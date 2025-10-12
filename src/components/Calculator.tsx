@@ -12,20 +12,23 @@ const Calculator = () => {
   // State to hold the final calculated cost
   const [totalCost, setTotalCost] = useState(0);
   const [area, setArea] = useState("");
-  const [quality, setQuality] = useState("basic");
+  const [quality, setQuality] = useState<"basic" | "standard" | "premium">(
+    "basic"
+  );
 
   // Function to handle the form submission and calculate the cost
   const calculateCost = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     // Per square foot rates for different quality levels
-    const rates: { [key: string]: number } = {
+    const rates: { [key in "basic" | "standard" | "premium"]: number } = {
       basic: 1500,
       standard: 1800,
       premium: 2200,
     };
 
-    const cost = Number(area) * rates[quality];
+    const parsedArea = parseFloat(area) || 0;
+    const cost = parsedArea * rates[quality];
     setTotalCost(cost);
   };
 
@@ -66,7 +69,7 @@ const Calculator = () => {
                 name="quality"
                 value="basic"
                 checked={quality === "basic"}
-                onChange={(e) => setQuality(e.target.value)}
+                onChange={(e) => setQuality(e.target.value as "basic")}
               />
               <label htmlFor="basic">Basic</label>
               <input
@@ -75,7 +78,7 @@ const Calculator = () => {
                 name="quality"
                 value="standard"
                 checked={quality === "standard"}
-                onChange={(e) => setQuality(e.target.value)}
+                onChange={(e) => setQuality(e.target.value as "standard")}
               />
               <label htmlFor="standard">Standard</label>
               <input
@@ -84,7 +87,7 @@ const Calculator = () => {
                 name="quality"
                 value="premium"
                 checked={quality === "premium"}
-                onChange={(e) => setQuality(e.target.value)}
+                onChange={(e) => setQuality(e.target.value as "premium")}
               />
               <label htmlFor="premium">Premium</label>
             </div>
@@ -96,7 +99,7 @@ const Calculator = () => {
       </div>
 
       {/* This section will only appear after a calculation is made */}
-      {totalCost > 0 && (
+      {totalCost !== 0 && (
         <div id="resultsSection" style={{ display: "block" }}>
           <div className="card">
             <div id="totalSummary" className="total-summary">
