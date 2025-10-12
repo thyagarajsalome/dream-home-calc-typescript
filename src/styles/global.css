@@ -1,16 +1,50 @@
-/* Paste your full CSS from the uploaded index.html here. This file preserves
---font-heading: 'Montserrat', sans-serif;
+:root {
+  --primary-color: #ff6f00;
+  --secondary-color: #2c3e50;
+  --background-color: #f8f9fa;
+  --card-background: #ffffff;
+  --text-color: #34495e;
+  --border-color: #dee2e6;
+  --font-body: "Poppins", sans-serif;
+  --font-heading: "Montserrat", sans-serif;
+  --border-radius: 12px;
+  --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
-
-* { box-sizing: border-box; margin: 0; padding: 0 }
-html { scroll-behavior: smooth; scroll-padding-top: 80px }
-body { font-family: var(--font-body); background-color: var(--background-color); color: var(--text-color) }
-.container { max-width: 960px; margin: 0 auto; padding: 0 1rem }
-h1,h2,h3 { font-family: var(--font-heading); font-weight: 700; color: var(--secondary-color) }
-section { padding: 4rem 0 }
-.section-title { text-align: center; margin-bottom: 3rem; font-size: 2.2rem }
-
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+}
+body {
+  font-family: var(--font-body);
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--secondary-color);
+}
+section {
+  padding: 4rem 0;
+}
+.section-title {
+  text-align: center;
+  margin-bottom: 3rem;
+  font-size: 2.2rem;
+}
 
 /* Header & Nav */
 .header {
@@ -261,7 +295,4 @@ input[type="number"]:focus {
   }
 }
 
-/* Include minimal font-face fallback import if needed */
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Poppins:wght@400;500;600;700&display=swap");
-
-/* Font Awesome usage note: we will load icons via CDN in index.html or developer may add icon svg library */
