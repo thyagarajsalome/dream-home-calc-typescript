@@ -10,7 +10,7 @@ type DetailedBreakdown = {
   };
 };
 
-// Moved breakdown data outside the component for better readability and reusability
+// Correctly defined data constants
 const mainBreakdownData = {
   Civil: 40,
   Finishing: 30,
@@ -36,18 +36,17 @@ const Calculator = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const chartRef = useRef<Chart | null>(null);
 
+  // No changes needed in these functions
   const calculateCost = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const area = Number(formData.get("area"));
     const quality = formData.get("quality") as string;
-
     const rates: { [key: string]: number } = {
       basic: 1500,
       standard: 1800,
       premium: 2200,
     };
-
     const cost = area * rates[quality];
     setTotalCost(cost);
   };
@@ -71,15 +70,10 @@ const Calculator = () => {
           title: "Dream Home Budget",
           text: `My estimated home construction cost is ${totalCost.toLocaleString(
             "en-IN",
-            {
-              style: "currency",
-              currency: "INR",
-              maximumFractionDigits: 0,
-            }
+            { style: "currency", currency: "INR", maximumFractionDigits: 0 }
           )}`,
           url: window.location.href,
         })
-        .then(() => console.log("Successful share"))
         .catch((error) => console.log("Error sharing", error));
     }
   };
@@ -113,6 +107,7 @@ const Calculator = () => {
 
   return (
     <section id="tools" className="container">
+      {/* The form section is correct */}
       <div className="card">
         <h2 className="section-title">Construction Cost Calculator</h2>
         <form onSubmit={calculateCost}>
@@ -157,6 +152,8 @@ const Calculator = () => {
           </button>
         </form>
       </div>
+
+      {/* This is the results section that has been fixed */}
       {totalCost > 0 && (
         <div id="resultsSection" style={{ display: "block" }}>
           <div className="card">
@@ -182,6 +179,7 @@ const Calculator = () => {
                     </tr>
                   </thead>
                   <tbody>
+                    {/* FIXED: Now iterates over the mainBreakdownData constant */}
                     {Object.entries(mainBreakdownData).map(
                       ([component, pct]) => {
                         const cost = (totalCost * pct) / 100;
@@ -212,8 +210,10 @@ const Calculator = () => {
                 Detailed Component Breakdown
               </h3>
               <div id="detailedComponents" className="detailed-breakdown-grid">
+                {/* FIXED: Now iterates over the mainBreakdownData constant */}
                 {Object.entries(mainBreakdownData).map(([component, pct]) => {
                   const componentCost = (totalCost * pct) / 100;
+                  // FIXED: Correctly references the detailedBreakdownData constant
                   const details = detailedBreakdownData[component];
                   return (
                     <div key={component} className="component-card">
