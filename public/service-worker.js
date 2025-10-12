@@ -11,9 +11,22 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  // Basic network-first strategy: try to fetch from the network,
-  // and if that fails, fall back to the cache.
+  // This is a "network-first" strategy.
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
+    fetch(event.request).catch(() => {
+      // If the network request fails (e.g., offline),
+      // try to find a match in the cache.
+      return caches.match(event.request).then((response) => {
+        // If a response is found in the cache, return it.
+        // Otherwise, return a basic offline response to prevent crashing.
+        return (
+          response ||
+          new Response("You are offline and this resource is not cached.", {
+            status: 404,
+            headers: { "Content-Type": "text/plain" },
+          })
+        );
+      });
+    })
   );
 });

@@ -11,13 +11,12 @@ const mainBreakdownData = {
 const Calculator = () => {
   // State to hold the final calculated cost
   const [totalCost, setTotalCost] = useState(0);
+  const [area, setArea] = useState("");
+  const [quality, setQuality] = useState("basic");
 
   // Function to handle the form submission and calculate the cost
   const calculateCost = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const area = Number(formData.get("area"));
-    const quality = formData.get("quality") as string;
 
     // Per square foot rates for different quality levels
     const rates: { [key: string]: number } = {
@@ -26,18 +25,15 @@ const Calculator = () => {
       premium: 2200,
     };
 
-    const cost = area * rates[quality];
+    const cost = Number(area) * rates[quality];
     setTotalCost(cost);
   };
 
   // Function to reset the calculator
   const resetAll = () => {
     setTotalCost(0);
-    // Also reset the form fields
-    const form = document.getElementById("calc-form") as HTMLFormElement;
-    if (form) {
-      form.reset();
-    }
+    setArea("");
+    setQuality("basic");
   };
 
   return (
@@ -54,6 +50,8 @@ const Calculator = () => {
               id="area"
               name="area"
               placeholder="e.g., 1200"
+              value={area}
+              onChange={(e) => setArea(e.target.value)}
               required
             />
           </div>
@@ -67,7 +65,8 @@ const Calculator = () => {
                 id="basic"
                 name="quality"
                 value="basic"
-                defaultChecked
+                checked={quality === "basic"}
+                onChange={(e) => setQuality(e.target.value)}
               />
               <label htmlFor="basic">Basic</label>
               <input
@@ -75,9 +74,18 @@ const Calculator = () => {
                 id="standard"
                 name="quality"
                 value="standard"
+                checked={quality === "standard"}
+                onChange={(e) => setQuality(e.target.value)}
               />
               <label htmlFor="standard">Standard</label>
-              <input type="radio" id="premium" name="quality" value="premium" />
+              <input
+                type="radio"
+                id="premium"
+                name="quality"
+                value="premium"
+                checked={quality === "premium"}
+                onChange={(e) => setQuality(e.target.value)}
+              />
               <label htmlFor="premium">Premium</label>
             </div>
           </div>
