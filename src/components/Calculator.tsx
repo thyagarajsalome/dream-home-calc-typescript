@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
-</div>
+import Chart from 'chart.js/auto'
+import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
 
 
 <div id="resultsSection" style={{ display: 'none' }}>
@@ -75,7 +77,7 @@ return (
 </div>
 </div>
 </div>
-</div>
+
 </section>
 )
 }
