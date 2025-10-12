@@ -10,7 +10,7 @@ type DetailedBreakdown = {
   };
 };
 
-// Moved breakdown data outside the component for better readability
+// Moved breakdown data outside the component for better readability and reusability
 const mainBreakdownData = {
   Civil: 40,
   Finishing: 30,
@@ -19,11 +19,7 @@ const mainBreakdownData = {
 };
 
 const detailedBreakdownData: DetailedBreakdown = {
-  Civil: {
-    Foundation: 20,
-    Structure: 50,
-    Masonry: 30,
-  },
+  Civil: { Foundation: 20, Structure: 50, Masonry: 30 },
   Finishing: {
     Flooring: 25,
     Painting: 25,
@@ -31,15 +27,8 @@ const detailedBreakdownData: DetailedBreakdown = {
     Doors: 15,
     Exterior: 15,
   },
-  Services: {
-    Electrical: 40,
-    Plumbing: 40,
-    HVAC: 20,
-  },
-  Other: {
-    Landscaping: 50,
-    Permits: 50,
-  },
+  Services: { Electrical: 40, Plumbing: 40, HVAC: 20 },
+  Other: { Landscaping: 50, Permits: 50 },
 };
 
 const Calculator = () => {
@@ -82,7 +71,11 @@ const Calculator = () => {
           title: "Dream Home Budget",
           text: `My estimated home construction cost is ${totalCost.toLocaleString(
             "en-IN",
-            { style: "currency", currency: "INR", maximumFractionDigits: 0 }
+            {
+              style: "currency",
+              currency: "INR",
+              maximumFractionDigits: 0,
+            }
           )}`,
           url: window.location.href,
         })
@@ -170,13 +163,11 @@ const Calculator = () => {
             <div id="totalSummary" className="total-summary">
               <p>Total Estimated Cost</p>
               <span id="finalTotalCost">
-                {totalCost
-                  ? totalCost.toLocaleString("en-IN", {
-                      style: "currency",
-                      currency: "INR",
-                      maximumFractionDigits: 0,
-                    })
-                  : "₹0"}
+                {totalCost.toLocaleString("en-IN", {
+                  style: "currency",
+                  currency: "INR",
+                  maximumFractionDigits: 0,
+                })}
               </span>
             </div>
             <div className="results-grid">

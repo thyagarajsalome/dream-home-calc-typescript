@@ -1,17 +1,18 @@
-// Very small offline-first service-worker skeleton. Vite will output service-worker.js
-// when you copy this to public/service-worker.js or integrate with Workbox for production.
+// A simple, offline-first service worker.
 
-self.addEventListener("install", (event: any) => {
+self.addEventListener("install", (event) => {
   console.log("Service Worker installing.");
+  // Skip waiting to activate the new service worker immediately.
   self.skipWaiting();
 });
 
-self.addEventListener("activate", (event: any) => {
+self.addEventListener("activate", (event) => {
   console.log("Service Worker activating.");
 });
 
-self.addEventListener("fetch", (event: any) => {
-  // Basic network-first for navigation, otherwise try cache fallback (simplified)
+self.addEventListener("fetch", (event) => {
+  // Basic network-first strategy: try to fetch from the network,
+  // and if that fails, fall back to the cache.
   event.respondWith(
     fetch(event.request).catch(() => caches.match(event.request))
   );
