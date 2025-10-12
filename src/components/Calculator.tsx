@@ -3,10 +3,47 @@ import Chart from "chart.js/auto";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
+// Type definition for the detailed breakdown
+type DetailedBreakdown = {
+  [key: string]: {
+    [key: string]: number;
+  };
+};
+
+// Moved breakdown data outside the component for better readability
+const mainBreakdownData = {
+  Civil: 40,
+  Finishing: 30,
+  Services: 20,
+  Other: 10,
+};
+
+const detailedBreakdownData: DetailedBreakdown = {
+  Civil: {
+    Foundation: 20,
+    Structure: 50,
+    Masonry: 30,
+  },
+  Finishing: {
+    Flooring: 25,
+    Painting: 25,
+    Windows: 20,
+    Doors: 15,
+    Exterior: 15,
+  },
+  Services: {
+    Electrical: 40,
+    Plumbing: 40,
+    HVAC: 20,
+  },
+  Other: {
+    Landscaping: 50,
+    Permits: 50,
+  },
+};
+
 const Calculator = () => {
   const [totalCost, setTotalCost] = useState(0);
-  const [mainBreakdown, setMainBreakdown] = useState({});
-  const [detailedBreakdown, setDetailedBreakdown] = useState({});
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const chartRef = useRef<Chart | null>(null);
 
@@ -16,7 +53,7 @@ const Calculator = () => {
     const area = Number(formData.get("area"));
     const quality = formData.get("quality") as string;
 
-    const rates = {
+    const rates: { [key: string]: number } = {
       basic: 1500,
       standard: 1800,
       premium: 2200,
@@ -24,39 +61,6 @@ const Calculator = () => {
 
     const cost = area * rates[quality];
     setTotalCost(cost);
-
-    const mainBreakdownData = {
-      Civil: 40,
-      Finishing: 30,
-      Services: 20,
-      Other: 10,
-    };
-    setMainBreakdown(mainBreakdownData);
-
-    const detailedBreakdownData = {
-      Civil: {
-        Foundation: 20,
-        Structure: 50,
-        Masonry: 30,
-      },
-      Finishing: {
-        Flooring: 25,
-        Painting: 25,
-        Windows: 20,
-        Doors: 15,
-        Exterior: 15,
-      },
-      Services: {
-        Electrical: 40,
-        Plumbing: 40,
-        HVAC: 20,
-      },
-      Other: {
-        Landscaping: 50,
-        Permits: 50,
-      },
-    };
-    setDetailedBreakdown(detailedBreakdownData);
   };
 
   const downloadPdf = () => {
@@ -89,8 +93,6 @@ const Calculator = () => {
 
   const resetAll = () => {
     setTotalCost(0);
-    setMainBreakdown({});
-    setDetailedBreakdown({});
   };
 
   useEffect(() => {
@@ -103,10 +105,10 @@ const Calculator = () => {
         chartRef.current = new Chart(ctx, {
           type: "doughnut",
           data: {
-            labels: Object.keys(mainBreakdown),
+            labels: Object.keys(mainBreakdownData),
             datasets: [
               {
-                data: Object.values(mainBreakdown),
+                data: Object.values(mainBreakdownData),
                 backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0"],
               },
             ],
@@ -114,7 +116,7 @@ const Calculator = () => {
         });
       }
     }
-  }, [totalCost, mainBreakdown]);
+  }, [totalCost]);
 
   return (
     <section id="tools" className="container">
@@ -189,13 +191,13 @@ const Calculator = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {totalCost &&
-                      Object.entries(mainBreakdown).map(([component, pct]) => {
-                        const cost = (totalCost * (pct as number)) / 100;
+                    {Object.entries(mainBreakdownData).map(
+                      ([component, pct]) => {
+                        const cost = (totalCost * pct) / 100;
                         return (
                           <tr key={component}>
                             <td>{component}</td>
-                            <td>{pct as number}%</td>
+                            <td>{pct}%</td>
                             <td className="text-right">
                               {cost.toLocaleString("en-IN", {
                                 style: "currency",
@@ -205,7 +207,8 @@ const Calculator = () => {
                             </td>
                           </tr>
                         );
-                      })}
+                      }
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -218,37 +221,34 @@ const Calculator = () => {
                 Detailed Component Breakdown
               </h3>
               <div id="detailedComponents" className="detailed-breakdown-grid">
-                {totalCost &&
-                  Object.entries(mainBreakdown).map(([component, pct]) => {
-                    const componentCost = (totalCost * (pct as number)) / 100;
-                    const details = detailedBreakdown[component];
-                    return (
-                      <div key={component} className="component-card">
-                        <h3>{component} Details</h3>
-                        <table>
-                          <tbody>
-                            {details &&
-                              Object.entries(details).map(([sub, subPct]) => {
-                                const subCost =
-                                  (componentCost * (subPct as number)) / 100;
-                                return (
-                                  <tr key={sub}>
-                                    <td>{sub}</td>
-                                    <td className="text-right">
-                                      {subCost.toLocaleString("en-IN", {
-                                        style: "currency",
-                                        currency: "INR",
-                                        maximumFractionDigits: 0,
-                                      })}
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                          </tbody>
-                        </table>
-                      </div>
-                    );
-                  })}
+                {Object.entries(mainBreakdownData).map(([component, pct]) => {
+                  const componentCost = (totalCost * pct) / 100;
+                  const details = detailedBreakdownData[component];
+                  return (
+                    <div key={component} className="component-card">
+                      <h3>{component} Details</h3>
+                      <table>
+                        <tbody>
+                          {Object.entries(details).map(([sub, subPct]) => {
+                            const subCost = (componentCost * subPct) / 100;
+                            return (
+                              <tr key={sub}>
+                                <td>{sub}</td>
+                                <td className="text-right">
+                                  {subCost.toLocaleString("en-IN", {
+                                    style: "currency",
+                                    currency: "INR",
+                                    maximumFractionDigits: 0,
+                                  })}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })}
               </div>
             </div>
             <div className="action-buttons" id="actionButtons">
