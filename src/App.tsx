@@ -10,11 +10,11 @@ export default function App() {
     <>
       <div>
         <main>
-          {/* <Hero /> */}
+          <Header />
+          <Hero />
           <Calculator />
           <FAQ />
         </main>
-        <Header />
         <Footer />
       </div>
     </>
