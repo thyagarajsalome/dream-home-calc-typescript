@@ -4,11 +4,24 @@ import html2canvas from "html2canvas";
 import Chart from "./Chart";
 
 // Data for the cost breakdown percentages
-const mainBreakdownData = {
-  "Civil Work": 40,
-  "Finishing Work": 30,
-  "Basic Services": 20,
-  "Other Expenses": 10,
+const mainBreakdown = {
+  Foundation: 15,
+  Structure: 35,
+  Roofing: 10,
+  Finishing: 25,
+  "Services (Elec/Plumb)": 15,
+};
+
+const detailedBreakdown = {
+  Foundation: { Excavation: 40, Concrete: 40, Reinforcement: 20 },
+  Structure: { Brickwork: 50, Cement: 30, "Labor & Scaffolding": 20 },
+  Roofing: { "Roofing Material": 70, "Waterproofing & Labor": 30 },
+  Finishing: { Flooring: 40, Painting: 30, "Doors & Windows": 30 },
+  "Services (Elec/Plumb)": {
+    "Electrical & Lighting": 50,
+    Plumbing: 30,
+    Fixtures: 20,
+  },
 };
 
 const qualityRates = {
@@ -165,24 +178,78 @@ const Calculator = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {Object.entries(mainBreakdownData).map(([key, value]) => (
-                      <tr key={key}>
-                        <td>{key}</td>
-                        <td>{value}%</td>
-                        <td className="text-right">
-                          {((totalCost * value) / 100).toLocaleString("en-IN", {
-                            style: "currency",
-                            currency: "INR",
-                            maximumFractionDigits: 0,
-                          })}
-                        </td>
-                      </tr>
-                    ))}
+                    {Object.entries(mainBreakdown).map(
+                      ([component, percentage]) => {
+                        const cost = (totalCost * percentage) / 100;
+                        return (
+                          <tr key={component}>
+                            <td>{component}</td>
+                            <td>{percentage}%</td>
+                            <td className="text-right">
+                              {cost.toLocaleString("en-IN", {
+                                style: "currency",
+                                currency: "INR",
+                                maximumFractionDigits: 0,
+                              })}
+                            </td>
+                          </tr>
+                        );
+                      }
+                    )}
                   </tbody>
                 </table>
               </div>
               <div className="chart-container">
-                <Chart data={mainBreakdownData} />
+                <Chart data={mainBreakdown} />
+              </div>
+            </div>
+            <div id="detailedBreakdownSection">
+              <h3 style={{ margin: "3rem 0 1rem", textAlign: "center" }}>
+                Detailed Component Breakdown
+              </h3>
+              <div className="detailed-breakdown-grid">
+                {Object.entries(detailedBreakdown).map(
+                  ([component, details]) => {
+                    const componentCost =
+                      (totalCost *
+                        (mainBreakdown as { [key: string]: number })[
+                          component
+                        ]) /
+                      100;
+                    return (
+                      <div className="component-card" key={component}>
+                        <h3>{component} Details</h3>
+                        <div className="component-card-content">
+                          <table>
+                            <tbody>
+                              {Object.entries(details).map(
+                                ([subComponent, percentage]) => {
+                                  const subCost =
+                                    (componentCost * percentage) / 100;
+                                  return (
+                                    <tr key={subComponent}>
+                                      <td>{subComponent}</td>
+                                      <td className="text-right">
+                                        {subCost.toLocaleString("en-IN", {
+                                          style: "currency",
+                                          currency: "INR",
+                                          maximumFractionDigits: 0,
+                                        })}
+                                      </td>
+                                    </tr>
+                                  );
+                                }
+                              )}
+                            </tbody>
+                          </table>
+                          <div className="chart-container">
+                            <Chart data={details} />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                )}
               </div>
             </div>
             <div className="action-buttons">
