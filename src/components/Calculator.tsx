@@ -30,6 +30,9 @@ const qualityRates = {
   premium: [2500, 2800, 3200],
 };
 
+// Color palettes for the charts
+const mainChartColors = ["#D9A443", "#59483B", "#8C6A4E", "#D9A443", "#C4B594"];
+
 const Calculator = () => {
   const [totalCost, setTotalCost] = useState(0);
   const [area, setArea] = useState("");
@@ -200,7 +203,7 @@ const Calculator = () => {
                 </table>
               </div>
               <div className="chart-container">
-                <Chart data={mainBreakdown} />
+                <Chart data={mainBreakdown} colors={mainChartColors} />
               </div>
             </div>
             <div id="detailedBreakdownSection">
@@ -219,33 +222,28 @@ const Calculator = () => {
                     return (
                       <div className="component-card" key={component}>
                         <h3>{component} Details</h3>
-                        <div className="component-card-content">
-                          <table>
-                            <tbody>
-                              {Object.entries(details).map(
-                                ([subComponent, percentage]) => {
-                                  const subCost =
-                                    (componentCost * percentage) / 100;
-                                  return (
-                                    <tr key={subComponent}>
-                                      <td>{subComponent}</td>
-                                      <td className="text-right">
-                                        {subCost.toLocaleString("en-IN", {
-                                          style: "currency",
-                                          currency: "INR",
-                                          maximumFractionDigits: 0,
-                                        })}
-                                      </td>
-                                    </tr>
-                                  );
-                                }
-                              )}
-                            </tbody>
-                          </table>
-                          <div className="chart-container">
-                            <Chart data={details} />
-                          </div>
-                        </div>
+                        <table>
+                          <tbody>
+                            {Object.entries(details).map(
+                              ([subComponent, percentage]) => {
+                                const subCost =
+                                  (componentCost * percentage) / 100;
+                                return (
+                                  <tr key={subComponent}>
+                                    <td>{subComponent}</td>
+                                    <td className="text-right">
+                                      {subCost.toLocaleString("en-IN", {
+                                        style: "currency",
+                                        currency: "INR",
+                                        maximumFractionDigits: 0,
+                                      })}
+                                    </td>
+                                  </tr>
+                                );
+                              }
+                            )}
+                          </tbody>
+                        </table>
                       </div>
                     );
                   }
