@@ -1,7 +1,6 @@
 export default function FAQ() {
   return (
     <section id="faq" className="container">
-      <h2 className="section-title">Frequently Asked Questions</h2>
       <div className="faq-container">
         <details className="faq-item">
           <summary>Is this calculator accurate?</summary>
