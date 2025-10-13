@@ -11,25 +11,34 @@ const mainBreakdownData = {
   "Other Expenses": 10,
 };
 
+const qualityRates = {
+  basic: [1200, 1500, 1800],
+  standard: [1900, 2000, 2400],
+  premium: [2500, 2800, 3200],
+};
+
 const Calculator = () => {
   const [totalCost, setTotalCost] = useState(0);
   const [area, setArea] = useState("");
   const [quality, setQuality] = useState<"basic" | "standard" | "premium">(
     "basic"
   );
+  const [rate, setRate] = useState<number>(qualityRates.basic[0]);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadFinished, setDownloadFinished] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
 
+  const handleQualityChange = (
+    newQuality: "basic" | "standard" | "premium"
+  ) => {
+    setQuality(newQuality);
+    setRate(qualityRates[newQuality][0]);
+  };
+
   const calculateCost = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const rates: { [key in "basic" | "standard" | "premium"]: number } = {
-      basic: 1500,
-      standard: 1800,
-      premium: 2200,
-    };
     const parsedArea = parseFloat(area) || 0;
-    const cost = parsedArea * rates[quality];
+    const cost = parsedArea * rate;
     setTotalCost(cost);
   };
 
@@ -37,6 +46,7 @@ const Calculator = () => {
     setTotalCost(0);
     setArea("");
     setQuality("basic");
+    setRate(qualityRates.basic[0]);
     setDownloadFinished(false);
   };
 
@@ -62,7 +72,6 @@ const Calculator = () => {
       <div className="card">
         <h2 className="section-title">Construction Cost Calculator</h2>
         <form id="calc-form" onSubmit={calculateCost}>
-          {/* Form inputs */}
           <div className="form-group">
             <label htmlFor="area">
               <i className="fas fa-ruler-combined"></i> Plot Area (sq. ft.)
@@ -88,7 +97,7 @@ const Calculator = () => {
                 name="quality"
                 value="basic"
                 checked={quality === "basic"}
-                onChange={(e) => setQuality(e.target.value as "basic")}
+                onChange={() => handleQualityChange("basic")}
               />
               <label htmlFor="basic">Basic</label>
               <input
@@ -97,7 +106,7 @@ const Calculator = () => {
                 name="quality"
                 value="standard"
                 checked={quality === "standard"}
-                onChange={(e) => setQuality(e.target.value as "standard")}
+                onChange={() => handleQualityChange("standard")}
               />
               <label htmlFor="standard">Standard</label>
               <input
@@ -106,9 +115,23 @@ const Calculator = () => {
                 name="quality"
                 value="premium"
                 checked={quality === "premium"}
-                onChange={(e) => setQuality(e.target.value as "premium")}
+                onChange={() => handleQualityChange("premium")}
               />
               <label htmlFor="premium">Premium</label>
+            </div>
+            <div className="rate-selector">
+              <label htmlFor="rate">Select Rate (per sq. ft.)</label>
+              <select
+                id="rate"
+                value={rate}
+                onChange={(e) => setRate(Number(e.target.value))}
+              >
+                {qualityRates[quality].map((r) => (
+                  <option key={r} value={r}>
+                    {r} Rs
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           <button type="submit" className="btn full-width">
