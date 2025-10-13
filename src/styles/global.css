@@ -37,10 +37,6 @@ h3 {
   font-weight: 700;
   color: var(--secondary-color);
 }
-
-.hero-text-main {
-  color: var(--background-color);
-}
 section {
   padding: 4rem 0;
 }
@@ -114,6 +110,7 @@ section {
 }
 #home h1 {
   font-size: 3rem;
+  color: #fff;
 }
 #home p {
   font-size: 1.1rem;
@@ -221,8 +218,10 @@ input[type="number"]:focus {
 }
 .results-grid {
   display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
   gap: 2rem;
   margin-top: 2rem;
+  align-items: center;
 }
 .total-summary {
   text-align: center;
@@ -232,21 +231,67 @@ input[type="number"]:focus {
   border-radius: var(--border-radius);
   margin-bottom: 2rem;
 }
-
-/* detailed components */
-.detailed-breakdown-grid {
-  display: grid;
-  gap: 1.5rem;
+.total-summary p {
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+}
+.total-summary span {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
   margin-top: 2rem;
 }
-.component-card {
+.progress-bar {
+  width: 100%;
+  height: 10px;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+  margin-top: 1rem;
+}
+.progress {
+  width: 0;
+  height: 100%;
+  background-color: var(--primary-color);
+  border-radius: 5px;
+  animation: progress-animation 2s forwards;
+}
+@keyframes progress-animation {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+.notification {
+  text-align: center;
+  margin-top: 1rem;
+  color: green;
+  font-weight: 600;
+}
+
+/* FAQ */
+.faq-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.faq-item {
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
-  padding: 1.5rem;
+  padding: 1rem;
 }
-.component-card h3 {
-  margin-bottom: 1rem;
-  color: var(--primary-color);
+.faq-item summary {
+  font-weight: 600;
+  cursor: pointer;
+}
+.faq-item p {
+  margin-top: 1rem;
+  line-height: 1.6;
 }
 
 /* Footer */
@@ -265,19 +310,10 @@ input[type="number"]:focus {
 }
 
 /* Responsive */
-@media (min-width: 768px) {
-  form {
-    grid-template-columns: 1fr 1fr;
-    align-items: end;
-  }
-  .results-grid {
-    grid-template-columns: 1.2fr 0.8fr;
-  }
-  .detailed-breakdown-grid {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  }
-}
 @media (max-width: 767px) {
+  .results-grid {
+    grid-template-columns: 1fr;
+  }
   .nav-menu {
     position: absolute;
     top: 80px;
@@ -298,5 +334,3 @@ input[type="number"]:focus {
     font-size: 2.5rem;
   }
 }
-
-@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Poppins:wght@400;500;600;700&display=swap");
