@@ -37,6 +37,10 @@ h3 {
   font-weight: 700;
   color: var(--secondary-color);
 }
+
+.hero-text-main {
+  color: var(--background-color);
+}
 section {
   padding: 4rem 0;
 }

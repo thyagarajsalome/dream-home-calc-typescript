@@ -100,7 +100,7 @@ const Calculator = () => {
 
       {/* This section will only appear after a calculation is made */}
       {totalCost !== 0 && (
-        <div id="resultsSection" style={{ display: "block" }}>
+        <div id="resultsSection" className={totalCost !== 0 ? "visible" : ""}>
           <div className="card">
             <div id="totalSummary" className="total-summary">
               <p>Total Estimated Cost</p>
