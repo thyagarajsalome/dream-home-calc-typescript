@@ -3,9 +3,10 @@ import Chart from "chart.js/auto";
 
 interface ChartProps {
   data: { [key: string]: number };
+  colors: string[];
 }
 
-const PieChart: React.FC<ChartProps> = ({ data }) => {
+const PieChart: React.FC<ChartProps> = ({ data, colors }) => {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart>();
 
@@ -23,14 +24,31 @@ const PieChart: React.FC<ChartProps> = ({ data }) => {
             datasets: [
               {
                 data: Object.values(data),
-                backgroundColor: ["#ff6f00", "#2c3e50", "#f1c40f", "#7f8c8d"],
+                backgroundColor: colors,
+                borderWidth: 2,
+                borderColor: "#fff",
               },
             ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: {
+                  padding: 10,
+                  font: {
+                    family: "'Roboto', sans-serif",
+                  },
+                },
+              },
+            },
           },
         });
       }
     }
-  }, [data]);
+  }, [data, colors]);
 
   return <canvas ref={chartRef} />;
 };
