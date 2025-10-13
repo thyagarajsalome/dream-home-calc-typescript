@@ -32,6 +32,14 @@ export default function FAQ() {
             or landscaping.
           </p>
         </details>
+        <details className="faq-item">
+          <summary>How does location affect the cost?</summary>
+          <p>
+            City / region — labour, material transport, local regulations differ
+            greatly (in Mumbai, Delhi, or Bengaluru, costs will be on the higher
+            side).
+          </p>
+        </details>
       </div>
     </section>
   );
