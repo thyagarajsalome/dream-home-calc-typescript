@@ -303,7 +303,7 @@ select:focus {
 /* Footer */
 .footer {
   text-align: center;
-  padding: 3rem 1rem;
+  padding: 1rem 1rem;
   background-color: var(--secondary-color);
   color: #bdc3c7;
 }
@@ -323,6 +323,7 @@ select:focus {
 }
 
 .component-card {
+  margin-bottom: 1rem;
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   padding: 1.5rem;
