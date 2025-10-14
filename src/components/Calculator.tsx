@@ -66,27 +66,59 @@ const Calculator = () => {
     setDownloadFinished(false);
   };
 
-  // ... (imports and existing code)
-
   const downloadPDF = () => {
     if (resultsRef.current) {
       setIsDownloading(true);
       setDownloadFinished(false);
-      // Added scale option for better quality
-      html2canvas(resultsRef.current, { scale: 1 }).then((canvas) => {
+
+      // Store original styles
+      const originalWidth = resultsRef.current.style.width;
+      const originalMaxWidth = resultsRef.current.style.maxWidth;
+      const originalTransform = resultsRef.current.style.transform;
+
+      // Temporarily set fixed width for PDF (desktop layout)
+      resultsRef.current.style.width = "1200px";
+      resultsRef.current.style.maxWidth = "1200px";
+      resultsRef.current.style.transform = "scale(1)";
+
+      // Use higher scale for better quality
+      html2canvas(resultsRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        width: 1200,
+      }).then((canvas) => {
+        // Restore original styles
+        resultsRef.current!.style.width = originalWidth;
+        resultsRef.current!.style.maxWidth = originalMaxWidth;
+        resultsRef.current!.style.transform = originalTransform;
+
         const imgData = canvas.toDataURL("image/png");
         const pdf = new jsPDF("p", "mm", "a4");
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+
+        // Handle multi-page PDFs if content is too long
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        let heightLeft = pdfHeight;
+        let position = 0;
+
+        pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
+        heightLeft -= pageHeight;
+
+        while (heightLeft > 0) {
+          position = heightLeft - pdfHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
+          heightLeft -= pageHeight;
+        }
+
         pdf.save("dream-home-cost-estimate.pdf");
         setIsDownloading(false);
         setDownloadFinished(true);
       });
     }
   };
-
-  // ... (rest of the component)
 
   return (
     <section id="tools" className="container">
