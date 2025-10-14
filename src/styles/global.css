@@ -335,6 +335,8 @@ select:focus {
   text-align: center;
 }
 
+/* (Existing styles remain the same) */
+
 /* Responsive */
 @media (min-width: 768px) {
   .results-grid {
@@ -364,5 +366,34 @@ select:focus {
   }
   #home h1 {
     font-size: 2.5rem;
+  }
+  /* Added to make the table responsive */
+  .result-details table,
+  .component-card table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
+
+/* Added for smaller mobile screens */
+@media (max-width: 480px) {
+  .card {
+    padding: 1.5rem;
+  }
+  #home h1 {
+    font-size: 2rem;
+  }
+  .section-title {
+    font-size: 1.8rem;
+  }
+  .quality-selector {
+    grid-template-columns: 1fr;
+  }
+  .total-summary span {
+    font-size: 2rem;
+  }
+  .action-buttons {
+    flex-direction: column;
   }
 }
