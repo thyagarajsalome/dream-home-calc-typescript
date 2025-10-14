@@ -397,3 +397,25 @@ select:focus {
     flex-direction: column;
   }
 }
+
+/* PDF Export Styles - ensure desktop layout for PDF regardless of screen size */
+@media print {
+  .results-grid {
+    grid-template-columns: 1.2fr 0.8fr !important;
+  }
+  .detailed-breakdown-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .quality-selector {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+  .action-buttons {
+    flex-direction: row !important;
+  }
+  .result-details table,
+  .component-card table {
+    display: table !important;
+    overflow-x: visible !important;
+    white-space: normal !important;
+  }
+}
