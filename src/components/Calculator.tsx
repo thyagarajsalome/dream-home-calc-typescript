@@ -66,11 +66,14 @@ const Calculator = () => {
     setDownloadFinished(false);
   };
 
+  // ... (imports and existing code)
+
   const downloadPDF = () => {
     if (resultsRef.current) {
       setIsDownloading(true);
       setDownloadFinished(false);
-      html2canvas(resultsRef.current).then((canvas) => {
+      // Added scale option for better quality
+      html2canvas(resultsRef.current, { scale: 1 }).then((canvas) => {
         const imgData = canvas.toDataURL("image/png");
         const pdf = new jsPDF("p", "mm", "a4");
         const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -82,6 +85,8 @@ const Calculator = () => {
       });
     }
   };
+
+  // ... (rest of the component)
 
   return (
     <section id="tools" className="container">
