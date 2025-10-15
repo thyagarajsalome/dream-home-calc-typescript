@@ -55,7 +55,7 @@ export default function Header() {
           </li>
           <li>
             <a href="#tools" className="nav-link" onClick={closeMenu}>
-              Calculator
+              Calculators
             </a>
           </li>
           <li>
