@@ -123,7 +123,7 @@ const Calculator = () => {
   return (
     <section id="tools" className="container">
       <div className="card">
-        <h2 className="section-title">Construction Cost Calculator</h2>
+        <h2 className="section-title">House Construction</h2>
         <form id="calc-form" onSubmit={calculateCost}>
           <div className="form-group">
             <label htmlFor="area">
