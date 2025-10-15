@@ -132,6 +132,57 @@ section {
   transform: translateY(-3px);
 }
 
+/* Calculator Tabs */
+.calculator-tabs-container {
+  padding: 0 1rem;
+  max-width: 1200px;
+  margin: -2rem auto 2rem;
+  position: relative;
+  z-index: 10;
+}
+.calculator-tabs {
+  display: flex;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  gap: 0.5rem;
+  padding-bottom: 1rem;
+}
+.calculator-tabs::-webkit-scrollbar {
+  display: none;
+}
+.tab-item {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background-color: #fff;
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--secondary-color);
+  box-shadow: var(--box-shadow);
+  transition: all 0.2s ease-in-out;
+}
+.tab-item i {
+  font-size: 1.5rem;
+  color: var(--accent-color);
+}
+.tab-item.active {
+  border-color: var(--primary-color);
+  background-color: var(--primary-color);
+  color: #fff;
+  transform: translateY(-5px);
+}
+.tab-item.active i {
+  color: #fff;
+}
+
 /* Card / Calculator styles */
 .card {
   background: var(--card-background);
@@ -335,8 +386,6 @@ select:focus {
   text-align: center;
 }
 
-/* (Existing styles remain the same) */
-
 /* Responsive */
 @media (min-width: 768px) {
   .results-grid {
@@ -344,6 +393,18 @@ select:focus {
   }
   .detailed-breakdown-grid {
     grid-template-columns: 1fr 1fr;
+  }
+  .calculator-tabs-container {
+    padding: 0;
+  }
+  .calculator-tabs {
+    justify-content: center;
+    overflow-x: visible;
+    gap: 1rem;
+  }
+  .tab-item {
+    flex-direction: row;
+    padding: 0.75rem 1.5rem;
   }
 }
 
@@ -367,7 +428,6 @@ select:focus {
   #home h1 {
     font-size: 2.5rem;
   }
-  /* Added to make the table responsive */
   .result-details table,
   .component-card table {
     display: block;
@@ -376,7 +436,6 @@ select:focus {
   }
 }
 
-/* Added for smaller mobile screens */
 @media (max-width: 480px) {
   .card {
     padding: 1.5rem;
@@ -398,7 +457,6 @@ select:focus {
   }
 }
 
-/* PDF Export Styles - ensure desktop layout for PDF regardless of screen size */
 @media print {
   .results-grid {
     grid-template-columns: 1.2fr 0.8fr !important;
