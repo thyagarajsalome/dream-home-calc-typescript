@@ -47,6 +47,59 @@ section {
   font-size: 2.2rem;
 }
 
+/* Auth Pages Layout */
+.auth-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+.auth-logo {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--secondary-color);
+  text-decoration: none;
+  margin-bottom: 2rem;
+}
+.auth-logo i {
+  color: var(--primary-color);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+}
+
+.auth-card h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.auth-card .form-group input {
+  padding: 1rem; /* Larger input fields */
+  font-size: 1rem;
+}
+
+.auth-card .btn {
+  padding: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.auth-switch-link {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.auth-switch-link a {
+  color: var(--primary-color);
+  font-weight: 600;
+  text-decoration: none;
+}
+
 /* Header & Nav */
 .header {
   position: sticky;
@@ -75,6 +128,7 @@ section {
 }
 .nav-menu {
   display: flex;
+  align-items: center;
   list-style: none;
   gap: 2rem;
 }
@@ -88,6 +142,21 @@ section {
 .nav-link:hover,
 .nav-link.active {
   color: var(--primary-color);
+}
+
+.user-info {
+  font-size: 0.9rem;
+  color: var(--text-color);
+}
+
+.sign-out-btn {
+  background: none;
+  border: 2px solid var(--primary-color);
+  color: var(--primary-color);
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
 }
 
 .hamburger {
@@ -210,6 +279,8 @@ label {
   gap: 0.5rem;
 }
 input[type="number"],
+input[type="email"],
+input[type="password"],
 select {
   width: 100%;
   padding: 0.8rem 1rem;
@@ -217,6 +288,8 @@ select {
   border-radius: 8px;
 }
 input[type="number"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
 select:focus {
   outline: none;
   border-color: var(--primary-color);
