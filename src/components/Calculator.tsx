@@ -33,7 +33,11 @@ const qualityRates = {
 // Color palettes for the charts
 const mainChartColors = ["#D9A443", "#59483B", "#8C6A4E", "#D9A443", "#C4B594"];
 
-const Calculator = () => {
+interface CalculatorProps {
+  hasPaid: boolean;
+}
+
+const Calculator: React.FC<CalculatorProps> = ({ hasPaid }) => {
   const [totalCost, setTotalCost] = useState(0);
   const [area, setArea] = useState("");
   const [quality, setQuality] = useState<"basic" | "standard" | "premium">(
@@ -70,53 +74,18 @@ const Calculator = () => {
     if (resultsRef.current) {
       setIsDownloading(true);
       setDownloadFinished(false);
-
-      // Store original styles
-      const originalWidth = resultsRef.current.style.width;
-      const originalMaxWidth = resultsRef.current.style.maxWidth;
-      const originalTransform = resultsRef.current.style.transform;
-
-      // Temporarily set fixed width for PDF (desktop layout)
-      resultsRef.current.style.width = "1200px";
-      resultsRef.current.style.maxWidth = "1200px";
-      resultsRef.current.style.transform = "scale(1)";
-
-      // Use higher scale for better quality
-      html2canvas(resultsRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        width: 1200,
-      }).then((canvas) => {
-        // Restore original styles
-        resultsRef.current!.style.width = originalWidth;
-        resultsRef.current!.style.maxWidth = originalMaxWidth;
-        resultsRef.current!.style.transform = originalTransform;
-
-        const imgData = canvas.toDataURL("image/png");
-        const pdf = new jsPDF("p", "mm", "a4");
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-        // Handle multi-page PDFs if content is too long
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        let heightLeft = pdfHeight;
-        let position = 0;
-
-        pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
-        heightLeft -= pageHeight;
-
-        while (heightLeft > 0) {
-          position = heightLeft - pdfHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
-          heightLeft -= pageHeight;
+      html2canvas(resultsRef.current, { scale: 2, useCORS: true }).then(
+        (canvas) => {
+          const imgData = canvas.toDataURL("image/png");
+          const pdf = new jsPDF("p", "mm", "a4");
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+          pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+          pdf.save("dream-home-cost-estimate.pdf");
+          setIsDownloading(false);
+          setDownloadFinished(true);
         }
-
-        pdf.save("dream-home-cost-estimate.pdf");
-        setIsDownloading(false);
-        setDownloadFinished(true);
-      });
+      );
     }
   };
 
@@ -160,8 +129,17 @@ const Calculator = () => {
                 value="standard"
                 checked={quality === "standard"}
                 onChange={() => handleQualityChange("standard")}
+                disabled={!hasPaid}
               />
-              <label htmlFor="standard">Standard</label>
+              <label
+                htmlFor="standard"
+                style={{
+                  cursor: hasPaid ? "pointer" : "not-allowed",
+                  opacity: hasPaid ? 1 : 0.5,
+                }}
+              >
+                Standard {!hasPaid && "(Pro)"}
+              </label>
               <input
                 type="radio"
                 id="premium"
@@ -169,9 +147,23 @@ const Calculator = () => {
                 value="premium"
                 checked={quality === "premium"}
                 onChange={() => handleQualityChange("premium")}
+                disabled={!hasPaid}
               />
-              <label htmlFor="premium">Premium</label>
+              <label
+                htmlFor="premium"
+                style={{
+                  cursor: hasPaid ? "pointer" : "not-allowed",
+                  opacity: hasPaid ? 1 : 0.5,
+                }}
+              >
+                Premium {!hasPaid && "(Pro)"}
+              </label>
             </div>
+            {!hasPaid && (
+              <p style={{ textAlign: "center", marginTop: "1rem" }}>
+                Upgrade to Pro to unlock Standard and Premium quality estimates.
+              </p>
+            )}
             <div className="rate-selector">
               <label htmlFor="rate">Select Rate (per sq. ft.)</label>
               <select
@@ -293,17 +285,13 @@ const Calculator = () => {
                 onClick={downloadPDF}
                 disabled={isDownloading}
               >
-                <i className="fas fa-download"></i> Download PDF
+                <i className="fas fa-download"></i>{" "}
+                {isDownloading ? "Downloading..." : "Download PDF"}
               </button>
               <button className="btn btn-secondary" onClick={resetAll}>
                 <i className="fas fa-sync-alt"></i> Reset
               </button>
             </div>
-            {isDownloading && (
-              <div className="progress-bar">
-                <div className="progress"></div>
-              </div>
-            )}
             {downloadFinished && (
               <div className="notification">
                 <p>Download finished!</p>

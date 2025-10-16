@@ -1,6 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { signOut, User } from "firebase/auth";
+import { auth } from "../firebase";
 
-export default function Header() {
+interface HeaderProps {
+  user: User | null;
+}
+
+const Header: React.FC<HeaderProps> = ({ user }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const toggleMenu = () => {
@@ -11,58 +17,29 @@ export default function Header() {
     setIsMenuOpen(false);
   };
 
-  useEffect(() => {
-    const navLinks = document.querySelectorAll(".nav-link");
-    const sections = document.querySelectorAll("main section");
-
-    const handleScroll = () => {
-      let current = "";
-      sections.forEach((section) => {
-        const sectionTop = section.offsetTop;
-        if (window.pageYOffset >= sectionTop - 100) {
-          current = section.getAttribute("id") || "";
-        }
-      });
-
-      navLinks.forEach((link) => {
-        link.classList.remove("active");
-        if (link.getAttribute("href")?.includes(current)) {
-          link.classList.add("active");
-        }
-      });
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  const handleSignOut = () => {
+    signOut(auth);
+  };
 
   return (
     <header className="header">
       <nav className="navbar container">
-        <a href="#home" className="logo" onClick={closeMenu}>
+        <a href="/" className="logo" onClick={closeMenu}>
           <i className="fas fa-home"></i> DreamHomeCalc
         </a>
         <ul className={isMenuOpen ? "nav-menu active" : "nav-menu"}>
-          <li>
-            <a href="#home" className="nav-link" onClick={closeMenu}>
-              Home
-            </a>
-          </li>
-          <li>
-            <a href="#about" className="nav-link" onClick={closeMenu}>
-              About
-            </a>
-          </li>
-          <li>
-            <a href="#tools" className="nav-link" onClick={closeMenu}>
-              Calculators
-            </a>
-          </li>
-          <li>
-            <a href="#faq" className="nav-link" onClick={closeMenu}>
-              FAQ
-            </a>
-          </li>
+          {user && (
+            <>
+              <li className="user-info">
+                <span>{user.email}</span>
+              </li>
+              <li>
+                <button onClick={handleSignOut} className="sign-out-btn">
+                  Sign Out
+                </button>
+              </li>
+            </>
+          )}
         </ul>
         <div className="hamburger" onClick={toggleMenu}>
           <i className={isMenuOpen ? "fas fa-times" : "fas fa-bars"}></i>
@@ -70,4 +47,6 @@ export default function Header() {
       </nav>
     </header>
   );
-}
+};
+
+export default Header;
