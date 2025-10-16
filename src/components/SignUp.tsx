@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "../firebase";
 import { setDoc, doc } from "firebase/firestore";
+import { Link } from "react-router-dom";
+import { auth, db } from "../firebase";
+import AuthLayout from "./AuthLayout";
 
 const SignUp = () => {
   const [email, setEmail] = useState("");
@@ -10,6 +12,11 @@ const SignUp = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return;
+    }
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -22,38 +29,49 @@ const SignUp = () => {
         hasPaid: false, // Default payment status
       });
     } catch (err: any) {
-      setError(err.message);
+      setError("Failed to create an account. The email may already be in use.");
     }
   };
 
   return (
-    <div className="card" style={{ maxWidth: "400px", margin: "2rem auto" }}>
-      <h2>Sign Up</h2>
+    <AuthLayout>
+      <h2>Create an Account</h2>
       <form onSubmit={handleSignUp}>
         <div className="form-group">
-          <label>Email</label>
+          <label htmlFor="email">Email</label>
           <input
+            id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            placeholder="name@example.com"
           />
         </div>
         <div className="form-group">
-          <label>Password</label>
+          <label htmlFor="password">Password</label>
           <input
+            id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            placeholder="At least 6 characters"
           />
         </div>
         <button type="submit" className="btn full-width">
           Sign Up
         </button>
-        {error && <p style={{ color: "red", marginTop: "1rem" }}>{error}</p>}
+        {error && (
+          <p style={{ color: "red", marginTop: "1rem", textAlign: "center" }}>
+            {error}
+          </p>
+        )}
       </form>
-    </div>
+      <p className="auth-switch-link">
+        Already have an account? <Link to="/signin">Sign In</Link>
+      </p>
+    </AuthLayout>
   );
 };
 
