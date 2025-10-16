@@ -9,7 +9,6 @@ import {
 import { onAuthStateChanged, User } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "./firebase";
-
 import Header from "./components/Header";
 import Hero from "./components/Hero";
 import Calculator from "./components/Calculator";
