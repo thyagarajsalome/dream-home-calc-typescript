@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 type CalculatorType =
   | "construction"
@@ -10,7 +11,7 @@ type CalculatorType =
 interface CalculatorTabsProps {
   activeCalculator: CalculatorType;
   setActiveCalculator: (calculator: CalculatorType) => void;
-  hasPaid: boolean; // New prop to track payment status
+  hasPaid: boolean;
 }
 
 const calculators: {
@@ -51,25 +52,33 @@ const CalculatorTabs: React.FC<CalculatorTabsProps> = ({
   setActiveCalculator,
   hasPaid,
 }) => {
+  const navigate = useNavigate();
+
+  const handleTabClick = (id: CalculatorType, isPremium: boolean) => {
+    if (isPremium && !hasPaid) {
+      navigate("/upgrade");
+    } else {
+      setActiveCalculator(id);
+    }
+  };
+
   return (
     <div className="calculator-tabs-container">
       <div className="calculator-tabs">
         {calculators.map(({ id, name, icon, isPremium }) => {
-          const isDisabled = isPremium && !hasPaid;
+          const isLocked = isPremium && !hasPaid;
           return (
             <button
               key={id}
-              className={`tab-item ${activeCalculator === id ? "active" : ""}`}
-              onClick={() => !isDisabled && setActiveCalculator(id)}
-              disabled={isDisabled}
-              style={{
-                cursor: isDisabled ? "not-allowed" : "pointer",
-                opacity: isDisabled ? 0.6 : 1,
-              }}
+              className={`tab-item ${
+                activeCalculator === id && !isLocked ? "active" : ""
+              }`}
+              onClick={() => handleTabClick(id, isPremium)}
+              // No longer disabled, navigation handles the logic
             >
               <i className={icon}></i>
               <span>
-                {name} {isDisabled && " (Pro)"}
+                {name} {isLocked && "✨"}
               </span>
             </button>
           );
