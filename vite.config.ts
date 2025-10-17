@@ -1,8 +1,16 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-export default defineConfig({
-  plugins: [react()],
-  server: { port: 5173 },
-  base: "https://github.com/thyagarajsalome/dream-home-calc-typescript.git",
+// https://vitejs.dev/config/
+export default defineConfig(({ command }) => {
+  const config = {
+    plugins: [react()],
+    base: "/",
+  };
+
+  if (command !== "serve") {
+    config.base = "/dream-home-calc-typescript/";
+  }
+
+  return config;
 });
