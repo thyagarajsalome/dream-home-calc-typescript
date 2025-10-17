@@ -1,5 +1,7 @@
+// src/components/UpgradePage.tsx
+
 import React, { useState } from "react";
-import { User } from "firebase/auth";
+import { User } from "@supabase/supabase-js"; // CORRECTED: Import Supabase User type
 import { useNavigate } from "react-router-dom";
 
 interface UpgradePageProps {
@@ -56,7 +58,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
                     razorpay_order_id: response.razorpay_order_id,
                     razorpay_payment_id: response.razorpay_payment_id,
                     razorpay_signature: response.razorpay_signature,
-                    userId: user?.uid,
+                    userId: user?.id, // Use .id for Supabase user
                   }),
                 }
               );
@@ -65,7 +67,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
               if (result.status === "success") {
                 alert("Payment Successful! You now have Pro access.");
                 setHasPaid(true);
-                navigate("/"); // Redirect to home page after successful payment
+                navigate("/");
               } else {
                 throw new Error("Payment verification failed.");
               }
