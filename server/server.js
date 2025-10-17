@@ -6,8 +6,9 @@ const crypto = require("crypto");
 const { createClient } = require("@supabase/supabase-js");
 
 // Initialize Supabase
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+// These variables are loaded from the .env file in the /server directory
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const app = express();
@@ -31,6 +32,7 @@ app.post("/create-order", async (req, res) => {
     const order = await razorpay.orders.create(options);
     res.json(order);
   } catch (error) {
+    console.error("Error creating Razorpay order:", error);
     res.status(500).send("Error creating order");
   }
 });
@@ -51,9 +53,10 @@ app.post("/verify-payment", async (req, res) => {
 
   if (digest === razorpay_signature) {
     try {
+      // Use the 'profiles' table and 'has_paid' column as created by the SQL script
       const { error } = await supabase
-        .from("users")
-        .update({ hasPaid: true })
+        .from("profiles")
+        .update({ has_paid: true })
         .eq("id", userId);
 
       if (error) throw error;
