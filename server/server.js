@@ -3,17 +3,12 @@ const express = require("express");
 const Razorpay = require("razorpay");
 const cors = require("cors");
 const crypto = require("crypto");
-const admin = require("firebase-admin");
+const { createClient } = require("@supabase/supabase-js");
 
-// IMPORTANT: Create this file in your /server directory
-// It's a JSON file you can download from your Firebase project settings.
-const serviceAccount = require("./firebase-service-account.json");
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
-
-const db = admin.firestore();
+// Initialize Supabase
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const app = express();
 app.use(express.json());
@@ -55,16 +50,20 @@ app.post("/verify-payment", async (req, res) => {
   const digest = shasum.digest("hex");
 
   if (digest === razorpay_signature) {
-    // Payment is legitimate
     try {
-      const userRef = db.collection("users").doc(userId);
-      await userRef.update({ hasPaid: true });
+      const { error } = await supabase
+        .from("users")
+        .update({ hasPaid: true })
+        .eq("id", userId);
+
+      if (error) throw error;
+
       res.json({
         status: "success",
         message: "Payment verified successfully.",
       });
     } catch (error) {
-      console.error("Error updating user in Firestore:", error);
+      console.error("Error updating user in Supabase:", error);
       res
         .status(500)
         .json({ status: "failure", message: "Could not update user status." });

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
 import { Link } from "react-router-dom";
-import { auth } from "../firebase";
+import { supabase } from "../supabaseClient";
 import AuthLayout from "./AuthLayout";
 
 const SignIn = () => {
@@ -13,7 +12,11 @@ const SignIn = () => {
     e.preventDefault();
     setError("");
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
     } catch (err: any) {
       setError("Failed to sign in. Please check your email and password.");
     }
