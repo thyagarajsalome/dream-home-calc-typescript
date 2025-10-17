@@ -1,35 +1,36 @@
 import React, { useState } from "react";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { setDoc, doc } from "firebase/firestore";
 import { Link } from "react-router-dom";
-import { auth, db } from "../firebase";
+import { supabase } from "../supabaseClient";
 import AuthLayout from "./AuthLayout";
 
 const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setMessage("");
     if (password.length < 6) {
       setError("Password must be at least 6 characters long.");
       return;
     }
     try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
+      const { data, error } = await supabase.auth.signUp({
         email,
-        password
-      );
-      // Add user to Firestore
-      await setDoc(doc(db, "users", userCredential.user.uid), {
-        email: userCredential.user.email,
-        hasPaid: false, // Default payment status
+        password,
       });
+      if (error) throw error;
+      if (data.user) {
+        setMessage("Success! Please check your email to confirm your account.");
+      }
     } catch (err: any) {
-      setError("Failed to create an account. The email may already be in use.");
+      setError(
+        err.message ||
+          "Failed to create an account. The email may already be in use."
+      );
     }
   };
 
@@ -65,6 +66,11 @@ const SignUp = () => {
         {error && (
           <p style={{ color: "red", marginTop: "1rem", textAlign: "center" }}>
             {error}
+          </p>
+        )}
+        {message && (
+          <p style={{ color: "green", marginTop: "1rem", textAlign: "center" }}>
+            {message}
           </p>
         )}
       </form>
