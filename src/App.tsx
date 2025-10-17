@@ -1,3 +1,5 @@
+// src/App.tsx
+
 import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
@@ -6,8 +8,8 @@ import {
   Navigate,
   Outlet,
 } from "react-router-dom";
-import { supabase } from "./supabaseClient"; // Correct import
-import { User } from "@supabase/supabase-js"; // Supabase user type
+import { supabase } from "./supabaseClient";
+import { User } from "@supabase/supabase-js";
 import Header from "./components/Header";
 import Hero from "./components/Hero";
 import Calculator from "./components/Calculator";
@@ -21,15 +23,7 @@ import Footer from "./components/Footer";
 import SignIn from "./components/SignIn";
 import SignUp from "./components/SignUp";
 import UpgradePage from "./components/UpgradePage";
-// src/App.tsx
-// ... other imports
-import { supabase } from "./supabaseClient"; // <-- CORRECT: This should import from your new Supabase file
-import { User } from "@supabase/supabase-js";
 
-// DO NOT import anything from "./firebase"
-// import { auth, db } from "./firebase"; // <-- WRONG: Delete this line if it exists
-
-// ... rest of the file
 type CalculatorType =
   | "construction"
   | "flooring"

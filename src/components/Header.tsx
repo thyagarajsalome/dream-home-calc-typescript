@@ -1,6 +1,8 @@
+// src/components/Header.tsx
+
 import React, { useState } from "react";
-import { signOut, User } from "firebase/auth";
-import { auth } from "../firebase";
+import { User } from "@supabase/supabase-js"; // Import Supabase User type
+import { supabase } from "../supabaseClient"; // Import the Supabase client
 
 interface HeaderProps {
   user: User | null;
@@ -17,8 +19,8 @@ const Header: React.FC<HeaderProps> = ({ user }) => {
     setIsMenuOpen(false);
   };
 
-  const handleSignOut = () => {
-    signOut(auth);
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
   };
 
   return (
