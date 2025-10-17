@@ -6,9 +6,8 @@ import {
   Navigate,
   Outlet,
 } from "react-router-dom";
-import { onAuthStateChanged, User } from "firebase/auth";
-import { doc, onSnapshot } from "firebase/firestore";
-import { auth, db } from "./firebase";
+import { supabase } from "./supabaseClient"; // Correct import
+import { User } from "@supabase/supabase-js"; // Supabase user type
 import Header from "./components/Header";
 import Hero from "./components/Hero";
 import Calculator from "./components/Calculator";
@@ -30,7 +29,6 @@ type CalculatorType =
   | "plumbing"
   | "electrical";
 
-// This layout component wraps the main application view
 const MainLayout = ({
   user,
   hasPaid,
@@ -42,7 +40,6 @@ const MainLayout = ({
     useState<CalculatorType>("construction");
 
   const renderCalculator = () => {
-    // This logic is now protected by the hasPaid prop in CalculatorTabs, which navigates away if needed
     switch (activeCalculator) {
       case "construction":
         return <Calculator hasPaid={hasPaid} />;
@@ -77,12 +74,11 @@ const MainLayout = ({
   );
 };
 
-// This component protects routes that require a user to be logged in
 const ProtectedRoute = ({ user }: { user: User | null }) => {
   if (!user) {
     return <Navigate to="/signin" />;
   }
-  return <Outlet />; // Renders the child routes (like Home or Upgrade)
+  return <Outlet />;
 };
 
 const App = () => {
@@ -90,26 +86,49 @@ const App = () => {
   const [hasPaid, setHasPaid] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Effect for handling authentication state changes
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    const getSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
       setLoading(false);
-    });
-    return () => unsubscribeAuth();
+    };
+    getSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
-  // Effect for listening to real-time payment status changes from Firestore
   useEffect(() => {
-    if (user) {
-      const userDocRef = doc(db, "users", user.uid);
-      const unsubscribeSnapshot = onSnapshot(userDocRef, (doc) => {
-        setHasPaid(doc.exists() && doc.data().hasPaid === true);
-      });
-      return () => unsubscribeSnapshot();
-    } else {
-      setHasPaid(false); // Reset payment status on logout
-    }
+    const fetchUserProfile = async () => {
+      if (user) {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("has_paid")
+          .eq("id", user.id)
+          .single();
+
+        if (error) {
+          console.error("Error fetching user profile:", error);
+          setHasPaid(false);
+        } else if (data) {
+          setHasPaid(data.has_paid);
+        }
+        setLoading(false);
+      } else {
+        setHasPaid(false);
+      }
+    };
+    fetchUserProfile();
   }, [user]);
 
   if (loading) {
@@ -121,7 +140,6 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        {/* Public routes for sign-in and sign-up */}
         <Route
           path="/signin"
           element={user ? <Navigate to="/" /> : <SignIn />}
@@ -130,8 +148,6 @@ const App = () => {
           path="/signup"
           element={user ? <Navigate to="/" /> : <SignUp />}
         />
-
-        {/* Protected routes that require a logged-in user */}
         <Route element={<ProtectedRoute user={user} />}>
           <Route
             path="/"
