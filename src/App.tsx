@@ -21,7 +21,15 @@ import Footer from "./components/Footer";
 import SignIn from "./components/SignIn";
 import SignUp from "./components/SignUp";
 import UpgradePage from "./components/UpgradePage";
+// src/App.tsx
+// ... other imports
+import { supabase } from "./supabaseClient"; // <-- CORRECT: This should import from your new Supabase file
+import { User } from "@supabase/supabase-js";
 
+// DO NOT import anything from "./firebase"
+// import { auth, db } from "./firebase"; // <-- WRONG: Delete this line if it exists
+
+// ... rest of the file
 type CalculatorType =
   | "construction"
   | "flooring"
