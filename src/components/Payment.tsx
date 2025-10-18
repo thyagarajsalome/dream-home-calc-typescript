@@ -1,5 +1,9 @@
+// src/components/Payment.tsx (Updated)
+
 import React, { useState } from "react";
-import { User } from "firebase/auth";
+import { User } from "@supabase/supabase-js"; // Changed from 'firebase/auth'
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 interface PaymentProps {
   user: User | null;
@@ -22,7 +26,7 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
     };
     script.onload = async () => {
       try {
-        const response = await fetch("http://localhost:3001/create-order", {
+        const response = await fetch(`${API_URL}/create-order`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -37,7 +41,7 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
         const order = await response.json();
 
         const options = {
-          key: import.meta.env.VITE_RAZORPAY_KEY_ID, // Using environment variables
+          key: import.meta.env.VITE_RAZORPAY_KEY_ID,
           amount: order.amount,
           currency: order.currency,
           name: "DreamHomeCalc Pro",
@@ -46,7 +50,7 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
           handler: async (response: any) => {
             try {
               const verificationResponse = await fetch(
-                "http://localhost:3001/verify-payment",
+                `${API_URL}/verify-payment`,
                 {
                   method: "POST",
                   headers: {
@@ -56,7 +60,7 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
                     razorpay_order_id: response.razorpay_order_id,
                     razorpay_payment_id: response.razorpay_payment_id,
                     razorpay_signature: response.razorpay_signature,
-                    userId: user?.uid,
+                    userId: user?.id, // Changed from user?.uid to user?.id
                   }),
                 }
               );
