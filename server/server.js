@@ -5,6 +5,18 @@ const cors = require("cors");
 const crypto = require("crypto");
 const { createClient } = require("@supabase/supabase-js");
 
+// --- Environment Variable Check ---
+// Ensures the server doesn't start without the necessary configuration.
+if (
+  !process.env.SUPABASE_URL ||
+  !process.env.SUPABASE_KEY ||
+  !process.env.RAZORPAY_KEY_ID ||
+  !process.env.RAZORPAY_KEY_SECRET
+) {
+  console.error("FATAL ERROR: Missing required environment variables.");
+  process.exit(1);
+}
+
 // Initialize Supabase
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
@@ -13,13 +25,10 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const app = express();
 app.use(express.json());
 
-// Whitelist your frontend's URLs
-// server/server.js
-const allowedOrigins = [
-  "https://homedesignenglish.com", // Add this line
-  "https://thyagarajsalome.github.io",
-  "http://localhost:5173",
-];
+// --- CORS Configuration ---
+// Whitelist your production frontend URL.
+// You can add "http://localhost:5173" back for local development.
+const allowedOrigins = ["https://homedesignenglish.com"];
 
 app.use(
   cors({
@@ -36,11 +45,19 @@ app.use(
   })
 );
 
+// --- Health Check Endpoint ---
+// A simple endpoint to confirm the server is running.
+app.get("/", (req, res) => {
+  res.send("Dream Home Calc server is running!");
+});
+
+// --- Razorpay Configuration ---
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+// --- API Endpoints ---
 app.post("/create-order", async (req, res) => {
   const { amount } = req.body;
   const options = {
@@ -53,7 +70,7 @@ app.post("/create-order", async (req, res) => {
     const order = await razorpay.orders.create(options);
     res.json(order);
   } catch (error) {
-    console.error("Error creating Razorpay order:", error);
+    console.error("Error creating Razorpay order:", error.message);
     res.status(500).send("Error creating order");
   }
 });
@@ -74,7 +91,7 @@ app.post("/verify-payment", async (req, res) => {
 
   if (digest === razorpay_signature) {
     try {
-      // Use the 'profiles' table and 'has_paid' column as created by the SQL script
+      // Use the 'profiles' table and 'has_paid' column
       const { error } = await supabase
         .from("profiles")
         .update({ has_paid: true })
@@ -87,7 +104,7 @@ app.post("/verify-payment", async (req, res) => {
         message: "Payment verified successfully.",
       });
     } catch (error) {
-      console.error("Error updating user in Supabase:", error);
+      console.error("Error updating user in Supabase:", error.message);
       res
         .status(500)
         .json({ status: "failure", message: "Could not update user status." });
@@ -97,5 +114,6 @@ app.post("/verify-payment", async (req, res) => {
   }
 });
 
+// --- Server Initialization ---
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
