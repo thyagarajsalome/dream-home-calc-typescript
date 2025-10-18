@@ -77,7 +77,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
             email: user?.email,
           },
           theme: {
-            color: "#d9a443", // This line is updated
+            color: "#d9a443",
           },
         };
 
@@ -96,11 +96,41 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
     <div className="auth-container">
       <div className="card upgrade-card">
         <div className="upgrade-header">
-          <span className="pro-badge">PRO</span>
+          <span className="pro-badge">LIMITED TIME OFFER</span>
           <h2>Unlock Your Dream Home's Full Potential</h2>
           <p className="price">
-            Just <span className="amount">₹99</span> for Lifetime Access
+            <span
+              className="amount"
+              style={{
+                color: "var(--primary-color)",
+                fontWeight: "bold",
+                fontSize: "2.8rem",
+              }}
+            >
+              ₹99
+            </span>
+            <span
+              style={{
+                textDecoration: "line-through",
+                marginLeft: "1rem",
+                fontSize: "1.5rem",
+                opacity: 0.6,
+              }}
+            >
+              ₹330
+            </span>
+            <span
+              style={{
+                marginLeft: "1rem",
+                fontSize: "1.2rem",
+                color: "var(--accent-color)",
+                fontWeight: "bold",
+              }}
+            >
+              (70% OFF)
+            </span>
           </p>
+          <p>One-time payment for Lifetime Access</p>
         </div>
         <ul className="features-list">
           <li>
@@ -120,10 +150,31 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
             unlimited PDF reports.
           </li>
           <li>
-            <i className="fas fa-check-circle"></i> One-time payment, lifetime
-            access to all future updates.
+            <i className="fas fa-check-circle"></i> Lifetime access to all
+            future updates.
           </li>
         </ul>
+
+        {/* --- ADDED SECTION --- */}
+        <div
+          style={{
+            padding: "1rem",
+            backgroundColor: "var(--background-color)",
+            borderRadius: "var(--border-radius)",
+            margin: "2rem 0",
+            border: "1px solid var(--border-color)",
+            textAlign: "center",
+          }}
+        >
+          <p style={{ margin: 0, lineHeight: 1.6, fontSize: "0.9rem" }}>
+            <strong>The Pro Plan will keep getting better:</strong> Upcoming
+            tools such as new calculators, architectural concept designs, and
+            House floor plans will be added soon, and all of them will be
+            included at no extra cost.
+          </p>
+        </div>
+        {/* --- END OF ADDED SECTION --- */}
+
         <button
           onClick={handlePayment}
           className="btn upgrade-btn"
