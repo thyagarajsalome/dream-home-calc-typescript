@@ -78,7 +78,7 @@ const CalculatorTabs: React.FC<CalculatorTabsProps> = ({
             >
               <i className={icon}></i>
               <span>
-                {name} {isLocked && "✨"}
+                {name} {isLocked && "🔒"}
               </span>
             </button>
           );
