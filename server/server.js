@@ -6,14 +6,33 @@ const crypto = require("crypto");
 const { createClient } = require("@supabase/supabase-js");
 
 // Initialize Supabase
-// These variables are loaded from the .env file in the /server directory
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+
+// Whitelist your frontend's URLs
+const allowedOrigins = [
+  "https://thyagarajsalome.github.io", // Your deployed GitHub Pages site
+  "http://localhost:5173", // Your local development environment
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) === -1) {
+        const msg =
+          "The CORS policy for this site does not allow access from the specified Origin.";
+        return callback(new Error(msg), false);
+      }
+      return callback(null, true);
+    },
+  })
+);
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -76,5 +95,5 @@ app.post("/verify-payment", async (req, res) => {
   }
 });
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
