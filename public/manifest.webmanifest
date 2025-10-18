@@ -1,10 +1,10 @@
 {
-  "name": "DreamHomeCalc",
-  "short_name": "DreamHome",
+  "name": "Dream Home Cost Calculator",
+  "short_name": "DreamHomeCalc",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#ff6f00",
+  "background_color": "#f8f9fa",
+  "theme_color": "#d9a443",
   "icons": [
     {
       "src": "./icons/icon-192x192.png",
