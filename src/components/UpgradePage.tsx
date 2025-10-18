@@ -1,8 +1,11 @@
 // src/components/UpgradePage.tsx
 
 import React, { useState } from "react";
-import { User } from "@supabase/supabase-js"; // CORRECTED: Import Supabase User type
+import { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
+
+// This line is new! It gets the backend URL from your environment variables.
+const API_URL = import.meta.env.VITE_API_URL;
 
 interface UpgradePageProps {
   user: User | null;
@@ -26,12 +29,13 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
     };
     script.onload = async () => {
       try {
-        const response = await fetch("http://localhost:3001/create-order", {
+        // UPDATED: Now uses the API_URL variable
+        const response = await fetch(`${API_URL}/create-order`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ amount: 9900 }), // Amount in paise (99 INR)
+          body: JSON.stringify({ amount: 9900 }),
         });
 
         if (!response.ok) {
@@ -49,8 +53,9 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
           order_id: order.id,
           handler: async (response: any) => {
             try {
+              // UPDATED: Now uses the API_URL variable
               const verificationResponse = await fetch(
-                "http://localhost:3001/verify-payment",
+                `${API_URL}/verify-payment`,
                 {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
@@ -58,7 +63,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
                     razorpay_order_id: response.razorpay_order_id,
                     razorpay_payment_id: response.razorpay_payment_id,
                     razorpay_signature: response.razorpay_signature,
-                    userId: user?.id, // Use .id for Supabase user
+                    userId: user?.id,
                   }),
                 }
               );
