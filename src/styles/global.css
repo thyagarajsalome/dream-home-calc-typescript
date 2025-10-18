@@ -233,7 +233,7 @@ section {
   max-width: 600px;
   margin: 1.5rem auto 2.5rem;
   line-height: 1.7;
-  color: #666;
+  color: #e5e5ea;
 }
 .cta-button {
   background: var(--primary-color);
@@ -263,6 +263,7 @@ section {
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   gap: 0.75rem;
+  margin-top: 2rem;
   padding-bottom: 1rem;
 }
 .calculator-tabs::-webkit-scrollbar {
