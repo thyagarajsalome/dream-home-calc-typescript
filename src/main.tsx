@@ -7,7 +7,7 @@ import "./styles/global.css";
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("/service-worker.js")
+      .register(`${import.meta.env.BASE_URL}service-worker.js`)
       .catch((err) => console.warn("SW registration failed:", err));
   });
 }
