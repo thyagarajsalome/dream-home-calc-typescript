@@ -1,8 +1,7 @@
-// src/components/Header.tsx
-
-import React, { useState } from "react";
-import { User } from "@supabase/supabase-js"; // Import Supabase User type
-import { supabase } from "../supabaseClient"; // Import the Supabase client
+import React, { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
+import { User } from "@supabase/supabase-js";
+import { supabase } from "../supabaseClient";
 
 interface HeaderProps {
   user: User | null;
@@ -10,25 +9,34 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ user }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
-
-  const closeMenu = () => {
-    setIsMenuOpen(false);
-  };
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLLIElement>(null);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
     <header className="header">
       <nav className="navbar container">
-        <a href="/" className="logo" onClick={closeMenu}>
+        <Link to="/" className="logo">
           <i className="fas fa-home"></i> DreamHomeCalc
-        </a>
+        </Link>
         <ul className={isMenuOpen ? "nav-menu active" : "nav-menu"}>
           {user && (
             <>
@@ -42,8 +50,39 @@ const Header: React.FC<HeaderProps> = ({ user }) => {
               </li>
             </>
           )}
+          <li className="dropdown" ref={dropdownRef}>
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="nav-link"
+              style={{ background: "none", border: "none", cursor: "pointer" }}
+            >
+              Resources <i className="fas fa-chevron-down fa-xs"></i>
+            </button>
+            <ul className={`dropdown-menu ${isDropdownOpen ? "show" : ""}`}>
+              <li>
+                <Link to="/contact" onClick={() => setIsDropdownOpen(false)}>
+                  Contact
+                </Link>
+              </li>
+              <li>
+                <Link to="/disclaimer" onClick={() => setIsDropdownOpen(false)}>
+                  Disclaimer
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacy" onClick={() => setIsDropdownOpen(false)}>
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link to="/terms" onClick={() => setIsDropdownOpen(false)}>
+                  Terms of Service
+                </Link>
+              </li>
+            </ul>
+          </li>
         </ul>
-        <div className="hamburger" onClick={toggleMenu}>
+        <div className="hamburger" onClick={() => setIsMenuOpen(!isMenuOpen)}>
           <i className={isMenuOpen ? "fas fa-times" : "fas fa-bars"}></i>
         </div>
       </nav>
