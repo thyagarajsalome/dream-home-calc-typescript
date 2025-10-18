@@ -1,42 +1,43 @@
 export default function FAQ() {
   return (
-    <section id="faq" className="container">
+    <section id="faq">
       <div className="faq-container">
+        <h2 className="section-title">Frequently Asked Questions</h2>
         <details className="faq-item">
-          <summary>Is this calculator accurate?</summary>
+          <summary>How accurate is this calculator?</summary>
           <p>
-            This tool provides a preliminary estimate based on standard industry
-            percentages in India. Actual costs can vary based on your specific
-            location, material choices, labor rates, and architectural design.
-            Always consult with a professional contractor for a detailed quote.
+            This tool provides a preliminary estimate based on generalized
+            industry averages in India. Actual costs will vary based on your
+            city, specific material choices, labor rates, and architectural
+            complexity. Always consult a professional contractor for a detailed
+            quote.
           </p>
         </details>
         <details className="faq-item">
-          <summary>What does "Finish Quality" mean?</summary>
+          <summary>What is included in the "Pro" version?</summary>
           <p>
-            <b>Basic:</b> Uses standard, budget-friendly materials for flooring,
-            paint, and fittings. <br />
-            <b>Standard:</b> A mix of quality and value, with better-grade
-            materials and finishes. <br />
-            <b>Premium:</b> Involves high-end, luxury materials, branded
-            fittings, and specialized finishes.
+            The one-time Pro upgrade unlocks all specialized calculators
+            (Flooring, Painting, Plumbing, Electrical), enables Standard &
+            Premium quality estimates in the main construction calculator, and
+            removes all restrictions on saving or sharing reports.
           </p>
         </details>
         <details className="faq-item">
-          <summary>What is included in the estimate?</summary>
+          <summary>What costs are NOT included in the estimate?</summary>
           <p>
-            The estimate covers the core civil, finishing, and basic
-            electrical/plumbing work. It does not typically include the cost of
-            land, architectural fees, government permits, interior furnishing,
-            or landscaping.
+            The estimate covers core construction and finishing. It does not
+            include the cost of land, architectural fees, government permits,
+            utility connections, interior furnishings (furniture, appliances),
+            landscaping, or boundary walls.
           </p>
         </details>
         <details className="faq-item">
-          <summary>How does location affect the cost?</summary>
+          <summary>How does my location affect the cost?</summary>
           <p>
-            City / region — labour, material transport, local regulations differ
-            greatly (in Mumbai, Delhi, or Bengaluru, costs will be on the higher
-            side).
+            Costs differ significantly between cities. Metropolitan areas like
+            Mumbai, Delhi, or Bengaluru have higher labor and material costs
+            compared to smaller towns. Our calculator provides a general
+            average; please adjust for your local market.
           </p>
         </details>
       </div>

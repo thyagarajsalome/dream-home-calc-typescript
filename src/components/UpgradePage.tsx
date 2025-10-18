@@ -1,10 +1,7 @@
-// src/components/UpgradePage.tsx
-
 import React, { useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 
-// This line is new! It gets the backend URL from your environment variables.
 const API_URL = import.meta.env.VITE_API_URL;
 
 interface UpgradePageProps {
@@ -29,12 +26,9 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
     };
     script.onload = async () => {
       try {
-        // UPDATED: Now uses the API_URL variable
         const response = await fetch(`${API_URL}/create-order`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ amount: 9900 }),
         });
 
@@ -53,7 +47,6 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
           order_id: order.id,
           handler: async (response: any) => {
             try {
-              // UPDATED: Now uses the API_URL variable
               const verificationResponse = await fetch(
                 `${API_URL}/verify-payment`,
                 {
@@ -84,7 +77,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
             email: user?.email,
           },
           theme: {
-            color: "#D9A443",
+            color: "#d9a443", // This line is updated
           },
         };
 
@@ -112,13 +105,11 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
         <ul className="features-list">
           <li>
             <i className="fas fa-check-circle"></i> Access all specialized
-            calculators:{" "}
-            <strong>Flooring, Painting, Plumbing, and Electrical</strong>.
+            calculators: Flooring, Painting, Plumbing, and Electrical.
           </li>
           <li>
-            <i className="fas fa-check-circle"></i> Use{" "}
-            <strong>Standard & Premium</strong> quality estimates in the
-            Construction calculator.
+            <i className="fas fa-check-circle"></i> Use Standard & Premium
+            quality estimates in the Construction calculator.
           </li>
           <li>
             <i className="fas fa-check-circle"></i> Get detailed cost breakdowns
@@ -135,7 +126,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
         </ul>
         <button
           onClick={handlePayment}
-          className="btn full-width upgrade-btn"
+          className="btn upgrade-btn"
           disabled={loading}
         >
           {loading ? "Processing..." : "Upgrade Now & Build Smarter"}

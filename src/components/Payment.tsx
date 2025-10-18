@@ -1,7 +1,5 @@
-// src/components/Payment.tsx (Updated)
-
 import React, { useState } from "react";
-import { User } from "@supabase/supabase-js"; // Changed from 'firebase/auth'
+import { User } from "@supabase/supabase-js";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -60,7 +58,7 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
                     razorpay_order_id: response.razorpay_order_id,
                     razorpay_payment_id: response.razorpay_payment_id,
                     razorpay_signature: response.razorpay_signature,
-                    userId: user?.id, // Changed from user?.uid to user?.id
+                    userId: user?.id,
                   }),
                 }
               );
@@ -68,7 +66,7 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
               const result = await verificationResponse.json();
               if (result.status === "success") {
                 alert("Payment Successful! You now have Pro access.");
-                setHasPaid(true); // Update state in App.tsx
+                setHasPaid(true);
               } else {
                 throw new Error("Payment verification failed.");
               }
@@ -80,7 +78,7 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
             email: user?.email,
           },
           theme: {
-            color: "#D9A443",
+            color: "#d9a443", // This line has been updated
           },
         };
 

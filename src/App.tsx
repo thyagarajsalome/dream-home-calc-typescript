@@ -1,5 +1,3 @@
-// src/App.tsx
-
 import React, { useState, useEffect } from "react";
 import {
   HashRouter as Router,
@@ -10,7 +8,10 @@ import {
 } from "react-router-dom";
 import { supabase } from "./supabaseClient";
 import { User } from "@supabase/supabase-js";
+
+// Components
 import Header from "./components/Header";
+import Footer from "./components/Footer";
 import Hero from "./components/Hero";
 import Calculator from "./components/Calculator";
 import FlooringCalculator from "./components/FlooringCalculator";
@@ -19,10 +20,17 @@ import PlumbingCalculator from "./components/PlumbingCalculator";
 import ElectricalCalculator from "./components/ElectricalCalculator";
 import CalculatorTabs from "./components/CalculatorTabs";
 import FAQ from "./components/FAQ";
-import Footer from "./components/Footer";
+
+// Auth & Upgrade Pages
 import SignIn from "./components/SignIn";
 import SignUp from "./components/SignUp";
 import UpgradePage from "./components/UpgradePage";
+
+// New Info Pages
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import Contact from "./pages/Contact";
+import Disclaimer from "./pages/Disclaimer";
 
 type CalculatorType =
   | "construction"
@@ -31,6 +39,7 @@ type CalculatorType =
   | "plumbing"
   | "electrical";
 
+// Layout for the main calculator pages
 const MainLayout = ({
   user,
   hasPaid,
@@ -75,6 +84,17 @@ const MainLayout = ({
     </>
   );
 };
+
+// Layout for the static info pages
+const InfoLayout = ({ user }: { user: User | null }) => (
+  <>
+    <Header user={user} />
+    <main>
+      <Outlet />
+    </main>
+    <Footer />
+  </>
+);
 
 const ProtectedRoute = ({ user }: { user: User | null }) => {
   if (!user) {
@@ -150,6 +170,16 @@ const App = () => {
           path="/signup"
           element={user ? <Navigate to="/" /> : <SignUp />}
         />
+
+        {/* Routes for static pages */}
+        <Route element={<InfoLayout user={user} />}>
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/disclaimer" element={<Disclaimer />} />
+        </Route>
+
+        {/* Protected routes for the main app */}
         <Route element={<ProtectedRoute user={user} />}>
           <Route
             path="/"
