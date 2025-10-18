@@ -5,14 +5,15 @@ name: Build and Deploy to Hostinger
 on:
   push:
     branches:
-      - main # Run this on push to main
-  pull_request:
-    branches:
-      - main # Also run this when a pull request is made to main
+      - main # Run this workflow on every push to the main branch
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    # --- THIS PERMISSIONS BLOCK IS THE FIX ---
+    permissions:
+      contents: write # Allows the action to push to the gh-pages branch
+    # --- END OF FIX ---
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v3
@@ -36,9 +37,7 @@ jobs:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
       - name: Deploy to gh-pages branch 🚀
-        # This step only runs on a push to the main branch, not on pull requests
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          publish_dir: ./dist # The directory to deploy
