@@ -1,7 +1,7 @@
 {
   "name": "DreamHomeCalc",
   "short_name": "DreamHome",
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ff6f00",
@@ -12,7 +12,7 @@
       "type": "image/png"
     },
     {
-      "src": "/icons/icon-512x512.png",
+      "src": "./icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
