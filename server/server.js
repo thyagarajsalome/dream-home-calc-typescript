@@ -14,9 +14,11 @@ const app = express();
 app.use(express.json());
 
 // Whitelist your frontend's URLs
+// server/server.js
 const allowedOrigins = [
-  "https://thyagarajsalome.github.io", // Your deployed GitHub Pages site
-  "http://localhost:5173", // Your local development environment
+  "https://homedesignenglish.com", // Add this line
+  "https://thyagarajsalome.github.io",
+  "http://localhost:5173",
 ];
 
 app.use(
