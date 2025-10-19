@@ -57,11 +57,7 @@ const razorpay = new Razorpay({
 });
 
 // --- API Endpoints ---
-// --- (Keep all code above this line the same) ---
-
-// --- API Endpoints ---
 app.post("/create-order", async (req, res) => {
-  // FIX: Explicitly parse and validate the amount
   const amount = parseInt(req.body.amount, 10);
 
   if (isNaN(amount) || amount <= 0) {
@@ -69,7 +65,7 @@ app.post("/create-order", async (req, res) => {
   }
 
   const options = {
-    amount, // Use the validated amount
+    amount,
     currency: "INR",
     receipt: `receipt_order_${new Date().getTime()}`,
   };
@@ -83,7 +79,52 @@ app.post("/create-order", async (req, res) => {
   }
 });
 
-// --- (Keep all code below this line the same) ---
+// **THIS IS THE MISSING ENDPOINT THAT FIXES THE 404 ERROR**
+app.post("/verify-payment", async (req, res) => {
+  try {
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      userId,
+    } = req.body;
+
+    const body = razorpay_order_id + "|" + razorpay_payment_id;
+
+    const expectedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(body.toString())
+      .digest("hex");
+
+    if (expectedSignature === razorpay_signature) {
+      // Signature is valid, now update the user's profile in Supabase
+      if (userId) {
+        const { data, error } = await supabase
+          .from("profiles")
+          .update({ has_paid: true })
+          .eq("id", userId);
+
+        if (error) {
+          console.error("Supabase profile update failed:", error);
+          // Log the error but don't fail the request since payment was successful.
+          // This allows for manual reconciliation if needed.
+        }
+      }
+      res.json({
+        status: "success",
+        message: "Payment verified successfully.",
+      });
+    } else {
+      res
+        .status(400)
+        .json({ status: "failure", message: "Invalid signature." });
+    }
+  } catch (error) {
+    console.error("Error verifying payment:", error);
+    res.status(500).send("Internal Server Error during payment verification.");
+  }
+});
+
 // --- Server Initialization ---
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
