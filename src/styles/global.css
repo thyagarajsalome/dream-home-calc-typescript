@@ -395,6 +395,7 @@ select:focus {
   border: none;
 }
 .total-summary {
+  margin-bottom: 2rem;
   text-align: center;
   padding: 2rem;
   background: var(--secondary-color);
