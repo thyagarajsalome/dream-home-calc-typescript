@@ -6,7 +6,6 @@ const crypto = require("crypto");
 const { createClient } = require("@supabase/supabase-js");
 
 // --- Environment Variable Check ---
-// Ensures the server doesn't start without the necessary configuration.
 if (
   !process.env.SUPABASE_URL ||
   !process.env.SUPABASE_KEY ||
@@ -23,30 +22,29 @@ const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const app = express();
-app.use(express.json());
 
 // --- CORS Configuration ---
-// Whitelist your production frontend URL.
-// You can add "http://localhost:5173" back for local development.
-const allowedOrigins = ["https://homedesignenglish.com"];
+const allowedOrigins = [
+  "https://homedesignenglish.com",
+  "http://localhost:5173",
+];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) === -1) {
-        const msg =
-          "The CORS policy for this site does not allow access from the specified Origin.";
-        return callback(new Error(msg), false);
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
       }
-      return callback(null, true);
     },
   })
 );
 
+// --- Middleware ---
+app.use(express.json()); // This must come before your routes
+
 // --- Health Check Endpoint ---
-// A simple endpoint to confirm the server is running.
 app.get("/", (req, res) => {
   res.send("Dream Home Calc server is running!");
 });
@@ -91,7 +89,6 @@ app.post("/verify-payment", async (req, res) => {
 
   if (digest === razorpay_signature) {
     try {
-      // Use the 'profiles' table and 'has_paid' column
       const { error } = await supabase
         .from("profiles")
         .update({ has_paid: true })
