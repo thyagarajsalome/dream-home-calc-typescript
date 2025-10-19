@@ -154,9 +154,7 @@ const App = () => {
   }, [user]);
 
   if (loading) {
-    return (
-      <div style={{ textAlign: "center", padding: "5rem" }}>Loading...</div>
-    );
+    return <div className="loading-container">Loading...</div>;
   }
 
   return (

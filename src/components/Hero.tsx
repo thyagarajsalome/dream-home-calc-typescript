@@ -10,6 +10,13 @@ const heroStyles: React.CSSProperties = {
 };
 
 export default function Hero() {
+  const scrollToTools = () => {
+    const toolsSection = document.getElementById("tools");
+    if (toolsSection) {
+      toolsSection.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
     <section id="home" style={heroStyles}>
       <div className="container">
@@ -21,9 +28,9 @@ export default function Hero() {
           building your home in India. Plan smarter, avoid surprises, and bring
           your vision to life.
         </p>
-        <a href="#tools" className="cta-button">
+        <button onClick={scrollToTools} className="cta-button">
           Start Calculating <i className="fas fa-arrow-down"></i>
-        </a>
+        </button>
       </div>
     </section>
   );
