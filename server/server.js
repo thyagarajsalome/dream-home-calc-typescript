@@ -57,10 +57,19 @@ const razorpay = new Razorpay({
 });
 
 // --- API Endpoints ---
+// --- (Keep all code above this line the same) ---
+
+// --- API Endpoints ---
 app.post("/create-order", async (req, res) => {
-  const { amount } = req.body; // Corrected line
+  // FIX: Explicitly parse and validate the amount
+  const amount = parseInt(req.body.amount, 10);
+
+  if (isNaN(amount) || amount <= 0) {
+    return res.status(400).send("Invalid amount specified.");
+  }
+
   const options = {
-    amount,
+    amount, // Use the validated amount
     currency: "INR",
     receipt: `receipt_order_${new Date().getTime()}`,
   };
@@ -74,44 +83,7 @@ app.post("/create-order", async (req, res) => {
   }
 });
 
-app.post("/verify-payment", async (req, res) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, userId } =
-    req.body;
-
-  if (!userId) {
-    return res
-      .status(400)
-      .json({ status: "failure", message: "User ID is missing." });
-  }
-
-  const shasum = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
-  shasum.update(`${razorpay_order_id}|${razorpay_payment_id}`);
-  const digest = shasum.digest("hex");
-
-  if (digest === razorpay_signature) {
-    try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ has_paid: true })
-        .eq("id", userId);
-
-      if (error) throw error;
-
-      res.json({
-        status: "success",
-        message: "Payment verified successfully.",
-      });
-    } catch (error) {
-      console.error("Error updating user in Supabase:", error.message);
-      res
-        .status(500)
-        .json({ status: "failure", message: "Could not update user status." });
-    }
-  } else {
-    res.status(400).json({ status: "failure", message: "Invalid signature." });
-  }
-});
-
+// --- (Keep all code below this line the same) ---
 // --- Server Initialization ---
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
