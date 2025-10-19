@@ -27,6 +27,7 @@ const app = express();
 const allowedOrigins = [
   "https://homedesignenglish.com",
   "http://localhost:5173",
+  "https://dream-home-calc-typescript.onrender.com",
 ];
 
 app.use(
@@ -42,7 +43,7 @@ app.use(
 );
 
 // --- Middleware ---
-app.use(express.json()); // This must come before your routes
+app.use(express.json());
 
 // --- Health Check Endpoint ---
 app.get("/", (req, res) => {
@@ -57,7 +58,7 @@ const razorpay = new Razorpay({
 
 // --- API Endpoints ---
 app.post("/create-order", async (req, res) => {
-  const { amount } = req.body;
+  const { amount } = req.body; // Corrected line
   const options = {
     amount,
     currency: "INR",
