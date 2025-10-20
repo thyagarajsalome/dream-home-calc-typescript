@@ -11,10 +11,8 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
-    # --- ADD THIS PERMISSIONS BLOCK ---
     permissions:
       contents: write
-    # ------------------------------------
 
     steps:
       - name: Checkout 🛎️
@@ -23,7 +21,7 @@ jobs:
       - name: Setup Node.js ⚙️
         uses: actions/setup-node@v3
         with:
-          node-version: "18"
+          node-version: "20" # <-- THIS IS THE FIX (changed from 18 to 20)
           cache: "npm"
 
       - name: Install Dependencies 📦
