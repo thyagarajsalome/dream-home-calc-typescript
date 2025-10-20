@@ -129,17 +129,8 @@ const Calculator: React.FC<CalculatorProps> = ({ hasPaid }) => {
                 value="standard"
                 checked={quality === "standard"}
                 onChange={() => handleQualityChange("standard")}
-                disabled={!hasPaid}
               />
-              <label
-                htmlFor="standard"
-                style={{
-                  cursor: hasPaid ? "pointer" : "not-allowed",
-                  opacity: hasPaid ? 1 : 0.5,
-                }}
-              >
-                Standard {!hasPaid && "(Pro)"}
-              </label>
+              <label htmlFor="standard">Standard</label>
               <input
                 type="radio"
                 id="premium"
@@ -159,9 +150,9 @@ const Calculator: React.FC<CalculatorProps> = ({ hasPaid }) => {
                 Premium {!hasPaid && "(Pro)"}
               </label>
             </div>
-            {!hasPaid && (
+            {!hasPaid && quality === "premium" && (
               <p style={{ textAlign: "center", marginTop: "1rem" }}>
-                Upgrade to Pro to unlock Standard and Premium quality estimates.
+                Upgrade to Pro to unlock Premium quality estimates.
               </p>
             )}
             <div className="rate-selector">

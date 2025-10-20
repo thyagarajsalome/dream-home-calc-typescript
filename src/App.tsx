@@ -105,6 +105,7 @@ const ProtectedRoute = ({ user }: { user: User | null }) => {
 
 const App = () => {
   const [user, setUser] = useState<User | null>(null);
+
   const [hasPaid, setHasPaid] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -128,6 +129,8 @@ const App = () => {
       authListener.subscription.unsubscribe();
     };
   }, []);
+
+  // for developer test (unlocking section)
 
   useEffect(() => {
     const fetchUserProfile = async () => {
