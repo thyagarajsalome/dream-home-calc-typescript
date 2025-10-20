@@ -20,6 +20,8 @@ import PlumbingCalculator from "./components/PlumbingCalculator";
 import ElectricalCalculator from "./components/ElectricalCalculator";
 import LoanCalculator from "./components/LoanCalculator";
 import LoanEligibilityCalculator from "./components/LoanEligibilityCalculator";
+import DoorsWindowsCalculator from "./components/DoorsWindowsCalculator";
+import InteriorCalculator from "./components/InteriorCalculator";
 import CalculatorTabs from "./components/CalculatorTabs";
 import FAQ from "./components/FAQ";
 
@@ -36,12 +38,14 @@ import Disclaimer from "./pages/Disclaimer";
 
 type CalculatorType =
   | "construction"
+  | "eligibility"
+  | "loan"
+  | "interior"
+  | "doors-windows"
   | "flooring"
   | "painting"
   | "plumbing"
-  | "electrical"
-  | "loan"
-  | "eligibility";
+  | "electrical";
 
 // Layout for the main calculator pages
 const MainLayout = ({
@@ -58,6 +62,14 @@ const MainLayout = ({
     switch (activeCalculator) {
       case "construction":
         return <Calculator hasPaid={hasPaid} />;
+      case "eligibility":
+        return <LoanEligibilityCalculator />;
+      case "loan":
+        return <LoanCalculator />;
+      case "interior":
+        return <InteriorCalculator />;
+      case "doors-windows":
+        return <DoorsWindowsCalculator />;
       case "flooring":
         return <FlooringCalculator />;
       case "painting":
@@ -66,10 +78,6 @@ const MainLayout = ({
         return <PlumbingCalculator />;
       case "electrical":
         return <ElectricalCalculator />;
-      case "loan":
-        return <LoanCalculator />;
-      case "eligibility":
-        return <LoanEligibilityCalculator />;
       default:
         return <Calculator hasPaid={hasPaid} />;
     }

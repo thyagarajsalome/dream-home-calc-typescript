@@ -3,12 +3,14 @@ import { useNavigate } from "react-router-dom";
 
 type CalculatorType =
   | "construction"
+  | "eligibility"
+  | "loan"
+  | "interior"
+  | "doors-windows"
   | "flooring"
   | "painting"
   | "plumbing"
-  | "electrical"
-  | "loan"
-  | "eligibility"; // New calculator type
+  | "electrical";
 
 interface CalculatorTabsProps {
   activeCalculator: CalculatorType;
@@ -39,6 +41,13 @@ const calculators: {
     name: "Loan EMI",
     icon: "fas fa-hand-holding-usd",
     isPremium: false,
+  },
+  { id: "interior", name: "Interiors", icon: "fas fa-couch", isPremium: true },
+  {
+    id: "doors-windows",
+    name: "Doors & Windows",
+    icon: "fas fa-door-open",
+    isPremium: true,
   },
   {
     id: "flooring",
