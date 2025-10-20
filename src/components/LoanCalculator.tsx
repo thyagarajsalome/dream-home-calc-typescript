@@ -1,0 +1,121 @@
+import React, { useState } from "react";
+
+const LoanCalculator: React.FC = () => {
+  const [principal, setPrincipal] = useState("2500000"); // Default: 25 Lakhs
+  const [rate, setRate] = useState("8.5"); // Default: 8.5%
+  const [years, setYears] = useState("20"); // Default: 20 years
+
+  const [emi, setEmi] = useState("");
+  const [totalInterest, setTotalInterest] = useState("");
+  const [totalAmount, setTotalAmount] = useState("");
+
+  const calculateEMI = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const p = parseFloat(principal);
+    const r = parseFloat(rate) / 12 / 100; // Monthly interest rate
+    const n = parseFloat(years) * 12; // Loan tenure in months
+
+    if (p > 0 && r > 0 && n > 0) {
+      const emiValue = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+      const totalAmountValue = emiValue * n;
+      const totalInterestValue = totalAmountValue - p;
+
+      setEmi(
+        emiValue.toLocaleString("en-IN", {
+          style: "currency",
+          currency: "INR",
+          maximumFractionDigits: 0,
+        })
+      );
+      setTotalAmount(
+        totalAmountValue.toLocaleString("en-IN", {
+          style: "currency",
+          currency: "INR",
+          maximumFractionDigits: 0,
+        })
+      );
+      setTotalInterest(
+        totalInterestValue.toLocaleString("en-IN", {
+          style: "currency",
+          currency: "INR",
+          maximumFractionDigits: 0,
+        })
+      );
+    }
+  };
+
+  return (
+    <section id="loan-calculator" className="container">
+      <div className="card">
+        <h2 className="section-title">Loan & EMI Calculator</h2>
+        <form onSubmit={calculateEMI}>
+          <div className="form-group">
+            <label htmlFor="principal">
+              <i className="fas fa-rupee-sign"></i> Loan Amount (INR)
+            </label>
+            <input
+              type="number"
+              id="principal"
+              value={principal}
+              onChange={(e) => setPrincipal(e.target.value)}
+              placeholder="e.g., 2500000"
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="rate">
+              <i className="fas fa-percentage"></i> Annual Interest Rate (%)
+            </label>
+            <input
+              type="number"
+              id="rate"
+              step="0.1"
+              value={rate}
+              onChange={(e) => setRate(e.target.value)}
+              placeholder="e.g., 8.5"
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="years">
+              <i className="fas fa-calendar-alt"></i> Loan Tenure (Years)
+            </label>
+            <input
+              type="number"
+              id="years"
+              value={years}
+              onChange={(e) => setYears(e.target.value)}
+              placeholder="e.g., 20"
+              required
+            />
+          </div>
+          <button type="submit" className="btn full-width">
+            <i className="fas fa-calculator"></i> Calculate EMI
+          </button>
+        </form>
+
+        {emi && (
+          <div id="resultsSection" className="visible">
+            <div className="loan-results-summary">
+              <div className="loan-result-item">
+                <p>Monthly EMI</p>
+                <span>{emi}</span>
+              </div>
+              <div className="loan-result-item">
+                <p>Total Interest Payable</p>
+                <span>{totalInterest}</span>
+              </div>
+              <div className="loan-result-item">
+                <p>Total Amount Payable</p>
+                <span>{totalAmount}</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+};
+
+export default LoanCalculator;

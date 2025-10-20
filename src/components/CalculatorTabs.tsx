@@ -6,7 +6,8 @@ type CalculatorType =
   | "flooring"
   | "painting"
   | "plumbing"
-  | "electrical";
+  | "electrical"
+  | "loan"; // New calculator type
 
 interface CalculatorTabsProps {
   activeCalculator: CalculatorType;
@@ -45,6 +46,12 @@ const calculators: {
     icon: "fas fa-bolt",
     isPremium: true,
   },
+  {
+    id: "loan", // New Loan Calculator
+    name: "Loan EMI",
+    icon: "fas fa-hand-holding-usd",
+    isPremium: false,
+  },
 ];
 
 const CalculatorTabs: React.FC<CalculatorTabsProps> = ({
@@ -74,7 +81,6 @@ const CalculatorTabs: React.FC<CalculatorTabsProps> = ({
                 activeCalculator === id && !isLocked ? "active" : ""
               }`}
               onClick={() => handleTabClick(id, isPremium)}
-              // No longer disabled, navigation handles the logic
             >
               <i className={icon}></i>
               <span>
