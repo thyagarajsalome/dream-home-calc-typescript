@@ -15,8 +15,16 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const navigate = useNavigate();
 
-  // Preload the Razorpay script for faster checkout
+  // --- FIX: WARM-UP THE SERVER ON PAGE LOAD ---
   useEffect(() => {
+    // This sends a simple request to wake up the free-tier server.
+    if (API_URL) {
+      fetch(API_URL).catch((err) =>
+        console.error("Server warm-up failed:", err)
+      );
+    }
+
+    // Preload the Razorpay script for faster checkout
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
     script.async = true;
@@ -31,7 +39,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
       const response = await fetch(`${API_URL}/create-order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: 29900 }), // Corrected amount: ₹299.00
+        body: JSON.stringify({ amount: 29900 }),
       });
 
       if (!response.ok) {
@@ -69,7 +77,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
               setHasPaid(true);
               setTimeout(() => {
                 navigate("/");
-              }, 2000); // Redirect after 2 seconds
+              }, 2000);
             } else {
               throw new Error("Payment verification failed.");
             }
