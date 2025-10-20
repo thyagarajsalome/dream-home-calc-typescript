@@ -18,7 +18,8 @@ import FlooringCalculator from "./components/FlooringCalculator";
 import PaintingCalculator from "./components/PaintingCalculator";
 import PlumbingCalculator from "./components/PlumbingCalculator";
 import ElectricalCalculator from "./components/ElectricalCalculator";
-import LoanCalculator from "./components/LoanCalculator"; // Import the new component
+import LoanCalculator from "./components/LoanCalculator";
+import LoanEligibilityCalculator from "./components/LoanEligibilityCalculator";
 import CalculatorTabs from "./components/CalculatorTabs";
 import FAQ from "./components/FAQ";
 
@@ -39,7 +40,8 @@ type CalculatorType =
   | "painting"
   | "plumbing"
   | "electrical"
-  | "loan"; // Add the new type
+  | "loan"
+  | "eligibility";
 
 // Layout for the main calculator pages
 const MainLayout = ({
@@ -64,8 +66,10 @@ const MainLayout = ({
         return <PlumbingCalculator />;
       case "electrical":
         return <ElectricalCalculator />;
-      case "loan": // Add the case for the new calculator
+      case "loan":
         return <LoanCalculator />;
+      case "eligibility":
+        return <LoanEligibilityCalculator />;
       default:
         return <Calculator hasPaid={hasPaid} />;
     }
@@ -88,8 +92,6 @@ const MainLayout = ({
     </>
   );
 };
-
-// ... (rest of the file is unchanged)
 
 // Layout for the static info pages
 const InfoLayout = ({ user }: { user: User | null }) => (
@@ -135,8 +137,6 @@ const App = () => {
       authListener.subscription.unsubscribe();
     };
   }, []);
-
-  // for developer test (unlocking section)
 
   useEffect(() => {
     const fetchUserProfile = async () => {
