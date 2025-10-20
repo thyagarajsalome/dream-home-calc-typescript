@@ -7,7 +7,8 @@ type CalculatorType =
   | "painting"
   | "plumbing"
   | "electrical"
-  | "loan"; // New calculator type
+  | "loan"
+  | "eligibility"; // New calculator type
 
 interface CalculatorTabsProps {
   activeCalculator: CalculatorType;
@@ -28,6 +29,18 @@ const calculators: {
     isPremium: false,
   },
   {
+    id: "eligibility",
+    name: "Eligibility",
+    icon: "fas fa-check-circle",
+    isPremium: false,
+  },
+  {
+    id: "loan",
+    name: "Loan EMI",
+    icon: "fas fa-hand-holding-usd",
+    isPremium: false,
+  },
+  {
     id: "flooring",
     name: "Flooring",
     icon: "fas fa-layer-group",
@@ -45,12 +58,6 @@ const calculators: {
     name: "Electrical",
     icon: "fas fa-bolt",
     isPremium: true,
-  },
-  {
-    id: "loan", // New Loan Calculator
-    name: "Loan EMI",
-    icon: "fas fa-hand-holding-usd",
-    isPremium: false,
   },
 ];
 
