@@ -5,15 +5,23 @@ import { supabase } from "../supabaseClient";
 
 interface HeaderProps {
   user: User | null;
+  installPrompt: any;
 }
 
-const Header: React.FC<HeaderProps> = ({ user }) => {
+const Header: React.FC<HeaderProps> = ({ user, installPrompt }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLLIElement>(null);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+  };
+
+  const handleInstallClick = async () => {
+    if (!installPrompt) {
+      return;
+    }
+    await installPrompt.prompt();
   };
 
   useEffect(() => {
@@ -38,6 +46,13 @@ const Header: React.FC<HeaderProps> = ({ user }) => {
           <i className="fas fa-home"></i> DreamHomeCalc
         </Link>
         <ul className={isMenuOpen ? "nav-menu active" : "nav-menu"}>
+          {installPrompt && (
+            <li>
+              <button onClick={handleInstallClick} className="btn install-btn">
+                <i className="fas fa-download"></i> Install App
+              </button>
+            </li>
+          )}
           {user && (
             <>
               <li className="user-info">
