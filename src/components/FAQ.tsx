@@ -1,3 +1,4 @@
+// src/components/FAQ.tsx
 export default function FAQ() {
   return (
     <section id="faq">
@@ -17,9 +18,10 @@ export default function FAQ() {
           <summary>What is included in the "Pro" version?</summary>
           <p>
             The one-time Pro upgrade unlocks all specialized calculators
-            (Flooring, Painting, Plumbing, Electrical), enables Standard &
-            Premium quality estimates in the main construction calculator, and
-            removes all restrictions on saving or sharing reports.
+            (Flooring, Painting, Plumbing, Electrical, Interiors, Doors &
+            Windows), enables Standard & Premium quality estimates in the main
+            construction calculator, and removes all restrictions on saving or
+            sharing reports.
           </p>
         </details>
         <details className="faq-item">
@@ -38,6 +40,17 @@ export default function FAQ() {
             Mumbai, Delhi, or Bengaluru have higher labor and material costs
             compared to smaller towns. Our calculator provides a general
             average; please adjust for your local market.
+          </p>
+        </details>
+        <details className="faq-item">
+          <summary>
+            Can I use the specialized calculators without a Pro account?
+          </summary>
+          <p>
+            The basic Construction, Loan EMI, and Eligibility calculators are
+            free to use. To access the specialized calculators for Interiors,
+            Doors & Windows, Flooring, Painting, Plumbing, and Electrical, you
+            will need to upgrade to a Pro account.
           </p>
         </details>
       </div>

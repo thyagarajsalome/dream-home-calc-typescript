@@ -30,7 +30,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
         const response = await fetch(`${API_URL}/create-order`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ amount: 9900 }),
+          body: JSON.stringify({ amount: 35282 }), // 299 + 18% GST
         });
 
         if (!response.ok) {
@@ -44,7 +44,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
           amount: order.amount,
           currency: order.currency,
           name: "DreamHomeCalc Pro",
-          description: "Lifetime Access",
+          description: "2 Years Access",
           order_id: order.id,
           handler: async (response: any) => {
             try {
@@ -117,7 +117,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
                     fontSize: "2.8rem",
                   }}
                 >
-                  ₹99
+                  ₹299
                 </span>
                 <span
                   style={{
@@ -127,7 +127,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
                     opacity: 0.6,
                   }}
                 >
-                  ₹330
+                  ₹1000
                 </span>
                 <span
                   style={{
@@ -140,8 +140,9 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
                   (70% OFF)
                 </span>
               </p>
-              <p>One-time payment for Lifetime Access</p>
+              <p>One-time payment for 2 Years Access — inclusive of 18% GST</p>
             </div>
+
             <ul className="features-list">
               <li>
                 <i className="fas fa-check-circle"></i> Access all specialized
@@ -157,14 +158,13 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
               </li>
               <li>
                 <i className="fas fa-check-circle"></i> Save, download, and
-                share unlimited PDF reports.
+                share PDF reports.
               </li>
               <li>
-                <i className="fas fa-check-circle"></i> Lifetime access to all
-                future updates.
+                <i className="fas fa-check-circle"></i> Enjoy 2 years of full
+                access with all future updates included.
               </li>
             </ul>
-
             <div
               style={{
                 padding: "1rem",
@@ -176,13 +176,9 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
               }}
             >
               <p style={{ margin: 0, lineHeight: 1.6, fontSize: "0.9rem" }}>
-                <strong>The Pro Plan will keep getting better:</strong> Upcoming
-                tools such as new calculators, architectural concept designs,
-                and House floor plans will be added soon, and all of them will
-                be included at no extra cost.
+                The Pro Plan will keep getting better.
               </p>
             </div>
-
             <button
               onClick={handlePayment}
               className="btn upgrade-btn"

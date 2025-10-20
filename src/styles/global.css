@@ -784,3 +784,35 @@ select:focus {
   font-size: 0.9rem;
   color: var(--secondary-color);
 }
+
+/* ... (all previous styles remain the same) */
+
+/* Add this new class at the end of the file or in a relevant section */
+.quality-description {
+  text-align: center;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: var(--background-color);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--secondary-color);
+}
+
+.disclaimer-box {
+  margin-top: 2.5rem;
+  padding: 1.5rem;
+  background-color: #fcf8e3; /* A soft yellow */
+  border: 1px solid #fbeed5;
+  border-radius: var(--border-radius);
+  color: #c09853; /* A darker text color for readability */
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.disclaimer-box p {
+  margin-bottom: 1rem;
+}
+
+.disclaimer-box p:last-child {
+  margin-bottom: 0;
+}
