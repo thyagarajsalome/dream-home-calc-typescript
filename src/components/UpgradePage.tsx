@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 
@@ -15,84 +15,83 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const navigate = useNavigate();
 
+  // Preload the Razorpay script for faster checkout
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
+
   const handlePayment = async () => {
     setLoading(true);
     setError("");
 
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.onerror = () => {
-      setError("Razorpay SDK failed to load. Are you online?");
-      setLoading(false);
-    };
-    script.onload = async () => {
-      try {
-        const response = await fetch(`${API_URL}/create-order`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ amount: 35282 }), // 299 + 18% GST
-        });
+    try {
+      const response = await fetch(`${API_URL}/create-order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: 29900 }), // Corrected amount: ₹299.00
+      });
 
-        if (!response.ok) {
-          throw new Error("Failed to create payment order.");
-        }
-
-        const order = await response.json();
-
-        const options = {
-          key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-          amount: order.amount,
-          currency: order.currency,
-          name: "DreamHomeCalc Pro",
-          description: "2 Years Access",
-          order_id: order.id,
-          handler: async (response: any) => {
-            try {
-              const verificationResponse = await fetch(
-                `${API_URL}/verify-payment`,
-                {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    razorpay_order_id: response.razorpay_order_id,
-                    razorpay_payment_id: response.razorpay_payment_id,
-                    razorpay_signature: response.razorpay_signature,
-                    userId: user?.id,
-                  }),
-                }
-              );
-
-              const result = await verificationResponse.json();
-              if (result.status === "success") {
-                setPaymentSuccess(true);
-                setHasPaid(true);
-                setTimeout(() => {
-                  navigate("/");
-                }, 2000); // Redirect after 2 seconds
-              } else {
-                throw new Error("Payment verification failed.");
-              }
-            } catch (err) {
-              setError("Payment verification failed. Please contact support.");
-            }
-          },
-          prefill: {
-            email: user?.email,
-          },
-          theme: {
-            color: "#d9a443",
-          },
-        };
-
-        const paymentObject = new (window as any).Razorpay(options);
-        paymentObject.open();
-      } catch (err) {
-        setError("Error creating payment order. Please try again.");
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error("Failed to create payment order.");
       }
-    };
-    document.body.appendChild(script);
+
+      const order = await response.json();
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        name: "DreamHomeCalc Pro",
+        description: "2 Years Access",
+        order_id: order.id,
+        handler: async (response: any) => {
+          try {
+            const verificationResponse = await fetch(
+              `${API_URL}/verify-payment`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  userId: user?.id,
+                }),
+              }
+            );
+
+            const result = await verificationResponse.json();
+            if (result.status === "success") {
+              setPaymentSuccess(true);
+              setHasPaid(true);
+              setTimeout(() => {
+                navigate("/");
+              }, 2000); // Redirect after 2 seconds
+            } else {
+              throw new Error("Payment verification failed.");
+            }
+          } catch (err) {
+            setError("Payment verification failed. Please contact support.");
+          }
+        },
+        prefill: {
+          email: user?.email,
+        },
+        theme: {
+          color: "#d9a443",
+        },
+      };
+
+      const paymentObject = new (window as any).Razorpay(options);
+      paymentObject.open();
+    } catch (err) {
+      setError("Error creating payment order. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
