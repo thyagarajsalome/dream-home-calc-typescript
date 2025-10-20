@@ -1,3 +1,4 @@
+// src/pages/PrivacyPolicy.tsx
 import React from "react";
 
 const PrivacyPolicy = () => {
@@ -5,7 +6,7 @@ const PrivacyPolicy = () => {
     <div className="info-page-container">
       <h1>Privacy Policy</h1>
       <p>
-        <strong>Last Updated: October 18, 2025</strong>
+        <strong>Last Updated: October 20, 2025</strong>
       </p>
 
       <h2>1. Introduction</h2>
