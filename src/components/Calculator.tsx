@@ -142,12 +142,9 @@ const Calculator: React.FC<CalculatorProps> = ({ hasPaid }) => {
               />
               <label
                 htmlFor="premium"
-                style={{
-                  cursor: hasPaid ? "pointer" : "not-allowed",
-                  opacity: hasPaid ? 1 : 0.5,
-                }}
+                className={!hasPaid ? "premium-locked" : ""}
               >
-                Premium {!hasPaid && "(Pro)"}
+                Premium {!hasPaid && <i className="fas fa-lock"></i>}
               </label>
             </div>
             {!hasPaid && quality === "premium" && (
