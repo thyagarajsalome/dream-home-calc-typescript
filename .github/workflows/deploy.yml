@@ -5,15 +5,17 @@ name: Build and Deploy to Hostinger
 on:
   push:
     branches:
-      - main # Run this workflow on every push to the main branch
+      - main
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    # --- THIS PERMISSIONS BLOCK IS THE FIX ---
+
+    # --- ADD THIS PERMISSIONS BLOCK ---
     permissions:
-      contents: write # Allows the action to push to the gh-pages branch
-    # --- END OF FIX ---
+      contents: write
+    # ------------------------------------
+
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v3
@@ -30,7 +32,6 @@ jobs:
       - name: Build Project 🔨
         run: npm run build
         env:
-          # These values are pulled from your GitHub repository secrets
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_RAZORPAY_KEY_ID: ${{ secrets.VITE_RAZORPAY_KEY_ID }}
@@ -40,4 +41,4 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist # The directory to deploy
+          publish_dir: ./dist
