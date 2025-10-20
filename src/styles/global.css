@@ -772,3 +772,15 @@ select:focus {
     grid-template-columns: 1fr;
   }
 }
+/* ... (all previous styles remain the same) */
+
+/* Add this new class at the end of the file or in a relevant section */
+.quality-description {
+  text-align: center;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: var(--background-color);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--secondary-color);
+}
