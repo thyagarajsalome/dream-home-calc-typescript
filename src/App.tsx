@@ -18,6 +18,7 @@ import FlooringCalculator from "./components/FlooringCalculator";
 import PaintingCalculator from "./components/PaintingCalculator";
 import PlumbingCalculator from "./components/PlumbingCalculator";
 import ElectricalCalculator from "./components/ElectricalCalculator";
+import LoanCalculator from "./components/LoanCalculator"; // Import the new component
 import CalculatorTabs from "./components/CalculatorTabs";
 import FAQ from "./components/FAQ";
 
@@ -37,7 +38,8 @@ type CalculatorType =
   | "flooring"
   | "painting"
   | "plumbing"
-  | "electrical";
+  | "electrical"
+  | "loan"; // Add the new type
 
 // Layout for the main calculator pages
 const MainLayout = ({
@@ -62,6 +64,8 @@ const MainLayout = ({
         return <PlumbingCalculator />;
       case "electrical":
         return <ElectricalCalculator />;
+      case "loan": // Add the case for the new calculator
+        return <LoanCalculator />;
       default:
         return <Calculator hasPaid={hasPaid} />;
     }
@@ -84,6 +88,8 @@ const MainLayout = ({
     </>
   );
 };
+
+// ... (rest of the file is unchanged)
 
 // Layout for the static info pages
 const InfoLayout = ({ user }: { user: User | null }) => (
