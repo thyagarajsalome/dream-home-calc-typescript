@@ -643,3 +643,63 @@ select:focus {
     padding: 0 1rem;
   }
 }
+
+/* ... (previous styles) */
+
+.btn-secondary {
+  background: #e5e5ea;
+  color: var(--secondary-color);
+  border: none;
+}
+.total-summary {
+  margin-bottom: 2rem;
+  text-align: center;
+  padding: 2rem;
+  background: var(--secondary-color);
+  color: #fff;
+  border-radius: var(--border-radius);
+}
+
+/* New Styles for Loan Calculator */
+.loan-results-summary {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.loan-result-item {
+  background-color: var(--background-color);
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+}
+
+.loan-result-item p {
+  font-size: 1rem;
+  color: var(--secondary-color);
+  margin-bottom: 0.5rem;
+}
+
+.loan-result-item span {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+/* End of New Styles */
+
+.total-summary p {
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+  opacity: 0.8;
+}
+
+/* ... (rest of the file is unchanged) */
+
+@media (min-width: 768px) {
+  /* ... (other styles) */
+  .loan-results-summary {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
