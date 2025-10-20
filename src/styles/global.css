@@ -812,7 +812,41 @@ select:focus {
 .disclaimer-box p {
   margin-bottom: 1rem;
 }
+/* ... (previous styles remain the same) */
 
 .disclaimer-box p:last-child {
   margin-bottom: 0;
+}
+
+/* PWA Install Button */
+.install-btn {
+  background-color: var(--success-color);
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  animation: pulse 2s infinite;
+  border-radius: 50px; /* Pill shape to stand out */
+}
+
+.install-btn:hover {
+  background-color: #277fae; /* Darker green */
+  animation: none; /* Stop pulsing on hover */
+  opacity: 1; /* Override default btn hover opacity */
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(46, 204, 113, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(46, 204, 113, 0);
+  }
 }
