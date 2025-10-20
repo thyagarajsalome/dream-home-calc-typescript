@@ -111,6 +111,20 @@ const LoanCalculator: React.FC = () => {
                 <span>{totalAmount}</span>
               </div>
             </div>
+            <div className="disclaimer-box">
+              <p>
+                <strong>For Educational Purposes Only:</strong> The figures
+                provided are estimates based on the inputs you provide and a
+                standard amortization formula. They are intended to give you a
+                general trend and for educational purposes only.
+              </p>
+              <p>
+                Interest rates are indicative and based on publicly available
+                market data. Actual EMI amounts, interest rates, and eligibility
+                will vary from bank to bank and are subject to each financial
+                institution's terms, conditions, and credit assessment.
+              </p>
+            </div>
           </div>
         )}
       </div>

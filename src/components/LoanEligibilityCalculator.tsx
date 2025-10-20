@@ -76,7 +76,7 @@ const LoanEligibilityCalculator: React.FC = () => {
       <div className="card">
         <h2 className="section-title">Loan Eligibility Calculator</h2>
         <form onSubmit={calculateEligibility}>
-          {/* Income Section */}
+          {/* ... (form fields remain the same) ... */}
           <fieldset className="form-fieldset">
             <legend>Income Details</legend>
             <div className="form-group">
@@ -196,7 +196,6 @@ const LoanEligibilityCalculator: React.FC = () => {
               />
             </div>
           </fieldset>
-
           <button type="submit" className="btn full-width">
             Check Eligibility
           </button>
@@ -247,6 +246,21 @@ const LoanEligibilityCalculator: React.FC = () => {
                   </p>
                 )}
               </div>
+            </div>
+            <div className="disclaimer-box">
+              <p>
+                <strong>For Educational Purposes Only:</strong> The eligibility
+                assessment is a simulation based on common financial industry
+                guidelines and is not a guarantee of loan approval. It is
+                intended to give you a general trend and for educational
+                purposes only.
+              </p>
+              <p>
+                Final loan eligibility and approval are at the sole discretion
+                of the lending institution and depend on a full credit
+                assessment, income verification, and other criteria as per their
+                policies.
+              </p>
             </div>
           </div>
         )}
