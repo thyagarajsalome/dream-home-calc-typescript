@@ -51,9 +51,11 @@ type CalculatorType =
 const MainLayout = ({
   user,
   hasPaid,
+  installPrompt,
 }: {
   user: User | null;
   hasPaid: boolean;
+  installPrompt: any;
 }) => {
   const [activeCalculator, setActiveCalculator] =
     useState<CalculatorType>("construction");
@@ -85,7 +87,7 @@ const MainLayout = ({
 
   return (
     <>
-      <Header user={user} />
+      <Header user={user} installPrompt={installPrompt} />
       <main>
         <Hero />
         <CalculatorTabs
@@ -102,9 +104,15 @@ const MainLayout = ({
 };
 
 // Layout for the static info pages
-const InfoLayout = ({ user }: { user: User | null }) => (
+const InfoLayout = ({
+  user,
+  installPrompt,
+}: {
+  user: User | null;
+  installPrompt: any;
+}) => (
   <>
-    <Header user={user} />
+    <Header user={user} installPrompt={installPrompt} />
     <main>
       <Outlet />
     </main>
@@ -121,9 +129,25 @@ const ProtectedRoute = ({ user }: { user: User | null }) => {
 
 const App = () => {
   const [user, setUser] = useState<User | null>(null);
-
   const [hasPaid, setHasPaid] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleBeforeInstallPrompt
+      );
+    };
+  }, []);
 
   useEffect(() => {
     const getSession = async () => {
@@ -187,7 +211,9 @@ const App = () => {
         />
 
         {/* Routes for static pages */}
-        <Route element={<InfoLayout user={user} />}>
+        <Route
+          element={<InfoLayout user={user} installPrompt={installPrompt} />}
+        >
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/contact" element={<Contact />} />
@@ -198,7 +224,13 @@ const App = () => {
         <Route element={<ProtectedRoute user={user} />}>
           <Route
             path="/"
-            element={<MainLayout user={user} hasPaid={hasPaid} />}
+            element={
+              <MainLayout
+                user={user}
+                hasPaid={hasPaid}
+                installPrompt={installPrompt}
+              />
+            }
           />
           <Route
             path="/upgrade"
