@@ -12,6 +12,7 @@ interface UpgradePageProps {
 const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
   const navigate = useNavigate();
 
   const handlePayment = async () => {
@@ -63,9 +64,11 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
 
               const result = await verificationResponse.json();
               if (result.status === "success") {
-                alert("Payment Successful! You now have Pro access.");
+                setPaymentSuccess(true);
                 setHasPaid(true);
-                navigate("/");
+                setTimeout(() => {
+                  navigate("/");
+                }, 2000); // Redirect after 2 seconds
               } else {
                 throw new Error("Payment verification failed.");
               }
@@ -95,101 +98,110 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
   return (
     <div className="auth-container">
       <div className="card upgrade-card">
-        <div className="upgrade-header">
-          <span className="pro-badge">LIMITED TIME OFFER</span>
-          <h2>Unlock Your Dream Home's Full Potential</h2>
-          <p className="price">
-            <span
-              className="amount"
-              style={{
-                color: "var(--primary-color)",
-                fontWeight: "bold",
-                fontSize: "2.8rem",
-              }}
-            >
-              ₹99
-            </span>
-            <span
-              style={{
-                textDecoration: "line-through",
-                marginLeft: "1rem",
-                fontSize: "1.5rem",
-                opacity: 0.6,
-              }}
-            >
-              ₹330
-            </span>
-            <span
-              style={{
-                marginLeft: "1rem",
-                fontSize: "1.2rem",
-                color: "var(--accent-color)",
-                fontWeight: "bold",
-              }}
-            >
-              (70% OFF)
-            </span>
-          </p>
-          <p>One-time payment for Lifetime Access</p>
-        </div>
-        <ul className="features-list">
-          <li>
-            <i className="fas fa-check-circle"></i> Access all specialized
-            calculators: Flooring, Painting, Plumbing, and Electrical.
-          </li>
-          <li>
-            <i className="fas fa-check-circle"></i> Use Standard & Premium
-            quality estimates in the Construction calculator.
-          </li>
-          <li>
-            <i className="fas fa-check-circle"></i> Get detailed cost breakdowns
-            for every aspect of your project.
-          </li>
-          <li>
-            <i className="fas fa-check-circle"></i> Save, download, and share
-            unlimited PDF reports.
-          </li>
-          <li>
-            <i className="fas fa-check-circle"></i> Lifetime access to all
-            future updates.
-          </li>
-        </ul>
+        {paymentSuccess ? (
+          <div className="payment-success-message">
+            <h3>Payment Successful!</h3>
+            <p>You now have Pro access. Redirecting...</p>
+          </div>
+        ) : (
+          <>
+            <div className="upgrade-header">
+              <span className="pro-badge">LIMITED TIME OFFER</span>
+              <h2>Unlock Your Dream Home's Full Potential</h2>
+              <p className="price">
+                <span
+                  className="amount"
+                  style={{
+                    color: "var(--primary-color)",
+                    fontWeight: "bold",
+                    fontSize: "2.8rem",
+                  }}
+                >
+                  ₹99
+                </span>
+                <span
+                  style={{
+                    textDecoration: "line-through",
+                    marginLeft: "1rem",
+                    fontSize: "1.5rem",
+                    opacity: 0.6,
+                  }}
+                >
+                  ₹330
+                </span>
+                <span
+                  style={{
+                    marginLeft: "1rem",
+                    fontSize: "1.2rem",
+                    color: "var(--accent-color)",
+                    fontWeight: "bold",
+                  }}
+                >
+                  (70% OFF)
+                </span>
+              </p>
+              <p>One-time payment for Lifetime Access</p>
+            </div>
+            <ul className="features-list">
+              <li>
+                <i className="fas fa-check-circle"></i> Access all specialized
+                calculators: Flooring, Painting, Plumbing, and Electrical.
+              </li>
+              <li>
+                <i className="fas fa-check-circle"></i> Use Standard & Premium
+                quality estimates in the Construction calculator.
+              </li>
+              <li>
+                <i className="fas fa-check-circle"></i> Get detailed cost
+                breakdowns for every aspect of your project.
+              </li>
+              <li>
+                <i className="fas fa-check-circle"></i> Save, download, and
+                share unlimited PDF reports.
+              </li>
+              <li>
+                <i className="fas fa-check-circle"></i> Lifetime access to all
+                future updates.
+              </li>
+            </ul>
 
-        {/* --- ADDED SECTION --- */}
-        <div
-          style={{
-            padding: "1rem",
-            backgroundColor: "var(--background-color)",
-            borderRadius: "var(--border-radius)",
-            margin: "2rem 0",
-            border: "1px solid var(--border-color)",
-            textAlign: "center",
-          }}
-        >
-          <p style={{ margin: 0, lineHeight: 1.6, fontSize: "0.9rem" }}>
-            <strong>The Pro Plan will keep getting better:</strong> Upcoming
-            tools such as new calculators, architectural concept designs, and
-            House floor plans will be added soon, and all of them will be
-            included at no extra cost.
-          </p>
-        </div>
-        {/* --- END OF ADDED SECTION --- */}
+            <div
+              style={{
+                padding: "1rem",
+                backgroundColor: "var(--background-color)",
+                borderRadius: "var(--border-radius)",
+                margin: "2rem 0",
+                border: "1px solid var(--border-color)",
+                textAlign: "center",
+              }}
+            >
+              <p style={{ margin: 0, lineHeight: 1.6, fontSize: "0.9rem" }}>
+                <strong>The Pro Plan will keep getting better:</strong> Upcoming
+                tools such as new calculators, architectural concept designs,
+                and House floor plans will be added soon, and all of them will
+                be included at no extra cost.
+              </p>
+            </div>
 
-        <button
-          onClick={handlePayment}
-          className="btn upgrade-btn"
-          disabled={loading}
-        >
-          {loading ? "Processing..." : "Upgrade Now & Build Smarter"}
-        </button>
-        {error && (
-          <p style={{ color: "red", marginTop: "1rem", textAlign: "center" }}>
-            {error}
-          </p>
+            <button
+              onClick={handlePayment}
+              className="btn upgrade-btn"
+              disabled={loading}
+            >
+              {loading ? "Processing..." : "Upgrade Now & Build Smarter"}
+            </button>
+            {error && (
+              <p
+                style={{ color: "red", marginTop: "1rem", textAlign: "center" }}
+              >
+                {error}
+              </p>
+            )}
+            <button onClick={() => navigate("/")} className="back-link">
+              Maybe Later
+            </button>
+          </>
         )}
-        <button onClick={() => navigate("/")} className="back-link">
-          Maybe Later
-        </button>
       </div>
     </div>
   );

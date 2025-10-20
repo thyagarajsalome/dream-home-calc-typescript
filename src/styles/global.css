@@ -372,6 +372,15 @@ select:focus {
   color: white;
   box-shadow: 0 2px 8px rgba(217, 164, 67, 0.3);
 }
+
+.quality-selector .premium-locked {
+  opacity: 0.6;
+}
+
+.quality-selector .premium-locked .fa-lock {
+  margin-left: 0.5rem;
+}
+
 .rate-selector {
   margin-top: 1rem;
 }
@@ -564,6 +573,22 @@ select:focus {
   cursor: pointer;
   font-weight: 500;
 }
+
+.payment-success-message {
+  padding: 2rem;
+  text-align: center;
+}
+
+.payment-success-message h3 {
+  color: var(--accent-color);
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+}
+
+.payment-success-message p {
+  font-size: 1.1rem;
+}
+
 .loading-container {
   display: flex;
   justify-content: center;
