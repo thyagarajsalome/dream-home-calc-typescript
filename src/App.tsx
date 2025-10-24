@@ -1,3 +1,5 @@
+// src/App.tsx
+
 import React, { useState, useEffect } from "react";
 import {
   HashRouter as Router,
@@ -36,6 +38,9 @@ import TermsOfService from "./pages/TermsOfService";
 import Contact from "./pages/Contact";
 import Disclaimer from "./pages/Disclaimer";
 
+// --- IMPORT THE NEW GUEST CALCULATOR ---
+import GuestCalculator from "./components/GuestCalculator"; // Make sure GuestCalculator.tsx exists in the components folder
+
 type CalculatorType =
   | "construction"
   | "eligibility"
@@ -47,7 +52,7 @@ type CalculatorType =
   | "plumbing"
   | "electrical";
 
-// Layout for the main calculator pages
+// Layout for the main calculator pages (protected)
 const MainLayout = ({
   user,
   hasPaid,
@@ -63,47 +68,47 @@ const MainLayout = ({
   const renderCalculator = () => {
     switch (activeCalculator) {
       case "construction":
-        return <Calculator hasPaid={hasPaid} />;
+        return <Calculator hasPaid={hasPaid} />; //
       case "eligibility":
-        return <LoanEligibilityCalculator />;
+        return <LoanEligibilityCalculator />; //
       case "loan":
-        return <LoanCalculator />;
+        return <LoanCalculator />; //
       case "interior":
-        return <InteriorCalculator />;
+        return <InteriorCalculator />; //
       case "doors-windows":
-        return <DoorsWindowsCalculator />;
+        return <DoorsWindowsCalculator />; //
       case "flooring":
-        return <FlooringCalculator />;
+        return <FlooringCalculator />; //
       case "painting":
-        return <PaintingCalculator />;
+        return <PaintingCalculator />; //
       case "plumbing":
-        return <PlumbingCalculator />;
+        return <PlumbingCalculator />; //
       case "electrical":
-        return <ElectricalCalculator />;
+        return <ElectricalCalculator />; //
       default:
-        return <Calculator hasPaid={hasPaid} />;
+        return <Calculator hasPaid={hasPaid} />; //
     }
   };
 
   return (
     <>
-      <Header user={user} installPrompt={installPrompt} />
+      <Header user={user} installPrompt={installPrompt} /> {/* */}
       <main>
-        <Hero />
-        <CalculatorTabs
+        <Hero /> {/* */}
+        <CalculatorTabs //
           activeCalculator={activeCalculator}
           setActiveCalculator={setActiveCalculator}
           hasPaid={hasPaid}
         />
         {renderCalculator()}
-        <FAQ />
+        <FAQ /> {/* */}
       </main>
-      <Footer />
+      <Footer /> {/* */}
     </>
   );
 };
 
-// Layout for the static info pages
+// Layout for the static info pages and public guest calculator
 const InfoLayout = ({
   user,
   installPrompt,
@@ -112,18 +117,22 @@ const InfoLayout = ({
   installPrompt: any;
 }) => (
   <>
-    <Header user={user} installPrompt={installPrompt} />
+    <Header user={user} installPrompt={installPrompt} /> {/* */}
     <main>
-      <Outlet />
+      <Outlet />{" "}
+      {/* Renders child routes like PrivacyPolicy, GuestCalculator */}
     </main>
-    <Footer />
+    <Footer /> {/* */}
   </>
 );
 
+// Protects routes that require a logged-in user
 const ProtectedRoute = ({ user }: { user: User | null }) => {
   if (!user) {
+    // If no user, redirect to signin page
     return <Navigate to="/signin" />;
   }
+  // If user exists, render the child routes (Outlet)
   return <Outlet />;
 };
 
@@ -133,14 +142,16 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
 
+  // Effect to listen for PWA install prompt
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setInstallPrompt(e);
+      e.preventDefault(); // Prevent the default browser install prompt
+      setInstallPrompt(e); // Store the event to trigger it later
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
+    // Cleanup listener on component unmount
     return () => {
       window.removeEventListener(
         "beforeinstallprompt",
@@ -149,51 +160,59 @@ const App = () => {
     };
   }, []);
 
+  // Effect to check auth state on initial load and subscribe to changes
   useEffect(() => {
     const getSession = async () => {
+      // Check if there's an active session
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      setLoading(false);
+      setUser(session?.user ?? null); // Set user state
+      setLoading(false); // Mark loading as complete
     };
     getSession();
 
+    // Listen for changes in authentication state (signin/signout)
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        setUser(session?.user ?? null);
+        setUser(session?.user ?? null); // Update user state on change
       }
     );
 
+    // Cleanup subscription on component unmount
     return () => {
       authListener.subscription.unsubscribe();
     };
   }, []);
 
+  // Effect to fetch user profile (specifically payment status) when user state changes
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (user) {
-        setLoading(true);
+        setLoading(true); // Start loading while fetching profile
+        // Fetch 'has_paid' field from 'profiles' table for the current user
         const { data, error } = await supabase
           .from("profiles")
           .select("has_paid")
           .eq("id", user.id)
-          .single();
+          .single(); // Expecting only one row
 
         if (error) {
           console.error("Error fetching user profile:", error);
-          setHasPaid(false);
+          setHasPaid(false); // Assume not paid if there's an error
         } else if (data) {
-          setHasPaid(data.has_paid);
+          setHasPaid(data.has_paid); // Set payment status from fetched data
         }
-        setLoading(false);
+        setLoading(false); // Mark loading as complete
       } else {
+        // If there's no user, they haven't paid
         setHasPaid(false);
       }
     };
     fetchUserProfile();
-  }, [user]);
+  }, [user]); // Re-run this effect whenever the 'user' object changes
 
+  // Show loading indicator while checking auth state or fetching profile
   if (loading) {
     return <div className="loading-container">Loading...</div>;
   }
@@ -201,27 +220,35 @@ const App = () => {
   return (
     <Router>
       <Routes>
+        {/* Auth Routes */}
         <Route
           path="/signin"
-          element={user ? <Navigate to="/" /> : <SignIn />}
+          // If user is already logged in, redirect to home, otherwise show SignIn component
+          element={user ? <Navigate to="/" /> : <SignIn />} //
         />
         <Route
           path="/signup"
-          element={user ? <Navigate to="/" /> : <SignUp />}
+          // If user is already logged in, redirect to home, otherwise show SignUp component
+          element={user ? <Navigate to="/" /> : <SignUp />} //
         />
 
-        {/* Routes for static pages */}
+        {/* Public Routes using InfoLayout (Header + Footer) */}
         <Route
           element={<InfoLayout user={user} installPrompt={installPrompt} />}
         >
-          <Route path="/privacy" element={<PrivacyPolicy />} />
-          <Route path="/terms" element={<TermsOfService />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/disclaimer" element={<Disclaimer />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} /> {/* */}
+          <Route path="/terms" element={<TermsOfService />} /> {/* */}
+          <Route path="/contact" element={<Contact />} /> {/* */}
+          <Route path="/disclaimer" element={<Disclaimer />} /> {/* */}
+          {/* --- ROUTE FOR THE NEW GUEST CALCULATOR --- */}
+          {/* This route is accessible without login */}
+          <Route path="/guest-calculator" element={<GuestCalculator />} />
         </Route>
 
-        {/* Protected routes for the main app */}
+        {/* Protected Routes (Require Login) */}
+        {/* Uses ProtectedRoute component to check for user */}
         <Route element={<ProtectedRoute user={user} />}>
+          {/* Main application home route */}
           <Route
             path="/"
             element={
@@ -232,10 +259,12 @@ const App = () => {
               />
             }
           />
+          {/* Upgrade page route */}
           <Route
             path="/upgrade"
-            element={<UpgradePage user={user} setHasPaid={setHasPaid} />}
+            element={<UpgradePage user={user} setHasPaid={setHasPaid} />} //
           />
+          {/* Add other protected routes inside this Route element if needed */}
         </Route>
       </Routes>
     </Router>
