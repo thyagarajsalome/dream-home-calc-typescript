@@ -9,6 +9,7 @@ import {
   Outlet,
   useNavigate, // Import useNavigate
   useLocation, // Import useLocation
+  Link, // Import Link for the AuthHandler message
 } from "react-router-dom";
 import { supabase } from "./supabaseClient"; // Ensure this path is correct
 import { User } from "@supabase/supabase-js";
@@ -163,8 +164,7 @@ const AuthHandler: React.FC = () => {
           "Verification link is invalid or has expired. Please try signing up again or request a new verification email.";
       }
       setMessage(userMessage); // Set the error message state
-      // Redirect back to the signup page after showing the message
-      // 'replace: true' avoids adding the error URL to browser history
+      // Redirect back to the signup page using replace to avoid adding the error URL to history
       navigate("/signup", { replace: true });
     } else if (
       hash.includes("access_token") &&
@@ -180,7 +180,7 @@ const AuthHandler: React.FC = () => {
 
   // If there's an error message, display it temporarily
   if (message) {
-    // You could replace this with a more styled notification component
+    // Display the error within the standard auth layout
     return (
       <div className="auth-container">
         <div className="card auth-card" style={{ textAlign: "center" }}>
@@ -190,8 +190,7 @@ const AuthHandler: React.FC = () => {
           <p>{message}</p>
           <Link to="/signup" className="btn" style={{ marginTop: "1.5rem" }}>
             Go to Sign Up
-          </Link>{" "}
-          {/* */}
+          </Link>
         </div>
       </div>
     );
@@ -205,21 +204,20 @@ const AuthHandler: React.FC = () => {
 
 const App = () => {
   // --- State Variables ---
-  const [user, setUser] = useState<User | null>(null); // Stores the logged-in user object or null
-  const [hasPaid, setHasPaid] = useState(false); // Tracks if the user has Pro access
-  const [loading, setLoading] = useState(true); // Tracks initial authentication check state
-  const [installPrompt, setInstallPrompt] = useState<any>(null); // Stores the PWA install prompt event
+  const [user, setUser] = useState<User | null>(null);
+  const [hasPaid, setHasPaid] = useState(false);
+  const [loading, setLoading] = useState(true); // START in loading state
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
 
   // --- Effects ---
 
   // Effect to capture the PWA installation prompt event
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault(); // Prevent the browser's default install banner
-      setInstallPrompt(e); // Save the event so it can be triggered manually
+      e.preventDefault();
+      setInstallPrompt(e);
     };
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    // Cleanup: remove the event listener when the component unmounts
     return () => {
       window.removeEventListener(
         "beforeinstallprompt",
@@ -235,55 +233,60 @@ const App = () => {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      setUser(session?.user ?? null); // Update user state based on session
-      setLoading(false); // Initial auth check is complete
+      setUser(session?.user ?? null);
+      setLoading(false); // *** Initial auth check is complete HERE ***
     };
     getSession();
 
-    // Set up a listener for real-time authentication state changes (login, logout)
+    // Set up a listener for real-time authentication state changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        setUser(session?.user ?? null); // Update user state whenever auth changes
+        setUser(session?.user ?? null);
+        // If user logs out, ensure loading is false
+        if (!session?.user) {
+          setLoading(false);
+          setHasPaid(false); // Reset paid status on logout
+        }
       }
     );
 
-    // Cleanup: unsubscribe from the auth listener when the component unmounts
+    // Cleanup: unsubscribe from the auth listener
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, []);
+  }, []); // Run only once on mount
 
-  // Effect to fetch the user's profile (payment status) whenever the user state changes
+  // *** CORRECTED Effect to fetch the user's profile ***
   useEffect(() => {
     const fetchUserProfile = async () => {
-      if (user) {
-        // Only fetch if a user is logged in
-        setLoading(true); // Indicate loading while fetching profile data
-        const { data, error } = await supabase
-          .from("profiles") // Target the 'profiles' table
-          .select("has_paid") // Select only the 'has_paid' column
-          .eq("id", user.id) // Filter for the current user's ID
-          .single(); // Expect only one result
+      // No setLoading(true) here - initial load is handled above
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("has_paid")
+        .eq("id", user!.id) // Use non-null assertion as we check user above
+        .single();
 
-        if (error) {
-          console.error("Error fetching user profile:", error);
-          setHasPaid(false); // Assume not paid if there's an error
-        } else if (data) {
-          setHasPaid(data.has_paid); // Update payment status from the database
-        }
-        setLoading(false); // Profile fetching complete
-      } else {
-        // If there's no user, reset payment status
+      if (error) {
+        console.error("Error fetching user profile:", error);
         setHasPaid(false);
-        if (!loading) setLoading(false); // Ensure loading is false if already checked session
+      } else if (data) {
+        setHasPaid(data.has_paid);
       }
+      // No setLoading(false) here
     };
-    fetchUserProfile();
-  }, [user, loading]); // Rerun this effect if the user object changes
+
+    // Only fetch profile *after* initial loading is done AND a user exists
+    if (!loading && user) {
+      fetchUserProfile();
+    } else if (!user) {
+      // If there is no user (e.g., after logout), ensure paid status is false
+      setHasPaid(false);
+    }
+  }, [user, loading]); // Depend on user and the initial loading state
 
   // --- Conditional Rendering ---
 
-  // Display a loading indicator during the initial auth check
+  // Display a loading indicator ONLY during the initial auth check
   if (loading) {
     return <div className="loading-container">Loading...</div>;
   }
@@ -291,10 +294,10 @@ const App = () => {
   // --- Router Setup ---
   return (
     <Router>
-      {/* AuthHandler runs on all routes to check for auth-related URL fragments */}
+      {/* AuthHandler runs on all routes */}
       <AuthHandler />
       <Routes>
-        {/* Authentication Routes (Sign In / Sign Up) */}
+        {/* Auth Routes */}
         <Route
           path="/signin"
           element={user ? <Navigate to="/" /> : <SignIn />}
@@ -304,7 +307,7 @@ const App = () => {
           element={user ? <Navigate to="/" /> : <SignUp />}
         />
 
-        {/* Public Routes (using InfoLayout with Header/Footer) */}
+        {/* Public Routes */}
         <Route
           element={<InfoLayout user={user} installPrompt={installPrompt} />}
         >
@@ -315,9 +318,8 @@ const App = () => {
           <Route path="/guest-calculator" element={<GuestCalculator />} />
         </Route>
 
-        {/* Protected Routes (require login, using ProtectedRoute wrapper) */}
+        {/* Protected Routes */}
         <Route element={<ProtectedRoute user={user} />}>
-          {/* Main App Route */}
           <Route
             path="/"
             element={
@@ -328,15 +330,13 @@ const App = () => {
               />
             }
           />
-          {/* Upgrade Page Route */}
           <Route
             path="/upgrade"
             element={<UpgradePage user={user} setHasPaid={setHasPaid} />}
           />
-          {/* Add any other authenticated routes here */}
         </Route>
 
-        {/* Fallback for unmatched routes - redirect home or to signin based on auth state */}
+        {/* Fallback Route */}
         <Route path="*" element={<Navigate to={user ? "/" : "/signin"} />} />
       </Routes>
     </Router>
