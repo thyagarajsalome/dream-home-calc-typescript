@@ -850,3 +850,79 @@ select:focus {
     box-shadow: 0 0 0 0 rgba(46, 204, 113, 0);
   }
 }
+
+/* src/styles/global.css */
+
+/* ... (previous styles) ... */
+
+/* Highlighted Link Styles */
+.highlighted-link-box {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border: 2px dashed var(--primary-color);
+  border-radius: var(--border-radius);
+  text-align: center;
+  background-color: #fef8ec; /* Light yellow background */
+  transition: background-color 0.3s ease;
+}
+
+.highlighted-link-box:hover {
+  background-color: #fdf2e0; /* Slightly darker yellow on hover */
+}
+
+.highlighted-link-box p {
+  margin-bottom: 0.5rem;
+  color: var(--secondary-color);
+  font-weight: 500;
+}
+
+.highlighted-link-box a {
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 50px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.highlighted-link-box a:hover {
+  background-color: var(--accent-color);
+  transform: translateY(-2px);
+  color: white; /* Ensure text remains white on hover */
+}
+
+.signup-value-prop {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: var(--background-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  text-align: center;
+}
+
+.signup-value-prop h4 {
+  color: var(--accent-color);
+  margin-bottom: 0.75rem;
+}
+
+.signup-value-prop ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-color);
+}
+
+.signup-value-prop ul li {
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.signup-value-prop ul li i {
+  color: var(--success-color);
+}

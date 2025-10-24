@@ -1,9 +1,8 @@
 // src/components/SignUp.tsx
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "../supabaseClient";
-import AuthLayout from "./AuthLayout";
+import { supabase } from "../supabaseClient"; //
+import AuthLayout from "./AuthLayout"; //
 
 const SignUp = () => {
   const [email, setEmail] = useState("");
@@ -21,6 +20,7 @@ const SignUp = () => {
     }
     try {
       const { data, error } = await supabase.auth.signUp({
+        //
         email,
         password,
       });
@@ -38,8 +38,20 @@ const SignUp = () => {
 
   return (
     <AuthLayout>
+      {" "}
+      {/* */}
       <h2>Create an Account</h2>
+      <p
+        style={{
+          textAlign: "center",
+          marginBottom: "1.5rem",
+          color: "var(--text-color)",
+        }}
+      >
+        Unlock all features by creating a free account.
+      </p>
       <form onSubmit={handleSignUp}>
+        {/* ... email and password inputs ... */}
         <div className="form-group">
           <label htmlFor="email">Email</label>
           <input
@@ -77,13 +89,13 @@ const SignUp = () => {
         )}
       </form>
       <p className="auth-switch-link">
-        Already have an account? <Link to="/signin">Sign In</Link>
+        Already have an account? <Link to="/signin">Sign In</Link> {/* */}
       </p>
-
-      {/* --- ADDED THIS LINK --- */}
-      <p className="auth-switch-link" style={{ marginTop: "1rem" }}>
-        Or, try our <Link to="/guest-calculator">Guest Calculator</Link>
-      </p>
+      {/* --- Updated Guest Link Section --- */}
+      <div className="highlighted-link-box">
+        <p>Just want a quick estimate?</p>
+        <Link to="/guest-calculator">Try Guest Calculator</Link> {/* */}
+      </div>
     </AuthLayout>
   );
 };
