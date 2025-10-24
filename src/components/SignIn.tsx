@@ -1,9 +1,8 @@
 // src/components/SignIn.tsx
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "../supabaseClient";
-import AuthLayout from "./AuthLayout";
+import { supabase } from "../supabaseClient"; //
+import AuthLayout from "./AuthLayout"; //
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
@@ -15,10 +14,12 @@ const SignIn = () => {
     setError("");
     try {
       const { error } = await supabase.auth.signInWithPassword({
+        //
         email,
         password,
       });
       if (error) throw error;
+      // Navigate on success is handled by the listener in App.tsx
     } catch (err: any) {
       setError("Failed to sign in. Please check your email and password.");
     }
@@ -26,8 +27,11 @@ const SignIn = () => {
 
   return (
     <AuthLayout>
+      {" "}
+      {/* */}
       <h2>Sign In</h2>
       <form onSubmit={handleSignIn}>
+        {/* ... email and password inputs ... */}
         <div className="form-group">
           <label htmlFor="email">Email</label>
           <input
@@ -59,14 +63,29 @@ const SignIn = () => {
           </p>
         )}
       </form>
-      <p className="auth-switch-link">
-        Don't have an account? <Link to="/signup">Sign Up</Link>
-      </p>
-
-      {/* --- ADDED THIS LINK --- */}
-      <p className="auth-switch-link" style={{ marginTop: "1rem" }}>
-        Or, try our <Link to="/guest-calculator">Guest Calculator</Link>
-      </p>
+      {/* --- Updated Sign Up Link Section --- */}
+      <div className="signup-value-prop">
+        <h4>New Here? Create an Account!</h4>
+        <ul>
+          <li>
+            <i className="fas fa-star"></i> Access Premium Calculators
+          </li>
+          <li>
+            <i className="fas fa-save"></i> Save & Download Reports
+          </li>
+          <li>
+            <i className="fas fa-chart-line"></i> Detailed Breakdowns
+          </li>
+        </ul>
+        <p className="auth-switch-link" style={{ marginTop: "1rem" }}>
+          <Link to="/signup">Sign Up Now</Link> {/* */}
+        </p>
+      </div>
+      {/* --- Updated Guest Link Section --- */}
+      <div className="highlighted-link-box">
+        <p>Or, try a quick estimate without an account:</p>
+        <Link to="/guest-calculator">Try Guest Calculator</Link> {/* */}
+      </div>
     </AuthLayout>
   );
 };

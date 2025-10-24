@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Chart from "chart.js/auto";
 import type { Chart as ChartType } from "chart.js/auto";
+import { Link } from "react-router-dom"; // Import Link
 import "../styles/GuestCalculator.css";
 
 // Define chart instances at the module level
@@ -227,6 +228,7 @@ const GuestCalculator: React.FC = () => {
   };
 
   useEffect(() => {
+    // This effect handles chart creation/updates
     if (results && pieChartRef.current && barChartRef.current) {
       const {
         constructionCost,
@@ -254,18 +256,18 @@ const GuestCalculator: React.FC = () => {
       const filteredLabels = labels.filter((_, i) => values[i] > 0);
       const filteredValues = values.filter((v) => v > 0);
       const chartColors = [
-        "#D9A443",
-        "#59483B",
-        "#8C6A4E",
-        "#C4B594",
-        "#A99A86",
+        "#D9A443", // primary-color
+        "#59483B", // secondary-color
+        "#8C6A4E", // accent-color
+        "#C4B594", // Lighter brown
+        "#A99A86", // Another light shade
       ];
 
-      // Destroy existing charts
+      // Destroy existing charts before creating new ones
       if (pieChartInstance) pieChartInstance.destroy();
       if (barChartInstance) barChartInstance.destroy();
 
-      // Pie Chart
+      // Pie Chart Configuration
       const pieCtx = pieChartRef.current.getContext("2d");
       if (pieCtx) {
         pieChartInstance = new Chart(pieCtx, {
@@ -277,7 +279,7 @@ const GuestCalculator: React.FC = () => {
                 data: filteredValues,
                 backgroundColor: chartColors.slice(0, filteredValues.length),
                 borderWidth: 2,
-                borderColor: "#fff",
+                borderColor: "#fff", // card-background
               },
             ],
           },
@@ -302,7 +304,7 @@ const GuestCalculator: React.FC = () => {
         });
       }
 
-      // Bar Chart
+      // Bar Chart Configuration
       const barCtx = barChartRef.current.getContext("2d");
       if (barCtx) {
         barChartInstance = new Chart(barCtx, {
@@ -315,7 +317,7 @@ const GuestCalculator: React.FC = () => {
                 data: filteredValues,
                 backgroundColor: chartColors
                   .slice(0, filteredValues.length)
-                  .map((c) => c + "CC"), // Add alpha
+                  .map((c) => c + "CC"), // Add alpha transparency
                 borderColor: chartColors.slice(0, filteredValues.length),
                 borderWidth: 2,
               },
@@ -337,6 +339,7 @@ const GuestCalculator: React.FC = () => {
               y: {
                 beginAtZero: true,
                 ticks: {
+                  // Format Y-axis ticks in Lakhs
                   callback: (value) =>
                     `₹${(Number(value) / 100000).toFixed(1)}L`,
                 },
@@ -346,26 +349,36 @@ const GuestCalculator: React.FC = () => {
         });
       }
 
-      // Scroll to results
+      // Scroll smoothly to results section after calculation
       const resultsEl = document.getElementById("guest-results");
       if (resultsEl) {
         setTimeout(() => {
           resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 100);
+        }, 100); // Small delay to ensure rendering
       }
     }
-  }, [results]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [results]); // Dependency array: run effect when results change
 
+  // --- COMPONENT RENDER ---
   return (
     <div className="guest-calculator-page">
+      {" "}
+      {/* Outer wrapper */}
       <div className="guest-container">
+        {" "}
+        {/* White card container */}
         <div className="guest-header">
+          {" "}
+          {/* Dark blue header */}
           <h1>🏗️ House Construction Cost Calculator</h1>
           <p>
             Estimate your construction costs accurately for Indian homes with
             detailed visualizations
           </p>
           <div className="hero-icons">
+            {" "}
+            {/* Icons below header text */}
             <div className="hero-icon">
               <div>🏠</div>
               <span>Smart Planning</span>
@@ -380,9 +393,11 @@ const GuestCalculator: React.FC = () => {
             </div>
           </div>
         </div>
-
         <div className="guest-content">
+          {" "}
+          {/* Main content area below header */}
           <form onSubmit={calculateCost}>
+            {/* Built-up Area Input */}
             <div className="form-section">
               <label htmlFor="builtupArea">Built-up Area (sq ft) *</label>
               <input
@@ -396,6 +411,7 @@ const GuestCalculator: React.FC = () => {
               />
             </div>
 
+            {/* City & Quality Row */}
             <div className="form-row">
               <div className="form-section">
                 <label htmlFor="city">City/Location *</label>
@@ -418,7 +434,6 @@ const GuestCalculator: React.FC = () => {
                   <option value="tier3">Tier-3 Cities & Towns</option>
                 </select>
               </div>
-
               <div className="form-section">
                 <label htmlFor="quality">Construction Quality *</label>
                 <select
@@ -436,6 +451,7 @@ const GuestCalculator: React.FC = () => {
               </div>
             </div>
 
+            {/* Floors & Foundation Row */}
             <div className="form-row">
               <div className="form-section">
                 <label htmlFor="floors">Number of Floors *</label>
@@ -451,7 +467,6 @@ const GuestCalculator: React.FC = () => {
                   <option value="4">Ground + 3 Floors (G+3)</option>
                 </select>
               </div>
-
               <div className="form-section">
                 <label htmlFor="foundation">Foundation Type *</label>
                 <select
@@ -467,8 +482,10 @@ const GuestCalculator: React.FC = () => {
               </div>
             </div>
 
+            {/* Additional Features Checkboxes */}
             <div className="checkbox-group">
               <h3>✨ Additional Features (Optional)</h3>
+              {/* Individual checkbox items */}
               <div className="checkbox-item">
                 <input
                   type="checkbox"
@@ -526,13 +543,15 @@ const GuestCalculator: React.FC = () => {
               </div>
             </div>
 
+            {/* Calculate Button */}
             <button className="calculate-btn" type="submit">
               <span>📊 Calculate Construction Cost</span>
             </button>
           </form>
-
+          {/* Results Section (conditionally rendered) */}
           {results && (
             <div className="results show" id="guest-results">
+              {/* Total Amount Header */}
               <div className="results-header">
                 <h2>💰 Your Construction Cost Estimate</h2>
                 <div className="total-amount">
@@ -541,28 +560,98 @@ const GuestCalculator: React.FC = () => {
                 <p>Detailed breakdown with visualizations below</p>
               </div>
 
+              {/* Building Structure Visualization */}
               <div className="construction-diagram">
                 <h3>🏗️ Your Building Structure</h3>
-                {renderHouseVisual()}
+                {renderHouseVisual()} {/* Renders floors and foundation */}
               </div>
 
+              {/* Charts Grid */}
               <div className="visualization-grid">
                 <div className="chart-container">
                   <h3>📊 Cost Distribution</h3>
-                  <canvas ref={pieChartRef}></canvas>
+                  <canvas ref={pieChartRef}></canvas> {/* Pie chart canvas */}
                 </div>
                 <div className="chart-container">
                   <h3>📈 Component-wise Breakdown</h3>
-                  <canvas ref={barChartRef}></canvas>
+                  <canvas ref={barChartRef}></canvas> {/* Bar chart canvas */}
                 </div>
               </div>
 
+              {/* Detailed Cost Breakdown Table */}
               <div className="cost-breakdown">
                 <h3>💵 Detailed Cost Breakdown</h3>
-                {renderBreakdown()}
+                {renderBreakdown()} {/* Renders the cost items */}
               </div>
 
-              <div className="disclaimer-box">
+              {/* --- NEW SECTION: Pro Features Promo --- */}
+              <div
+                className="pro-features-promo card"
+                style={{
+                  marginTop: "2rem",
+                  background: "var(--background-color)", // Use light background
+                }}
+              >
+                <h3>Want More Detailed Calculations? 🤔</h3>
+                <p>Sign up for a free account to:</p>
+                <ul>
+                  <li>
+                    <i className="fas fa-calculator"></i> Access Loan EMI &
+                    Eligibility Calculators
+                  </li>
+                  <li>
+                    <i className="fas fa-save"></i> Option to Save Basic Reports
+                    (Coming Soon!)
+                  </li>
+                </ul>
+                <p style={{ marginTop: "1rem" }}>
+                  Upgrade to <strong>Pro</strong> (
+                  <Link to="/upgrade">only ₹299 for 2 years!</Link>) to unlock
+                  everything: ✨
+                </p>
+                <ul>
+                  <li>
+                    <i className="fas fa-couch"></i> Interior Calculator
+                  </li>
+                  <li>
+                    <i className="fas fa-door-open"></i> Doors & Windows
+                    Calculator
+                  </li>
+                  <li>
+                    <i className="fas fa-layer-group"></i> Flooring Calculator
+                  </li>
+                  <li>
+                    <i className="fas fa-paint-roller"></i> Painting Calculator
+                  </li>
+                  <li>
+                    <i className="fas fa-bath"></i> Plumbing Calculator
+                  </li>
+                  <li>
+                    <i className="fas fa-bolt"></i> Electrical Calculator
+                  </li>
+                  <li>
+                    <i className="fas fa-star"></i> Standard & Premium quality
+                    options in main calculator
+                  </li>
+                  <li>
+                    <i className="fas fa-file-pdf"></i> Download detailed PDF
+                    reports for all calculators
+                  </li>
+                </ul>
+                <div style={{ marginTop: "1.5rem", textAlign: "center" }}>
+                  <Link to="/signup" className="btn">
+                    {" "}
+                    {/* */}
+                    Sign Up for Free Now!
+                  </Link>
+                </div>
+              </div>
+              {/* --- END NEW SECTION --- */}
+
+              {/* Disclaimer Box */}
+              <div className="disclaimer-box" style={{ marginTop: "2rem" }}>
+                {" "}
+                {/* */}
                 <strong>⚠️ Important Note:</strong>
                 This is an approximate estimate based on current market rates in
                 India. Actual costs may vary by ±15-20% based on material
