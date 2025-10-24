@@ -1,3 +1,5 @@
+// src/components/SignIn.tsx
+
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../supabaseClient";
@@ -59,6 +61,11 @@ const SignIn = () => {
       </form>
       <p className="auth-switch-link">
         Don't have an account? <Link to="/signup">Sign Up</Link>
+      </p>
+
+      {/* --- ADDED THIS LINK --- */}
+      <p className="auth-switch-link" style={{ marginTop: "1rem" }}>
+        Or, try our <Link to="/guest-calculator">Guest Calculator</Link>
       </p>
     </AuthLayout>
   );
