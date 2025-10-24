@@ -458,7 +458,7 @@
 }
 
 .pro-features-promo a {
-  color: var(--primary-color);
+  color: white;
   font-weight: 600;
   text-decoration: underline;
 }
