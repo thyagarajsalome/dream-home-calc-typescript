@@ -606,8 +606,10 @@ const GuestCalculator: React.FC = () => {
                 </ul>
                 <p style={{ marginTop: "1rem" }}>
                   Upgrade to <strong>Pro</strong> (
-                  <Link to="/upgrade">only ₹299 for 2 years!</Link>) to unlock
-                  everything: ✨
+                  <Link style={{ color: "black" }} to="/upgrade">
+                    only ₹299 for 2 years
+                  </Link>
+                  ) to unlock everything: ✨
                 </p>
                 <ul>
                   <li>
