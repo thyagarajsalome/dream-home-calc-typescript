@@ -604,16 +604,6 @@ const GuestCalculator: React.FC = () => {
                     (Coming Soon!)
                   </li>
                 </ul>
-                <p style={{ marginTop: "1rem" }}>
-                  Upgrade to <strong>Pro</strong> (
-                  <Link
-                    style={{ color: "black", fontWeight: "bold" }}
-                    to="/upgrade"
-                  >
-                    only ₹299 for 2 years
-                  </Link>
-                  ) to unlock everything: ✨
-                </p>
                 <ul>
                   <li>
                     <i className="fas fa-couch"></i> Interior Calculator
@@ -644,7 +634,7 @@ const GuestCalculator: React.FC = () => {
                   </li>
                 </ul>
                 <div style={{ marginTop: "1.5rem", textAlign: "center" }}>
-                  <Link to="/signup" className="btn" style={{ color: "black" }}>
+                  <Link to="/signup" className="btn" style={{ color: "white" }}>
                     {" "}
                     {/* */}
                     Sign Up for Free Now!
