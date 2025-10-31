@@ -268,14 +268,18 @@ const Calculator: React.FC<CalculatorProps> = ({ hasPaid }) => {
               </div>
             </div>
             <div className="action-buttons">
-              <button
-                className="btn"
-                onClick={downloadPDF}
-                disabled={isDownloading}
-              >
-                <i className="fas fa-download"></i>{" "}
-                {isDownloading ? "Downloading..." : "Download PDF"}
-              </button>
+              {/* --- UPDATE: PDF BUTTON IS NOW CONDITIONAL --- */}
+              {hasPaid && (
+                <button
+                  className="btn"
+                  onClick={downloadPDF}
+                  disabled={isDownloading}
+                >
+                  <i className="fas fa-download"></i>{" "}
+                  {isDownloading ? "Downloading..." : "Download PDF"}
+                </button>
+              )}
+              {/* --- END OF UPDATE --- */}
               <button className="btn btn-secondary" onClick={resetAll}>
                 <i className="fas fa-sync-alt"></i> Reset
               </button>

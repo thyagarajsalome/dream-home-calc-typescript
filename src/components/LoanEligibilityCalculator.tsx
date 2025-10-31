@@ -1,6 +1,18 @@
-import React, { useState } from "react";
+// src/components/LoanEligibilityCalculator.tsx
 
-const LoanEligibilityCalculator: React.FC = () => {
+import React, { useState, useRef } from "react";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+
+// --- ADD 'hasPaid' to the component's props ---
+interface LoanEligibilityCalculatorProps {
+  hasPaid: boolean;
+}
+
+// --- Accept 'hasPaid' prop ---
+const LoanEligibilityCalculator: React.FC<LoanEligibilityCalculatorProps> = ({
+  hasPaid,
+}) => {
   // Input states
   const [monthlyIncome, setMonthlyIncome] = useState("75000");
   const [hasRegularIncome, setHasRegularIncome] = useState(true);
@@ -17,6 +29,28 @@ const LoanEligibilityCalculator: React.FC = () => {
     "Low" | "Medium" | "High" | null
   >(null);
   const [oir, setOir] = useState<number | null>(null);
+
+  // --- ADDITIONS FOR PDF ---
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const downloadPDF = () => {
+    if (resultsRef.current) {
+      setIsDownloading(true);
+      html2canvas(resultsRef.current, { scale: 2, useCORS: true }).then(
+        (canvas) => {
+          const imgData = canvas.toDataURL("image/png");
+          const pdf = new jsPDF("p", "mm", "a4");
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+          pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+          pdf.save("loan-eligibility-report.pdf");
+          setIsDownloading(false);
+        }
+      );
+    }
+  };
+  // --- END OF ADDITIONS ---
 
   const calculateEligibility = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -202,7 +236,8 @@ const LoanEligibilityCalculator: React.FC = () => {
         </form>
 
         {riskFactor && oir !== null && (
-          <div id="resultsSection" className="visible">
+          // --- ATTACH REF HERE ---
+          <div id="resultsSection" className="visible" ref={resultsRef}>
             <h3 className="results-title">Your Eligibility Report</h3>
             <div className="eligibility-dashboard">
               <div className="risk-gauge">
@@ -262,6 +297,20 @@ const LoanEligibilityCalculator: React.FC = () => {
                 policies.
               </p>
             </div>
+            {/* --- ADD CONDITIONAL PDF BUTTON --- */}
+            {hasPaid && (
+              <div className="action-buttons">
+                <button
+                  className="btn"
+                  onClick={downloadPDF}
+                  disabled={isDownloading}
+                >
+                  <i className="fas fa-download"></i>{" "}
+                  {isDownloading ? "Downloading..." : "Download PDF"}
+                </button>
+              </div>
+            )}
+            {/* --- END OF ADDITION --- */}
           </div>
         )}
       </div>

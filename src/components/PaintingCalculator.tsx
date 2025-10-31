@@ -3,6 +3,11 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import Chart from "./Chart";
 
+// --- ADD 'hasPaid' to the component's props ---
+interface PaintingCalculatorProps {
+  hasPaid: boolean;
+}
+
 const paintTypes = {
   distemper: { name: "Distemper", rate: 20 },
   emulsion: { name: "Emulsion", rate: 35 },
@@ -19,7 +24,8 @@ const paintingBreakdown = {
 
 const chartColors = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
 
-const PaintingCalculator = () => {
+// --- Accept 'hasPaid' prop ---
+const PaintingCalculator: React.FC<PaintingCalculatorProps> = ({ hasPaid }) => {
   const [wallArea, setWallArea] = useState("");
   const [paintType, setPaintType] =
     useState<keyof typeof paintTypes>("distemper");
@@ -160,16 +166,20 @@ const PaintingCalculator = () => {
                   <Chart data={paintingBreakdown} colors={chartColors} />
                 </div>
               </div>
-              <div className="action-buttons">
-                <button
-                  className="btn"
-                  onClick={downloadPDF}
-                  disabled={isDownloading}
-                >
-                  <i className="fas fa-download"></i>{" "}
-                  {isDownloading ? "Downloading..." : "Download PDF"}
-                </button>
-              </div>
+              {/* --- UPDATE: PDF BUTTON IS NOW CONDITIONAL --- */}
+              {hasPaid && (
+                <div className="action-buttons">
+                  <button
+                    className="btn"
+                    onClick={downloadPDF}
+                    disabled={isDownloading}
+                  >
+                    <i className="fas fa-download"></i>{" "}
+                    {isDownloading ? "Downloading..." : "Download PDF"}
+                  </button>
+                </div>
+              )}
+              {/* --- END OF UPDATE --- */}
             </div>
           </div>
         )}

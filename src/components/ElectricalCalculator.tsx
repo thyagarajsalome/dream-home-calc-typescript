@@ -3,6 +3,11 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import Chart from "./Chart";
 
+// --- ADD 'hasPaid' to the component's props ---
+interface ElectricalCalculatorProps {
+  hasPaid: boolean;
+}
+
 const electricalQualities = {
   basic: { name: "Basic", ratePerSqFt: 100 },
   standard: { name: "Standard (Concealed)", ratePerSqFt: 180 },
@@ -18,7 +23,10 @@ const electricalBreakdown = {
 
 const chartColors = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
 
-const ElectricalCalculator = () => {
+// --- Accept 'hasPaid' prop ---
+const ElectricalCalculator: React.FC<ElectricalCalculatorProps> = ({
+  hasPaid,
+}) => {
   const [area, setArea] = useState("");
   const [quality, setQuality] =
     useState<keyof typeof electricalQualities>("basic");
@@ -143,16 +151,20 @@ const ElectricalCalculator = () => {
                   <Chart data={electricalBreakdown} colors={chartColors} />
                 </div>
               </div>
-              <div className="action-buttons">
-                <button
-                  className="btn"
-                  onClick={downloadPDF}
-                  disabled={isDownloading}
-                >
-                  <i className="fas fa-download"></i>{" "}
-                  {isDownloading ? "Downloading..." : "Download PDF"}
-                </button>
-              </div>
+              {/* --- UPDATE: PDF BUTTON IS NOW CONDITIONAL --- */}
+              {hasPaid && (
+                <div className="action-buttons">
+                  <button
+                    className="btn"
+                    onClick={downloadPDF}
+                    disabled={isDownloading}
+                  >
+                    <i className="fas fa-download"></i>{" "}
+                    {isDownloading ? "Downloading..." : "Download PDF"}
+                  </button>
+                </div>
+              )}
+              {/* --- END OF UPDATE --- */}
             </div>
           </div>
         )}
