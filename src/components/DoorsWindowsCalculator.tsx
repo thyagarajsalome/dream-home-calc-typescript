@@ -1,4 +1,13 @@
-import React, { useState } from "react";
+// src/components/DoorsWindowsCalculator.tsx
+
+import React, { useState, useRef } from "react";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+
+// --- ADD 'hasPaid' to the component's props ---
+interface DoorsWindowsCalculatorProps {
+  hasPaid: boolean;
+}
 
 const doorTypes = {
   flush: { name: "Flush Door (Laminate)", rate: 7000 },
@@ -12,7 +21,10 @@ const windowTypes = {
   wood: { name: "Wooden Frame", rate: 1200 },
 };
 
-const DoorsWindowsCalculator = () => {
+// --- Accept 'hasPaid' prop ---
+const DoorsWindowsCalculator: React.FC<DoorsWindowsCalculatorProps> = ({
+  hasPaid,
+}) => {
   // Door States
   const [doorCount, setDoorCount] = useState("5");
   const [doorType, setDoorType] = useState<keyof typeof doorTypes>("flush");
@@ -28,6 +40,28 @@ const DoorsWindowsCalculator = () => {
   const [totalCost, setTotalCost] = useState(0);
   const [doorCost, setDoorCost] = useState(0);
   const [windowCost, setWindowCost] = useState(0);
+
+  // --- ADDITIONS FOR PDF ---
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const downloadPDF = () => {
+    if (resultsRef.current) {
+      setIsDownloading(true);
+      html2canvas(resultsRef.current, { scale: 2, useCORS: true }).then(
+        (canvas) => {
+          const imgData = canvas.toDataURL("image/png");
+          const pdf = new jsPDF("p", "mm", "a4");
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+          pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+          pdf.save("doors-windows-cost-estimate.pdf");
+          setIsDownloading(false);
+        }
+      );
+    }
+  };
+  // --- END OF ADDITIONS ---
 
   const calculateCost = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -143,7 +177,8 @@ const DoorsWindowsCalculator = () => {
         </form>
 
         {totalCost > 0 && (
-          <div id="resultsSection" className="visible">
+          // --- ATTACH REF HERE ---
+          <div id="resultsSection" className="visible" ref={resultsRef}>
             <div className="total-summary">
               <p>Total Estimated Doors & Windows Cost</p>
               <span>
@@ -176,6 +211,20 @@ const DoorsWindowsCalculator = () => {
                 </span>
               </div>
             </div>
+            {/* --- ADD CONDITIONAL PDF BUTTON --- */}
+            {hasPaid && (
+              <div className="action-buttons">
+                <button
+                  className="btn"
+                  onClick={downloadPDF}
+                  disabled={isDownloading}
+                >
+                  <i className="fas fa-download"></i>{" "}
+                  {isDownloading ? "Downloading..." : "Download PDF"}
+                </button>
+              </div>
+            )}
+            {/* --- END OF ADDITION --- */}
           </div>
         )}
       </div>
