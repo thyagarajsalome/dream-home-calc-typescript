@@ -1,3 +1,5 @@
+// src/components/UpgradePage.tsx
+
 import React, { useState, useEffect } from "react";
 import { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
@@ -9,37 +11,66 @@ interface UpgradePageProps {
   setHasPaid: (status: boolean) => void;
 }
 
+// Define plan details
+const plans = {
+  monthly: {
+    id: "monthly",
+    name: "Pro Monthly",
+    amount: 9900, // ₹99 in paise
+    priceString: "₹99",
+    term: "/ month",
+    description: "Pro Monthly Plan",
+  },
+  annual: {
+    id: "annual",
+    name: "Pro Annual",
+    amount: 49900, // ₹499 in paise
+    priceString: "₹499",
+    term: "/ year",
+    description: "Pro Annual Plan",
+    badge: "Best Value",
+    savings: "Save 58% vs. Monthly",
+  },
+};
+
+type PlanID = "monthly" | "annual";
+
 const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
-  const [loading, setLoading] = useState(false);
+  // State to track loading for a specific plan
+  const [loadingPlan, setLoadingPlan] = useState<PlanID | null>(null);
   const [error, setError] = useState("");
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const navigate = useNavigate();
 
-  // --- FIX: WARM-UP THE SERVER ON PAGE LOAD ---
+  // --- WARM-UP THE SERVER ON PAGE LOAD ---
   useEffect(() => {
-    // This sends a simple request to wake up the free-tier server.
     if (API_URL) {
       fetch(API_URL).catch((err) =>
         console.error("Server warm-up failed:", err)
       );
     }
-
-    // Preload the Razorpay script for faster checkout
+    // Preload the Razorpay script
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
     script.async = true;
     document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
   }, []);
 
-  const handlePayment = async () => {
-    setLoading(true);
+  const handlePayment = async (planId: PlanID) => {
+    const selectedPlan = plans[planId];
+    setLoadingPlan(planId);
     setError("");
 
     try {
       const response = await fetch(`${API_URL}/create-order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: 29900 }),
+        // Send the amount for the selected plan
+        body: JSON.stringify({ amount: selectedPlan.amount }),
       });
 
       if (!response.ok) {
@@ -53,7 +84,8 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
         amount: order.amount,
         currency: order.currency,
         name: "DreamHomeCalc Pro",
-        description: "2 Years Access",
+        // Use the plan's description
+        description: selectedPlan.description,
         order_id: order.id,
         handler: async (response: any) => {
           try {
@@ -98,7 +130,8 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
     } catch (err) {
       setError("Error creating payment order. Please try again.");
     } finally {
-      setLoading(false);
+      // Stop loading for this specific plan
+      setLoadingPlan(null);
     }
   };
 
@@ -113,44 +146,50 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
         ) : (
           <>
             <div className="upgrade-header">
-              <span className="pro-badge">LIMITED TIME OFFER</span>
-              <h2>Unlock Your Dream Home's Full Potential</h2>
-              <p className="price">
-                <span
-                  className="amount"
-                  style={{
-                    color: "var(--primary-color)",
-                    fontWeight: "bold",
-                    fontSize: "2.8rem",
-                  }}
-                >
-                  ₹299
-                </span>
-                <span
-                  style={{
-                    textDecoration: "line-through",
-                    marginLeft: "1rem",
-                    fontSize: "1.5rem",
-                    opacity: 0.6,
-                  }}
-                >
-                  ₹1000
-                </span>
-                <span
-                  style={{
-                    marginLeft: "1rem",
-                    fontSize: "1.2rem",
-                    color: "var(--accent-color)",
-                    fontWeight: "bold",
-                  }}
-                >
-                  (70% OFF)
-                </span>
-              </p>
-              <p>One-time payment for 2 Years Access — inclusive of 18% GST</p>
+              <h2>Upgrade to DreamHomeCalc Pro</h2>
+              <p>Choose the plan that works best for you.</p>
             </div>
 
-            <ul className="features-list">
+            {/* --- NEW PRICING GRID --- */}
+            <div className="pricing-grid">
+              {/* Monthly Plan */}
+              <div className="pricing-card">
+                <h3>{plans.monthly.name}</h3>
+                <div className="price-amount">{plans.monthly.priceString}</div>
+                <div className="price-term">{plans.monthly.term}</div>
+                <p>Perfect for a single project.</p>
+                <button
+                  onClick={() => handlePayment("monthly")}
+                  className="btn btn-secondary" // Use secondary style for the less popular option
+                  disabled={loadingPlan !== null}
+                >
+                  {loadingPlan === "monthly"
+                    ? "Processing..."
+                    : "Choose Monthly"}
+                </button>
+              </div>
+
+              {/* Annual Plan */}
+              <div className="pricing-card popular">
+                <div className="popular-badge">{plans.annual.badge}</div>
+                <h3>{plans.annual.name}</h3>
+                <div className="price-amount">{plans.annual.priceString}</div>
+                <div className="price-term">{plans.annual.term}</div>
+                <p style={{ color: "var(--accent-color)", fontWeight: 600 }}>
+                  {plans.annual.savings}
+                </p>
+                <button
+                  onClick={() => handlePayment("annual")}
+                  className="btn" // Use primary style for the popular option
+                  disabled={loadingPlan !== null}
+                >
+                  {loadingPlan === "annual" ? "Processing..." : "Choose Annual"}
+                </button>
+              </div>
+            </div>
+            {/* --- END PRICING GRID --- */}
+
+            <ul className="features-list" style={{ marginTop: "2.5rem" }}>
               <li>
                 <i className="fas fa-check-circle"></i> Access all specialized
                 calculators: Flooring, Painting, Plumbing, and Electrical.
@@ -168,31 +207,11 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
                 share PDF reports.
               </li>
               <li>
-                <i className="fas fa-check-circle"></i> Enjoy 2 years of full
-                access with all future updates included.
+                <i className="fas fa-check-circle"></i> Full access with all
+                future updates included during your subscription.
               </li>
             </ul>
-            <div
-              style={{
-                padding: "1rem",
-                backgroundColor: "var(--background-color)",
-                borderRadius: "var(--border-radius)",
-                margin: "2rem 0",
-                border: "1px solid var(--border-color)",
-                textAlign: "center",
-              }}
-            >
-              <p style={{ margin: 0, lineHeight: 1.6, fontSize: "0.9rem" }}>
-                The Pro Plan will keep getting better.
-              </p>
-            </div>
-            <button
-              onClick={handlePayment}
-              className="btn upgrade-btn"
-              disabled={loading}
-            >
-              {loading ? "Processing..." : "Upgrade Now & Build Smarter"}
-            </button>
+
             {error && (
               <p
                 style={{ color: "red", marginTop: "1rem", textAlign: "center" }}
