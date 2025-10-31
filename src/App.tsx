@@ -69,25 +69,26 @@ const MainLayout = ({
 
   const renderCalculator = () => {
     // Dynamically render the selected calculator component
+    // --- ALL CALCULATORS NOW RECEIVE 'hasPaid' PROP ---
     switch (activeCalculator) {
       case "construction":
         return <Calculator hasPaid={hasPaid} />;
       case "eligibility":
-        return <LoanEligibilityCalculator />;
+        return <LoanEligibilityCalculator hasPaid={hasPaid} />;
       case "loan":
-        return <LoanCalculator />;
+        return <LoanCalculator hasPaid={hasPaid} />;
       case "interior":
-        return <InteriorCalculator />;
+        return <InteriorCalculator hasPaid={hasPaid} />;
       case "doors-windows":
-        return <DoorsWindowsCalculator />;
+        return <DoorsWindowsCalculator hasPaid={hasPaid} />;
       case "flooring":
-        return <FlooringCalculator />;
+        return <FlooringCalculator hasPaid={hasPaid} />;
       case "painting":
-        return <PaintingCalculator />;
+        return <PaintingCalculator hasPaid={hasPaid} />;
       case "plumbing":
-        return <PlumbingCalculator />;
+        return <PlumbingCalculator hasPaid={hasPaid} />;
       case "electrical":
-        return <ElectricalCalculator />;
+        return <ElectricalCalculator hasPaid={hasPaid} />;
       default:
         return <Calculator hasPaid={hasPaid} />;
     }

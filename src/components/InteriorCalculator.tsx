@@ -1,5 +1,14 @@
-import React, { useState } from "react";
+// src/components/InteriorCalculator.tsx
+
+import React, { useState, useRef } from "react";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import Chart from "./Chart";
+
+// --- ADD 'hasPaid' to the component's props ---
+interface InteriorCalculatorProps {
+  hasPaid: boolean;
+}
 
 const qualityRates = {
   basic: {
@@ -31,10 +40,33 @@ const interiorBreakdown = {
 
 const chartColors = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594", "#A99A86"];
 
-const InteriorCalculator = () => {
+// --- Accept 'hasPaid' prop ---
+const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
   const [area, setArea] = useState("1200");
   const [quality, setQuality] = useState<keyof typeof qualityRates>("standard");
   const [totalCost, setTotalCost] = useState(0);
+
+  // --- ADDITIONS FOR PDF ---
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const downloadPDF = () => {
+    if (resultsRef.current) {
+      setIsDownloading(true);
+      html2canvas(resultsRef.current, { scale: 2, useCORS: true }).then(
+        (canvas) => {
+          const imgData = canvas.toDataURL("image/png");
+          const pdf = new jsPDF("p", "mm", "a4");
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+          pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+          pdf.save("interior-cost-estimate.pdf");
+          setIsDownloading(false);
+        }
+      );
+    }
+  };
+  // --- END OF ADDITIONS ---
 
   const calculateCost = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -95,7 +127,8 @@ const InteriorCalculator = () => {
         </form>
 
         {totalCost > 0 && (
-          <div id="resultsSection" className="visible">
+          // --- ATTACH REF HERE ---
+          <div id="resultsSection" className="visible" ref={resultsRef}>
             <div className="total-summary">
               <p>Total Estimated Interior Budget</p>
               <span>
@@ -143,6 +176,20 @@ const InteriorCalculator = () => {
                 <Chart data={interiorBreakdown} colors={chartColors} />
               </div>
             </div>
+            {/* --- ADD CONDITIONAL PDF BUTTON --- */}
+            {hasPaid && (
+              <div className="action-buttons">
+                <button
+                  className="btn"
+                  onClick={downloadPDF}
+                  disabled={isDownloading}
+                >
+                  <i className="fas fa-download"></i>{" "}
+                  {isDownloading ? "Downloading..." : "Download PDF"}
+                </button>
+              </div>
+            )}
+            {/* --- END OF ADDITION --- */}
           </div>
         )}
       </div>

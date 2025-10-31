@@ -1,6 +1,16 @@
-import React, { useState } from "react";
+// src/components/LoanCalculator.tsx
 
-const LoanCalculator: React.FC = () => {
+import React, { useState, useRef } from "react";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+
+// --- ADD 'hasPaid' to the component's props ---
+interface LoanCalculatorProps {
+  hasPaid: boolean;
+}
+
+// --- Accept 'hasPaid' prop ---
+const LoanCalculator: React.FC<LoanCalculatorProps> = ({ hasPaid }) => {
   const [principal, setPrincipal] = useState("2500000"); // Default: 25 Lakhs
   const [rate, setRate] = useState("8.5"); // Default: 8.5%
   const [years, setYears] = useState("20"); // Default: 20 years
@@ -8,6 +18,28 @@ const LoanCalculator: React.FC = () => {
   const [emi, setEmi] = useState("");
   const [totalInterest, setTotalInterest] = useState("");
   const [totalAmount, setTotalAmount] = useState("");
+
+  // --- ADDITIONS FOR PDF ---
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const downloadPDF = () => {
+    if (resultsRef.current) {
+      setIsDownloading(true);
+      html2canvas(resultsRef.current, { scale: 2, useCORS: true }).then(
+        (canvas) => {
+          const imgData = canvas.toDataURL("image/png");
+          const pdf = new jsPDF("p", "mm", "a4");
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+          pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+          pdf.save("loan-emi-estimate.pdf");
+          setIsDownloading(false);
+        }
+      );
+    }
+  };
+  // --- END OF ADDITIONS ---
 
   const calculateEMI = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -96,7 +128,8 @@ const LoanCalculator: React.FC = () => {
         </form>
 
         {emi && (
-          <div id="resultsSection" className="visible">
+          // --- ATTACH REF HERE ---
+          <div id="resultsSection" className="visible" ref={resultsRef}>
             <div className="loan-results-summary">
               <div className="loan-result-item">
                 <p>Monthly EMI</p>
@@ -125,6 +158,20 @@ const LoanCalculator: React.FC = () => {
                 institution's terms, conditions, and credit assessment.
               </p>
             </div>
+            {/* --- ADD CONDITIONAL PDF BUTTON --- */}
+            {hasPaid && (
+              <div className="action-buttons">
+                <button
+                  className="btn"
+                  onClick={downloadPDF}
+                  disabled={isDownloading}
+                >
+                  <i className="fas fa-download"></i>{" "}
+                  {isDownloading ? "Downloading..." : "Download PDF"}
+                </button>
+              </div>
+            )}
+            {/* --- END OF ADDITION --- */}
           </div>
         )}
       </div>
