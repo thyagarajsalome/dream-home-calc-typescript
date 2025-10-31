@@ -1,3 +1,5 @@
+// src/pages/TermsOfService.tsx
+
 import React from "react";
 
 const TermsOfService = () => {
@@ -26,6 +28,7 @@ const TermsOfService = () => {
         provided.
       </p>
 
+      {/* --- UPDATED SECTION --- */}
       <h2>3. Pro Accounts</h2>
       <p>
         Certain features, calculators, and functionalities of the Service are
@@ -34,21 +37,27 @@ const TermsOfService = () => {
       <ul>
         <li>
           <strong>Term of Access:</strong> A Pro Account provides you with
-          access to all premium features for a fixed term of two (2) years from
-          the date of purchase. It is not a lifetime license.
+          access to all premium features via a recurring subscription, available
+          on a monthly or annual basis (the "Subscription Term"). Your access
+          lasts for the duration of the Subscription Term you select and pay
+          for.
         </li>
         <li>
-          <strong>Payments and Fees:</strong> The fee for a Pro Account is a
-          one-time payment for the entirety of the 2-year term. All prices are
-          inclusive of applicable taxes, including GST.
+          <strong>Payments and Fees:</strong> The fee for a Pro Account is
+          billed at the beginning of your chosen Subscription Term (monthly or
+          annually). All prices are inclusive of applicable taxes, including
+          GST. Your subscription will automatically renew at the end of each
+          Subscription Term unless you cancel it prior to the renewal date.
         </li>
         <li>
           <strong>No Refund Policy:</strong> All payments for Pro Accounts are
           final and non-refundable. Once a purchase is made, you will have
-          access for the full 2-year term, and no refunds will be issued for any
-          reason.
+          access for the full paid Subscription Term, and no partial or full
+          refunds will be issued for any reason, including if you cancel your
+          subscription mid-term.
         </li>
       </ul>
+      {/* --- END OF UPDATE --- */}
 
       <h2>4. Intellectual Property</h2>
       <p>

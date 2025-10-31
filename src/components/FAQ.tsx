@@ -1,4 +1,5 @@
 // src/components/FAQ.tsx
+
 export default function FAQ() {
   return (
     <section id="faq">
@@ -17,11 +18,14 @@ export default function FAQ() {
         <details className="faq-item">
           <summary>What is included in the "Pro" version?</summary>
           <p>
-            The one-time Pro upgrade unlocks all specialized calculators
-            (Flooring, Painting, Plumbing, Electrical, Interiors, Doors &
-            Windows), enables Standard & Premium quality estimates in the main
-            construction calculator, and removes all restrictions on saving or
-            sharing reports.
+            {/* --- UPDATED TEXT --- */}
+            Upgrading to a Pro plan (available as a monthly or annual
+            subscription) unlocks all specialized calculators (Flooring,
+            Painting, Plumbing, Electrical, Interiors, Doors & Windows), enables
+            Standard & Premium quality estimates in the main construction
+            calculator, and removes all restrictions on saving or sharing
+            reports.
+            {/* --- END OF UPDATE --- */}
           </p>
         </details>
         <details className="faq-item">

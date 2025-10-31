@@ -926,3 +926,80 @@ select:focus {
 .signup-value-prop ul li i {
   color: var(--success-color);
 }
+
+/* ... (all your existing styles) ... */
+
+/* --- ADD THESE STYLES FOR THE UPGRADE PAGE --- */
+.pricing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin: 2.5rem 0;
+}
+
+.pricing-card {
+  border: 1px solid var(--border-color);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  text-align: center;
+  transition: all 0.3s ease;
+  background-color: var(--card-background);
+  position: relative;
+}
+
+.pricing-card h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.pricing-card .price-amount {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  line-height: 1.2;
+}
+
+.pricing-card .price-term {
+  opacity: 0.7;
+  margin-bottom: 1rem;
+}
+
+.pricing-card p {
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+  min-height: 40px; /* Aligns buttons */
+}
+
+.pricing-card .btn {
+  width: 100%;
+}
+
+.pricing-card.popular {
+  border: 2px solid var(--primary-color);
+  transform: scale(1.03);
+  box-shadow: 0 10px 30px rgba(217, 164, 67, 0.2);
+}
+
+.popular-badge {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--primary-color);
+  color: white;
+  padding: 0.3rem 1rem;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .pricing-grid {
+    grid-template-columns: 1fr;
+  }
+  .pricing-card.popular {
+    transform: scale(1);
+    order: -1; /* Make the popular plan appear first on mobile */
+  }
+}
+/* --- END OF NEW STYLES --- */
