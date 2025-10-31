@@ -3,6 +3,11 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import Chart from "./Chart";
 
+// --- ADD 'hasPaid' to the component's props ---
+interface FlooringCalculatorProps {
+  hasPaid: boolean;
+}
+
 const flooringTypes = {
   vitrified: { name: "Vitrified Tiles", rate: 150 },
   marble: { name: "Marble", rate: 250 },
@@ -19,7 +24,8 @@ const flooringBreakdown = {
 
 const chartColors = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
 
-const FlooringCalculator = () => {
+// --- Accept 'hasPaid' prop ---
+const FlooringCalculator: React.FC<FlooringCalculatorProps> = ({ hasPaid }) => {
   const [area, setArea] = useState("");
   const [flooringType, setFlooringType] =
     useState<keyof typeof flooringTypes>("vitrified");
@@ -145,17 +151,20 @@ const FlooringCalculator = () => {
                   <Chart data={flooringBreakdown} colors={chartColors} />
                 </div>
               </div>
-              {/* ADD THE BUTTON HERE */}
-              <div className="action-buttons">
-                <button
-                  className="btn"
-                  onClick={downloadPDF}
-                  disabled={isDownloading}
-                >
-                  <i className="fas fa-download"></i>{" "}
-                  {isDownloading ? "Downloading..." : "Download PDF"}
-                </button>
-              </div>
+              {/* --- UPDATE: PDF BUTTON IS NOW CONDITIONAL --- */}
+              {hasPaid && (
+                <div className="action-buttons">
+                  <button
+                    className="btn"
+                    onClick={downloadPDF}
+                    disabled={isDownloading}
+                  >
+                    <i className="fas fa-download"></i>{" "}
+                    {isDownloading ? "Downloading..." : "Download PDF"}
+                  </button>
+                </div>
+              )}
+              {/* --- END OF UPDATE --- */}
             </div>
           </div>
         )}

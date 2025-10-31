@@ -3,6 +3,11 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import Chart from "./Chart";
 
+// --- ADD 'hasPaid' to the component's props ---
+interface PlumbingCalculatorProps {
+  hasPaid: boolean;
+}
+
 const fixtureQualities = {
   basic: { name: "Basic", ratePerWetArea: 15000 },
   standard: { name: "Standard", ratePerWetArea: 25000 },
@@ -18,7 +23,8 @@ const plumbingBreakdown = {
 
 const chartColors = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
 
-const PlumbingCalculator = () => {
+// --- Accept 'hasPaid' prop ---
+const PlumbingCalculator: React.FC<PlumbingCalculatorProps> = ({ hasPaid }) => {
   const [wetAreas, setWetAreas] = useState("");
   const [quality, setQuality] =
     useState<keyof typeof fixtureQualities>("basic");
@@ -144,16 +150,20 @@ const PlumbingCalculator = () => {
                   <Chart data={plumbingBreakdown} colors={chartColors} />
                 </div>
               </div>
-              <div className="action-buttons">
-                <button
-                  className="btn"
-                  onClick={downloadPDF}
-                  disabled={isDownloading}
-                >
-                  <i className="fas fa-download"></i>{" "}
-                  {isDownloading ? "Downloading..." : "Download PDF"}
-                </button>
-              </div>
+              {/* --- UPDATE: PDF BUTTON IS NOW CONDITIONAL --- */}
+              {hasPaid && (
+                <div className="action-buttons">
+                  <button
+                    className="btn"
+                    onClick={downloadPDF}
+                    disabled={isDownloading}
+                  >
+                    <i className="fas fa-download"></i>{" "}
+                    {isDownloading ? "Downloading..." : "Download PDF"}
+                  </button>
+                </div>
+              )}
+              {/* --- END OF UPDATE --- */}
             </div>
           </div>
         )}
