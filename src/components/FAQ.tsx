@@ -20,11 +20,14 @@ export default function FAQ() {
           <p>
             {/* --- UPDATED TEXT --- */}
             Upgrading to a Pro plan (available as a monthly or annual
-            subscription) unlocks all specialized calculators (Flooring,
-            Painting, Plumbing, Electrical, Interiors, Doors & Windows), enables
-            Standard & Premium quality estimates in the main construction
-            calculator, and removes all restrictions on saving or sharing
-            reports.
+            subscription) unlocks all specialized calculators (
+            <strong style={{ color: "var(--primary-color)" }}>
+              Materials BOQ
+            </strong>
+            , Flooring, Painting, Plumbing, Electrical, Interiors, Doors &
+            Windows), enables Standard & Premium quality estimates in the main
+            construction calculator, and removes all restrictions on saving or
+            sharing reports.
             {/* --- END OF UPDATE --- */}
           </p>
         </details>
@@ -53,8 +56,11 @@ export default function FAQ() {
           <p>
             The basic Construction, Loan EMI, and Eligibility calculators are
             free to use. To access the specialized calculators for Interiors,
-            Doors & Windows, Flooring, Painting, Plumbing, and Electrical, you
-            will need to upgrade to a Pro account.
+            Doors & Windows, Flooring, Painting, Plumbing, Electrical, and
+            <strong style={{ color: "var(--primary-color)" }}>
+              Materials BOQ
+            </strong>
+            , you will need to upgrade to a Pro account.
           </p>
         </details>
       </div>
