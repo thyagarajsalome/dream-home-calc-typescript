@@ -7,9 +7,9 @@ import {
   Route,
   Navigate,
   Outlet,
-  useNavigate, // Import useNavigate
-  useLocation, // Import useLocation
-  Link, // Import Link for the AuthHandler message
+  useNavigate,
+  useLocation,
+  Link,
 } from "react-router-dom";
 import { supabase } from "./supabaseClient"; // Ensure this path is correct
 import { User } from "@supabase/supabase-js";
@@ -32,7 +32,9 @@ import FAQ from "./components/FAQ";
 import SignIn from "./components/SignIn";
 import SignUp from "./components/SignUp";
 import UpgradePage from "./components/UpgradePage";
-import GuestCalculator from "./components/GuestCalculator"; // Make sure this exists
+import GuestCalculator from "./components/GuestCalculator";
+// --- NEW IMPORT ---
+import MaterialQuantityCalculator from "./components/MaterialQuantityCalculator";
 
 // --- Import Page Components ---
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -50,7 +52,8 @@ type CalculatorType =
   | "flooring"
   | "painting"
   | "plumbing"
-  | "electrical";
+  | "electrical"
+  | "materials"; // <-- ADDED
 
 // --- Layout Components ---
 
@@ -77,6 +80,10 @@ const MainLayout = ({
         return <LoanEligibilityCalculator hasPaid={hasPaid} />;
       case "loan":
         return <LoanCalculator hasPaid={hasPaid} />;
+      // --- NEW CASE ---
+      case "materials":
+        return <MaterialQuantityCalculator hasPaid={hasPaid} />;
+      // -----------------
       case "interior":
         return <InteriorCalculator hasPaid={hasPaid} />;
       case "doors-windows":

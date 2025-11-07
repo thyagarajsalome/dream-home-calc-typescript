@@ -10,7 +10,8 @@ type CalculatorType =
   | "flooring"
   | "painting"
   | "plumbing"
-  | "electrical";
+  | "electrical"
+  | "materials"; // <-- ADDED
 
 interface CalculatorTabsProps {
   activeCalculator: CalculatorType;
@@ -42,6 +43,14 @@ const calculators: {
     icon: "fas fa-hand-holding-usd",
     isPremium: false,
   },
+  // --- NEW: Material Quantity Calculator ---
+  {
+    id: "materials",
+    name: "Materials BOQ",
+    icon: "fas fa-cubes",
+    isPremium: true,
+  },
+  // ----------------------------------------
   { id: "interior", name: "Interiors", icon: "fas fa-couch", isPremium: true },
   {
     id: "doors-windows",
