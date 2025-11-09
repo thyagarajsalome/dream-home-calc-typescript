@@ -183,6 +183,7 @@ const AuthHandler: React.FC = () => {
       // We just need to clean the URL by redirecting to the home page.
       navigate("/", { replace: true });
     }
+
     // Only run this effect when the location (URL) changes
   }, [location, navigate]);
 
