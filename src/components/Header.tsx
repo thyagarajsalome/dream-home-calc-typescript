@@ -42,9 +42,14 @@ const Header: React.FC<HeaderProps> = ({ user, installPrompt }) => {
   return (
     <header className="header">
       <nav className="navbar container">
+        {/* --- MODIFIED LOGO LINK --- */}
         <Link to="/" className="logo">
-          <i className="fas fa-home"></i> DreamHomeCalc
+          <img src="/icons/bg-logo.png" alt="DreamHomeCalc Logo" />
+          <span>HDE</span>
         </Link>
+
+        {/* --- END OF MODIFICATION --- */}
+
         <ul className={isMenuOpen ? "nav-menu active" : "nav-menu"}>
           {installPrompt && (
             <li>

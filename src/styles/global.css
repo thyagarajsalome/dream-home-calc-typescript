@@ -140,11 +140,21 @@ section {
   height: 70px;
 }
 .logo {
-  font-size: 1.5rem;
+  font-size: 1.5rem; /* This will style the "DreamHomeCalc" text */
   font-weight: 800;
-  color: var(--secondary-color);
+  color: var(--primary-color);
   text-decoration: none;
+  display: flex;
+  align-items: center;
 }
+.logo img {
+  height: 45px; /* Controls the logo's height */
+  width: 45px; /* Controls the logo's width */
+  object-fit: cover;
+  /* Optional: uncomment below if you want a circular logo */
+  /* border-radius: 50%; */
+}
+
 .logo i {
   color: var(--primary-color);
 }
