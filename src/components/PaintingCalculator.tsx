@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import Chart from "./Chart";
 import { useUser } from "../context/UserContext";
@@ -17,18 +17,19 @@ const paintTypes = {
 
 const processTypes = {
   repaint: { name: "Repainting (Touchup + 2 Coats)", factor: 1.0 },
-  fresh: { name: "Fresh Painting (Putty + Primer + 2 Coats)", factor: 1.6 },
+  fresh: { name: "Fresh Painting (Putty + Primer + 2 Coats)", factor: 1.6 }, // Costs 60% more
 };
 
 const chartColors = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
 
 const PaintingCalculator: React.FC = () => {
-  const { hasPaid, user } = useUser();
+  const { hasPaid, user } = useUser(); // Use Context
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Inputs
-  const [carpetArea, setCarpetArea] = useState("");
-  const [wallArea, setWallArea] = useState("");
+  const [carpetArea, setCarpetArea] = useState(""); // Helper input
+  const [wallArea, setWallArea] = useState(""); // Actual calc input
   const [includeCeiling, setIncludeCeiling] = useState(true);
 
   const [paintType, setPaintType] =
@@ -42,6 +43,7 @@ const PaintingCalculator: React.FC = () => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Helper: Auto-calculate wall area when carpet area changes
   useEffect(() => {
     const area = parseFloat(carpetArea);
     if (!isNaN(area)) {
@@ -50,6 +52,21 @@ const PaintingCalculator: React.FC = () => {
       setWallArea(Math.round(walls + ceiling).toString());
     }
   }, [carpetArea, includeCeiling]);
+
+  // --- Load Data on Edit ---
+  useEffect(() => {
+    if (location.state && (location.state as any).projectData) {
+      const data = (location.state as any).projectData;
+      if (data.paintType && data.process) {
+        setCarpetArea(data.carpetArea);
+        setWallArea(data.wallArea);
+        setPaintType(data.paintType);
+        setProcess(data.process);
+        setIncludeCeiling(data.includeCeiling);
+      }
+    }
+  }, [location]);
+  // ------------------------
 
   const downloadPDF = () => {
     if (resultsRef.current) {
@@ -95,10 +112,11 @@ const PaintingCalculator: React.FC = () => {
         },
       });
       if (error) throw error;
-      alert("Saved!");
+      alert("Project saved successfully!");
       navigate("/dashboard");
     } catch (e) {
-      alert("Error saving.");
+      console.error(e);
+      alert("Error saving project.");
     } finally {
       setIsSaving(false);
     }
@@ -131,6 +149,7 @@ const PaintingCalculator: React.FC = () => {
         )}
 
         <form onSubmit={calculateCost}>
+          {/* Smart Area Input */}
           <div className="form-grid">
             <div className="form-group">
               <label htmlFor="carpetArea">
@@ -271,35 +290,28 @@ const PaintingCalculator: React.FC = () => {
               </div>
 
               {hasPaid && (
-                // ... inside return statement ...
                 <div className="action-buttons">
-                  {hasPaid && (
-                    <>
-                      <button
-                        className="btn"
-                        onClick={downloadPDF}
-                        disabled={isDownloading}
-                      >
-                        <i className="fas fa-download"></i>{" "}
-                        {isDownloading ? "Downloading..." : "Download PDF"}
-                      </button>
-                      {/* UPDATED TEXT */}
-                      <button
-                        className="btn"
-                        style={{
-                          backgroundColor: "var(--accent-color)",
-                          marginLeft: "10px",
-                        }}
-                        onClick={handleSave}
-                        disabled={isSaving}
-                      >
-                        <i className="fas fa-save"></i>{" "}
-                        {isSaving ? "Saving..." : "Save to Dashboard"}
-                      </button>
-                    </>
-                  )}
+                  <button
+                    className="btn"
+                    onClick={downloadPDF}
+                    disabled={isDownloading}
+                  >
+                    <i className="fas fa-download"></i>{" "}
+                    {isDownloading ? "Downloading..." : "Download PDF"}
+                  </button>
+                  <button
+                    className="btn"
+                    style={{
+                      backgroundColor: "var(--secondary-color)",
+                      marginLeft: "10px",
+                    }}
+                    onClick={handleSave}
+                    disabled={isSaving}
+                  >
+                    <i className="fas fa-save"></i>{" "}
+                    {isSaving ? "Saving..." : "Save to Dashboard"}
+                  </button>
                 </div>
-                // ...
               )}
             </div>
           </div>

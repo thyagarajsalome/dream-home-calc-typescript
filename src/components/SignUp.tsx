@@ -14,27 +14,23 @@ const SignUp = () => {
     e.preventDefault();
     setError("");
     setMessage("");
-
     if (password.length < 6) {
       setError("Password must be at least 6 characters long.");
       return;
     }
-
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        // IMPORTANT: Helps ensure the email link is generated correctly
         options: {
+          // This ensures the user is redirected back to your site after clicking the email link
           emailRedirectTo: window.location.origin,
         },
       });
-
       if (error) throw error;
-
       if (data.user) {
         setMessage(
-          "Success! Confirmation email sent. Please check your inbox and spam folder."
+          "Success! Please check your email (and spam folder) to confirm your account."
         );
       }
     } catch (err: any) {
@@ -92,14 +88,14 @@ const SignUp = () => {
           <div
             style={{
               marginTop: "1rem",
-              padding: "0.5rem",
-              backgroundColor: "#e6fffa",
-              border: "1px solid #38b2ac",
-              borderRadius: "4px",
+              padding: "10px",
+              backgroundColor: "#d4edda",
+              color: "#155724",
+              borderRadius: "5px",
               textAlign: "center",
             }}
           >
-            <p style={{ color: "#2c7a7b", fontWeight: "bold" }}>{message}</p>
+            {message}
           </div>
         )}
       </form>

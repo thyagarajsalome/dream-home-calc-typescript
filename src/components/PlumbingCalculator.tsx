@@ -1,21 +1,22 @@
 // src/components/PlumbingCalculator.tsx
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import Chart from "./Chart";
 import { useUser } from "../context/UserContext";
 
-// Rates per unit
+// Rates per unit (Average for Standard Quality)
 const unitRates = {
   kitchen: { name: "Kitchen (Sink + Taps)", rate: 12000 },
   commonBath: { name: "Common Bathroom (Basic)", rate: 25000 },
-  masterBath: { name: "Master Bathroom (Premium)", rate: 45000 },
+  masterBath: { name: "Master Bathroom (Premium)", rate: 45000 }, // Higher due to diverters, etc.
   motor: { name: "Motor & Pump Installation", rate: 15000 },
 };
 
+// Quality Multipliers
 const qualityMultipliers = {
   basic: { name: "Basic (PVC/Chrome Plated)", factor: 0.8 },
   standard: { name: "Standard (Jaguar/Parryware)", factor: 1.0 },
@@ -25,8 +26,9 @@ const qualityMultipliers = {
 const chartColors = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
 
 const PlumbingCalculator: React.FC = () => {
-  const { hasPaid, user } = useUser();
+  const { hasPaid, user } = useUser(); // Use Context
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Inputs
   const [kitchens, setKitchens] = useState("1");
@@ -40,10 +42,25 @@ const PlumbingCalculator: React.FC = () => {
   const [totalCost, setTotalCost] = useState(0);
   const [costBreakdown, setCostBreakdown] = useState<any>(null);
 
-  // PDF Logic
+  // PDF & Save Logic
   const resultsRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // --- Load Data on Edit ---
+  useEffect(() => {
+    if (location.state && (location.state as any).projectData) {
+      const data = (location.state as any).projectData;
+      if (data.kitchens && data.commonBaths) {
+        setKitchens(data.kitchens);
+        setCommonBaths(data.commonBaths);
+        setMasterBaths(data.masterBaths);
+        setIncludeMotor(data.includeMotor);
+        setQuality(data.quality);
+      }
+    }
+  }, [location]);
+  // ------------------------
 
   const downloadPDF = () => {
     if (resultsRef.current) {
@@ -68,7 +85,7 @@ const PlumbingCalculator: React.FC = () => {
       navigate("/signin");
       return;
     }
-    if (!costBreakdown) return;
+    if (totalCost === 0) return;
     const name = prompt("Project Name:");
     if (!name) return;
 
@@ -90,10 +107,11 @@ const PlumbingCalculator: React.FC = () => {
         },
       });
       if (error) throw error;
-      alert("Saved!");
+      alert("Project saved successfully!");
       navigate("/dashboard");
     } catch (e) {
-      alert("Error saving.");
+      console.error(e);
+      alert("Error saving project.");
     } finally {
       setIsSaving(false);
     }
@@ -107,13 +125,15 @@ const PlumbingCalculator: React.FC = () => {
     const mCount = parseInt(masterBaths) || 0;
     const factor = qualityMultipliers[quality].factor;
 
+    // Calculate Base Costs (Material + Labor integrated in unit rates)
     const kitchenCost = kCount * unitRates.kitchen.rate * factor;
     const commonBathCost = cCount * unitRates.commonBath.rate * factor;
     const masterBathCost = mCount * unitRates.masterBath.rate * factor;
-    const motorCost = includeMotor ? unitRates.motor.rate : 0;
+    const motorCost = includeMotor ? unitRates.motor.rate : 0; // Motor cost doesn't scale much with fixture quality
 
     const total = kitchenCost + commonBathCost + masterBathCost + motorCost;
 
+    // Approximate split for chart
     const piping = total * 0.35;
     const fixtures = total * 0.4;
     const labor = total * 0.25;
@@ -289,35 +309,28 @@ const PlumbingCalculator: React.FC = () => {
               </div>
 
               {hasPaid && (
-                // ... inside return statement ...
                 <div className="action-buttons">
-                  {hasPaid && (
-                    <>
-                      <button
-                        className="btn"
-                        onClick={downloadPDF}
-                        disabled={isDownloading}
-                      >
-                        <i className="fas fa-download"></i>{" "}
-                        {isDownloading ? "Downloading..." : "Download PDF"}
-                      </button>
-                      {/* UPDATED TEXT */}
-                      <button
-                        className="btn"
-                        style={{
-                          backgroundColor: "var(--accent-color)",
-                          marginLeft: "10px",
-                        }}
-                        onClick={handleSave}
-                        disabled={isSaving}
-                      >
-                        <i className="fas fa-save"></i>{" "}
-                        {isSaving ? "Saving..." : "Save to Dashboard"}
-                      </button>
-                    </>
-                  )}
+                  <button
+                    className="btn"
+                    onClick={downloadPDF}
+                    disabled={isDownloading}
+                  >
+                    <i className="fas fa-download"></i>{" "}
+                    {isDownloading ? "Downloading..." : "Download PDF"}
+                  </button>
+                  <button
+                    className="btn"
+                    style={{
+                      backgroundColor: "var(--secondary-color)",
+                      marginLeft: "10px",
+                    }}
+                    onClick={handleSave}
+                    disabled={isSaving}
+                  >
+                    <i className="fas fa-save"></i>{" "}
+                    {isSaving ? "Saving..." : "Save to Dashboard"}
+                  </button>
                 </div>
-                // ...
               )}
             </div>
           </div>

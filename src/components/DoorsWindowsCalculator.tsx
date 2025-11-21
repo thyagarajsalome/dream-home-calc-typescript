@@ -1,9 +1,9 @@
 // src/components/DoorsWindowsCalculator.tsx
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import { useUser } from "../context/UserContext";
 
@@ -28,6 +28,7 @@ const DoorsWindowsCalculator: React.FC<DoorsWindowsCalculatorProps> = ({
 }) => {
   const { user } = useUser();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Door States
   const [doorCount, setDoorCount] = useState("5");
@@ -49,6 +50,22 @@ const DoorsWindowsCalculator: React.FC<DoorsWindowsCalculatorProps> = ({
   const resultsRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // --- Load Data on Edit ---
+  useEffect(() => {
+    if (location.state && (location.state as any).projectData) {
+      const data = (location.state as any).projectData;
+      if (data.doorCount && data.windowCount) {
+        setDoorCount(data.doorCount);
+        setDoorType(data.doorType);
+        setWindowCount(data.windowCount);
+        setWindowType(data.windowType);
+        setWindowWidth(data.windowWidth || "5");
+        setWindowHeight(data.windowHeight || "4");
+      }
+    }
+  }, [location]);
+  // ------------------------
 
   const downloadPDF = () => {
     if (resultsRef.current) {
@@ -95,10 +112,11 @@ const DoorsWindowsCalculator: React.FC<DoorsWindowsCalculatorProps> = ({
         },
       });
       if (error) throw error;
-      alert("Saved!");
+      alert("Project saved successfully!");
       navigate("/dashboard");
     } catch (e) {
-      alert("Error saving.");
+      console.error(e);
+      alert("Error saving project.");
     } finally {
       setIsSaving(false);
     }
@@ -126,6 +144,7 @@ const DoorsWindowsCalculator: React.FC<DoorsWindowsCalculatorProps> = ({
       <div className="card">
         <h2 className="section-title">Doors & Windows Calculator</h2>
         <form onSubmit={calculateCost}>
+          {/* Doors Section */}
           <fieldset className="form-fieldset">
             <legend>Doors</legend>
             <div className="form-grid">
@@ -158,6 +177,7 @@ const DoorsWindowsCalculator: React.FC<DoorsWindowsCalculatorProps> = ({
             </div>
           </fieldset>
 
+          {/* Windows Section */}
           <fieldset className="form-fieldset">
             <legend>Windows</legend>
             <div className="form-grid">
@@ -216,6 +236,7 @@ const DoorsWindowsCalculator: React.FC<DoorsWindowsCalculatorProps> = ({
         </form>
 
         {totalCost > 0 && (
+          // --- ATTACH REF HERE ---
           <div id="resultsSection" className="visible" ref={resultsRef}>
             <div className="total-summary">
               <p>Total Estimated Doors & Windows Cost</p>
@@ -249,38 +270,32 @@ const DoorsWindowsCalculator: React.FC<DoorsWindowsCalculatorProps> = ({
                 </span>
               </div>
             </div>
-
+            {/* --- ADD CONDITIONAL PDF BUTTON --- */}
             {hasPaid && (
-              // ... inside return statement ...
               <div className="action-buttons">
-                {hasPaid && (
-                  <>
-                    <button
-                      className="btn"
-                      onClick={downloadPDF}
-                      disabled={isDownloading}
-                    >
-                      <i className="fas fa-download"></i>{" "}
-                      {isDownloading ? "Downloading..." : "Download PDF"}
-                    </button>
-                    {/* UPDATED TEXT */}
-                    <button
-                      className="btn"
-                      style={{
-                        backgroundColor: "var(--accent-color)",
-                        marginLeft: "10px",
-                      }}
-                      onClick={handleSave}
-                      disabled={isSaving}
-                    >
-                      <i className="fas fa-save"></i>{" "}
-                      {isSaving ? "Saving..." : "Save to Dashboard"}
-                    </button>
-                  </>
-                )}
+                <button
+                  className="btn"
+                  onClick={downloadPDF}
+                  disabled={isDownloading}
+                >
+                  <i className="fas fa-download"></i>{" "}
+                  {isDownloading ? "Downloading..." : "Download PDF"}
+                </button>
+                <button
+                  className="btn"
+                  style={{
+                    backgroundColor: "var(--secondary-color)",
+                    marginLeft: "10px",
+                  }}
+                  onClick={handleSave}
+                  disabled={isSaving}
+                >
+                  <i className="fas fa-save"></i>{" "}
+                  {isSaving ? "Saving..." : "Save to Dashboard"}
+                </button>
               </div>
-              // ...
             )}
+            {/* --- END OF ADDITION --- */}
           </div>
         )}
       </div>
