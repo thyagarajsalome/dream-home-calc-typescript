@@ -1,18 +1,22 @@
 :root {
-  --primary-color: #d9a443;
-  --secondary-color: #59483b;
-  --accent-color: #8c6a4e;
-  --background-color: #f8f9fa;
-  --card-background: #ffffff;
-  --text-color: #333;
-  --border-color: #e0e0e0;
-  --font-body: "Roboto", sans-serif;
-  --font-heading: "Roboto", sans-serif;
-  --border-radius: 12px;
-  --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  --danger-color: #e74c3c;
-  --warning-color: #f39c12;
-  --success-color: #2ecc71;
+  /* Modern "Trust" Palette */
+  --primary-color: #0f172a; /* Slate 900 - Deep Dark Blue/Black */
+  --secondary-color: #3b82f6; /* Blue 500 - Bright Interactive Blue */
+  --accent-color: #f59e0b; /* Amber 500 - Action Gold (Buttons) */
+  --background-color: #f8fafc; /* Slate 50 - Very light gray-blue background */
+  --card-bg: #ffffff; /* Pure White */
+  --text-color: #334155; /* Slate 700 - Soft Dark Gray for text */
+  --border-color: #e2e8f0; /* Slate 200 - Light border */
+
+  /* Status Colors */
+  --danger-color: #ef4444; /* Red 500 */
+  --success-color: #10b981; /* Emerald 500 */
+  --warning-color: #f59e0b; /* Amber 500 */
+
+  /* Global Spacing */
+  --container-width: 1200px;
+  --header-height: 70px;
+  --border-radius: 12px; /* Softer, modern corners */
 }
 
 * {
@@ -26,7 +30,7 @@ html {
 }
 body {
   font-family: var(--font-body);
-  background-color: var(--background-color);
+  background: linear-gradient(to bottom, var(--background-color), #eff6ff);
   color: var(--text-color);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -394,24 +398,29 @@ select:focus {
 .rate-selector {
   margin-top: 1rem;
 }
+/* Update Button Styles for better visibility */
 .btn {
-  background: var(--primary-color);
-  color: #fff;
-  border: none;
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
-  cursor: pointer;
+  background-color: var(--secondary-color); /* Blue by default */
+  border-radius: var(--border-radius);
   font-weight: 600;
-  font-size: 1rem;
+  letter-spacing: 0.5px;
   transition: all 0.2s ease;
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2); /* Subtle shadow */
 }
+
 .btn:hover {
-  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 8px -1px rgba(59, 130, 246, 0.3);
 }
 .btn-secondary {
   background: #e5e5ea;
   color: var(--secondary-color);
   border: none;
+}
+/* Primary Action Button (Calculate/Save) */
+.btn-primary {
+  background-color: var(--accent-color);
+  color: white;
 }
 .total-summary {
   margin-bottom: 2rem;
@@ -518,7 +527,12 @@ select:focus {
   font-size: 0.9rem;
   color: #888;
 }
-
+/* Card styling improvement */
+.card {
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
 /* Upgrade Page */
 .upgrade-card {
   max-width: 550px;
