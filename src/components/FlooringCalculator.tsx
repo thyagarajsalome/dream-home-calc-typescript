@@ -1,9 +1,9 @@
 // src/components/FlooringCalculator.tsx
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import Chart from "./Chart";
 import { useUser } from "../context/UserContext";
@@ -19,8 +19,9 @@ const flooringTypes = {
 const chartColors = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
 
 const FlooringCalculator: React.FC = () => {
-  const { hasPaid, user } = useUser();
+  const { hasPaid, user } = useUser(); // Use Context
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Inputs
   const [area, setArea] = useState("");
@@ -32,10 +33,23 @@ const FlooringCalculator: React.FC = () => {
   const [totalCost, setTotalCost] = useState(0);
   const [breakdown, setBreakdown] = useState<any>(null);
 
-  // PDF Logic
+  // PDF & Save Logic
   const resultsRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // --- Load Data on Edit ---
+  useEffect(() => {
+    if (location.state && (location.state as any).projectData) {
+      const data = (location.state as any).projectData;
+      if (data.flooringType) {
+        setArea(data.area);
+        setFlooringType(data.flooringType);
+        setIncludeSkirting(data.includeSkirting);
+      }
+    }
+  }, [location]);
+  // ------------------------
 
   const downloadPDF = () => {
     if (resultsRef.current) {
@@ -61,7 +75,7 @@ const FlooringCalculator: React.FC = () => {
       return;
     }
     if (!breakdown) return;
-    const name = prompt("Project Name:");
+    const name = prompt("Project Name (e.g., Living Room Flooring):");
     if (!name) return;
 
     setIsSaving(true);
@@ -80,10 +94,11 @@ const FlooringCalculator: React.FC = () => {
         },
       });
       if (error) throw error;
-      alert("Saved!");
+      alert("Project saved successfully!");
       navigate("/dashboard");
     } catch (e) {
-      alert("Error saving.");
+      console.error(e);
+      alert("Failed to save project.");
     } finally {
       setIsSaving(false);
     }
@@ -100,21 +115,23 @@ const FlooringCalculator: React.FC = () => {
     const materialArea = parsedArea * (1 + selectedType.wastage);
     const materialCost = materialArea * selectedType.rate;
 
-    // 2. Labor Cost
+    // 2. Labor Cost (Avg ₹35/sq.ft for tiles, ₹50 for marble)
     const laborRate =
       flooringType === "marble" || flooringType === "granite" ? 60 : 35;
     const laborCost = parsedArea * laborRate;
 
-    // 3. Skirting Cost
+    // 3. Skirting Cost (Approx Perimeter = sqrt(Area) * 4)
     let skirtingCost = 0;
     let skirtingLen = 0;
 
     if (includeSkirting) {
+      // Estimate perimeter assuming square room
       skirtingLen = Math.sqrt(parsedArea) * 4;
+      // Skirting roughly costs same per R.ft as material per Sq.ft + fixing
       skirtingCost = skirtingLen * (selectedType.rate * 0.8 + 20);
     }
 
-    // 4. Supplies
+    // 4. Supplies (Cement, Sand, Grout) ~ ₹25/sq.ft
     const suppliesCost = parsedArea * 25;
 
     const total = materialCost + laborCost + skirtingCost + suppliesCost;
@@ -272,35 +289,28 @@ const FlooringCalculator: React.FC = () => {
               </div>
 
               {hasPaid && (
-                // ... inside return statement ...
                 <div className="action-buttons">
-                  {hasPaid && (
-                    <>
-                      <button
-                        className="btn"
-                        onClick={downloadPDF}
-                        disabled={isDownloading}
-                      >
-                        <i className="fas fa-download"></i>{" "}
-                        {isDownloading ? "Downloading..." : "Download PDF"}
-                      </button>
-                      {/* UPDATED TEXT */}
-                      <button
-                        className="btn"
-                        style={{
-                          backgroundColor: "var(--accent-color)",
-                          marginLeft: "10px",
-                        }}
-                        onClick={handleSave}
-                        disabled={isSaving}
-                      >
-                        <i className="fas fa-save"></i>{" "}
-                        {isSaving ? "Saving..." : "Save to Dashboard"}
-                      </button>
-                    </>
-                  )}
+                  <button
+                    className="btn"
+                    onClick={downloadPDF}
+                    disabled={isDownloading}
+                  >
+                    <i className="fas fa-download"></i>{" "}
+                    {isDownloading ? "Downloading..." : "Download PDF"}
+                  </button>
+                  <button
+                    className="btn"
+                    style={{
+                      backgroundColor: "var(--secondary-color)",
+                      marginLeft: "10px",
+                    }}
+                    onClick={handleSave}
+                    disabled={isSaving}
+                  >
+                    <i className="fas fa-save"></i>{" "}
+                    {isSaving ? "Saving..." : "Save to Dashboard"}
+                  </button>
                 </div>
-                // ...
               )}
             </div>
           </div>

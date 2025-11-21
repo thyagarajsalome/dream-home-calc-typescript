@@ -48,10 +48,17 @@ const Dashboard: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this project?")) return;
+
     const { error } = await supabase.from("projects").delete().eq("id", id);
     if (!error) {
       setProjects(projects.filter((p) => p.id !== id));
     }
+  };
+
+  const handleEdit = (project: Project) => {
+    navigate("/", {
+      state: { calculatorType: project.type, projectData: project.data },
+    });
   };
 
   const toggleDetails = (id: string) => {
@@ -67,7 +74,7 @@ const Dashboard: React.FC = () => {
   };
 
   const renderDataValue = (key: string, value: any) => {
-    if (typeof value === "object" && value !== null) return "Complex Data";
+    if (typeof value === "object" && value !== null) return "";
     if (
       key.toLowerCase().includes("cost") ||
       key.toLowerCase().includes("price")
@@ -82,8 +89,8 @@ const Dashboard: React.FC = () => {
 
   return (
     <section className="container">
-      {/* --- FIXED BACK BUTTON --- */}
-      <div style={{ marginBottom: "1.5rem", marginTop: "1rem" }}>
+      {/* --- Back Button with correct padding and Gold/Brown theme --- */}
+      <div style={{ marginTop: "2rem", marginBottom: "2rem" }}>
         <Link
           to="/"
           className="btn"
@@ -91,16 +98,17 @@ const Dashboard: React.FC = () => {
             backgroundColor: "var(--secondary-color)",
             display: "inline-flex",
             alignItems: "center",
-            gap: "8px",
-            padding: "0.6rem 1.2rem",
+            gap: "10px",
+            padding: "0.8rem 1.5rem",
             color: "white",
             textDecoration: "none",
+            fontSize: "1rem",
           }}
         >
           <i className="fas fa-arrow-left"></i> Back to Calculators
         </Link>
       </div>
-      {/* ------------------------- */}
+      {/* ---------------------------------------------------------- */}
 
       <div className="card">
         <div
@@ -109,6 +117,8 @@ const Dashboard: React.FC = () => {
             justifyContent: "space-between",
             alignItems: "center",
             marginBottom: "2rem",
+            paddingBottom: "1rem",
+            borderBottom: "1px solid var(--border-color)",
           }}
         >
           <h2
@@ -117,8 +127,8 @@ const Dashboard: React.FC = () => {
           >
             My Saved Projects
           </h2>
-          <Link to="/" className="btn" style={{ padding: "0.6rem 1.2rem" }}>
-            <i className="fas fa-plus"></i> New Calculation
+          <Link to="/" className="btn" style={{ padding: "0.8rem 1.5rem" }}>
+            <i className="fas fa-plus"></i> New
           </Link>
         </div>
 
@@ -129,7 +139,7 @@ const Dashboard: React.FC = () => {
               style={{ fontSize: "3rem", marginBottom: "1rem", opacity: 0.5 }}
             ></i>
             <p>You haven't saved any projects yet.</p>
-            <p>Go to a calculator and click "Save" to see it here.</p>
+            <p>Go to a calculator and click "Save to Dashboard" to start.</p>
           </div>
         ) : (
           <div style={{ display: "grid", gap: "1rem" }}>
@@ -171,6 +181,7 @@ const Dashboard: React.FC = () => {
                           background: "#eee",
                           marginRight: "1rem",
                           textTransform: "capitalize",
+                          fontWeight: "bold",
                         }}
                       >
                         {project.type}
@@ -183,22 +194,30 @@ const Dashboard: React.FC = () => {
                   </div>
 
                   <div style={{ display: "flex", gap: "1rem" }}>
+                    {/* Edit Button */}
+                    <button
+                      onClick={() => handleEdit(project)}
+                      className="btn"
+                      style={{
+                        backgroundColor: "var(--primary-color)",
+                        padding: "0.5rem 1rem",
+                      }}
+                    >
+                      <i className="fas fa-edit"></i> Edit
+                    </button>
+
                     <button
                       onClick={() => toggleDetails(project.id)}
-                      className="btn"
-                      style={{ padding: "0.5rem 1rem", fontSize: "0.9rem" }}
+                      className="btn btn-secondary"
+                      style={{ padding: "0.5rem 1rem" }}
                     >
-                      {expandedProjectId === project.id
-                        ? "Hide Details"
-                        : "View Details"}
+                      {expandedProjectId === project.id ? "Hide" : "View"}
                     </button>
                     <button
                       onClick={() => handleDelete(project.id)}
-                      className="btn btn-secondary"
+                      className="btn"
                       style={{
-                        color: "var(--danger-color)",
-                        background: "#fff",
-                        border: "1px solid var(--danger-color)",
+                        backgroundColor: "var(--danger-color)",
                         padding: "0.5rem 1rem",
                       }}
                     >
@@ -207,7 +226,6 @@ const Dashboard: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Details View */}
                 {expandedProjectId === project.id && (
                   <div
                     style={{
@@ -222,13 +240,13 @@ const Dashboard: React.FC = () => {
                         color: "var(--primary-color)",
                       }}
                     >
-                      Saved Estimate Details:
+                      Estimate Details:
                     </h4>
                     <div
                       style={{
                         display: "grid",
                         gridTemplateColumns:
-                          "repeat(auto-fill, minmax(200px, 1fr))",
+                          "repeat(auto-fill, minmax(180px, 1fr))",
                         gap: "10px",
                       }}
                     >
@@ -257,7 +275,6 @@ const Dashboard: React.FC = () => {
                           </div>
                         );
                       })}
-                      {/* Total Cost Highlight */}
                       {project.data.totalCost && (
                         <div
                           style={{
@@ -269,7 +286,7 @@ const Dashboard: React.FC = () => {
                             fontWeight: "bold",
                           }}
                         >
-                          Total Estimate: <br />₹
+                          Total: ₹
                           {Number(project.data.totalCost).toLocaleString(
                             "en-IN"
                           )}

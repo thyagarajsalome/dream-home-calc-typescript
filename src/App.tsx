@@ -1,6 +1,5 @@
 // src/App.tsx
-
-import React from "react";
+import React, { useEffect } from "react";
 import {
   HashRouter as Router,
   Routes,
@@ -12,8 +11,7 @@ import {
   Link,
 } from "react-router-dom";
 import { UserProvider, useUser } from "./context/UserContext";
-
-// --- Import Components ---
+// ... existing imports ...
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Hero from "./components/Hero";
@@ -32,10 +30,7 @@ import SignIn from "./components/SignIn";
 import SignUp from "./components/SignUp";
 import UpgradePage from "./components/UpgradePage";
 import MaterialQuantityCalculator from "./components/MaterialQuantityCalculator";
-// --- NEW: Import Dashboard ---
 import Dashboard from "./components/Dashboard";
-
-// --- Import Page Components ---
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import Contact from "./pages/Contact";
@@ -55,8 +50,16 @@ type CalculatorType =
 
 const MainLayout = () => {
   const { hasPaid } = useUser();
+  const location = useLocation();
   const [activeCalculator, setActiveCalculator] =
     React.useState<CalculatorType>("construction");
+
+  // Handle navigation from Dashboard Edit button
+  useEffect(() => {
+    if (location.state && (location.state as any).calculatorType) {
+      setActiveCalculator((location.state as any).calculatorType);
+    }
+  }, [location]);
 
   const renderCalculator = () => {
     switch (activeCalculator) {
@@ -103,6 +106,7 @@ const MainLayout = () => {
   );
 };
 
+// ... Keep InfoLayout, ProtectedRoute, AuthHandler, AppRoutes, App same as before ...
 const InfoLayout = () => (
   <>
     <Header />
@@ -112,7 +116,6 @@ const InfoLayout = () => (
     <Footer />
   </>
 );
-
 const ProtectedRoute = () => {
   const { user, loading } = useUser();
   if (loading) return <div className="loading-container">Loading...</div>;
@@ -124,45 +127,33 @@ const AuthHandler = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [message, setMessage] = React.useState<string | null>(null);
-
   React.useEffect(() => {
     const hash = location.hash;
     if (hash.includes("error=access_denied")) {
-      setMessage(
-        "Access denied. Could not verify email. Link might be expired."
-      );
+      setMessage("Access denied. Could not verify email.");
       navigate("/signup", { replace: true });
     } else if (hash.includes("access_token")) {
       navigate("/", { replace: true });
     }
   }, [location, navigate]);
-
-  if (message) {
+  if (message)
     return (
       <div className="auth-container">
-        <div className="card auth-card" style={{ textAlign: "center" }}>
-          <h3 style={{ color: "var(--danger-color)" }}>Error</h3>
+        <div className="card auth-card">
           <p>{message}</p>
-          <Link to="/signup" className="btn" style={{ marginTop: "1.5rem" }}>
-            Go to Sign Up
-          </Link>
         </div>
       </div>
     );
-  }
   return null;
 };
 
 const AppRoutes = () => {
   const { user, loading } = useUser();
-
   if (loading) return <div className="loading-container">Loading...</div>;
-
   return (
     <Router>
       <AuthHandler />
       <Routes>
-        {/* Auth Routes */}
         <Route
           path="/signin"
           element={user ? <Navigate to="/" /> : <SignIn />}
@@ -171,25 +162,17 @@ const AppRoutes = () => {
           path="/signup"
           element={user ? <Navigate to="/" /> : <SignUp />}
         />
-
-        {/* Public Info Pages */}
         <Route element={<InfoLayout />}>
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/disclaimer" element={<Disclaimer />} />
         </Route>
-
-        {/* PUBLIC HOME: MainLayout is now accessible to everyone */}
         <Route path="/" element={<MainLayout />} />
-
-        {/* PROTECTED ROUTES */}
         <Route element={<ProtectedRoute />}>
           <Route path="/upgrade" element={<UpgradePage />} />
-          {/* --- NEW: Dashboard Route --- */}
           <Route path="/dashboard" element={<Dashboard />} />
         </Route>
-
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
@@ -201,5 +184,4 @@ const App = () => (
     <AppRoutes />
   </UserProvider>
 );
-
 export default App;
