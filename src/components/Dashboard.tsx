@@ -5,6 +5,7 @@ import { useUser } from "../context/UserContext";
 import { supabase } from "../supabaseClient";
 import { Link, useNavigate } from "react-router-dom";
 
+// ... (Keep your existing interfaces and logic) ...
 interface Project {
   id: string;
   name: string;
@@ -14,6 +15,7 @@ interface Project {
 }
 
 const Dashboard: React.FC = () => {
+  // ... (Keep your existing state and fetch logic) ...
   const { user, loading } = useUser();
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -23,11 +25,8 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !user) {
-      navigate("/signin");
-    } else if (user) {
-      fetchProjects();
-    }
+    if (!loading && !user) navigate("/signin");
+    else if (user) fetchProjects();
   }, [user, loading, navigate]);
 
   const fetchProjects = async () => {
@@ -36,53 +35,58 @@ const Dashboard: React.FC = () => {
         .from("projects")
         .select("*")
         .order("created_at", { ascending: false });
-
       if (error) throw error;
       setProjects(data || []);
     } catch (error) {
-      console.error("Error fetching projects:", error);
+      console.error(error);
     } finally {
       setIsLoadingData(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this project?")) return;
-    const { error } = await supabase.from("projects").delete().eq("id", id);
-    if (!error) {
-      setProjects(projects.filter((p) => p.id !== id));
-    }
+    if (!confirm("Are you sure?")) return;
+    await supabase.from("projects").delete().eq("id", id);
+    setProjects(projects.filter((p) => p.id !== id));
   };
 
-  const toggleDetails = (id: string) => {
+  const toggleDetails = (id: string) =>
     setExpandedProjectId(expandedProjectId === id ? null : id);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
+  const formatDate = (date: string) =>
+    new Date(date).toLocaleDateString("en-IN", {
       year: "numeric",
       month: "short",
       day: "numeric",
     });
-  };
-
-  // Helper to render saved data values nicely
-  const renderDataValue = (key: string, value: any) => {
-    if (typeof value === "object" && value !== null) return "Complex Data";
-    if (
-      key.toLowerCase().includes("cost") ||
-      key.toLowerCase().includes("price")
-    ) {
-      return `₹${Number(value).toLocaleString("en-IN")}`;
-    }
-    return value.toString();
-  };
+  const renderDataValue = (k: string, v: any) =>
+    typeof v === "object"
+      ? ""
+      : k.toLowerCase().includes("cost")
+      ? `₹${Number(v).toLocaleString("en-IN")}`
+      : v;
 
   if (loading || isLoadingData)
     return <div className="loading-container">Loading Dashboard...</div>;
 
   return (
     <section className="container">
+      {/* --- NEW: Navigation Bar inside Dashboard --- */}
+      <div style={{ marginBottom: "1.5rem" }}>
+        <Link
+          to="/"
+          className="btn"
+          style={{
+            backgroundColor: "var(--secondary-color)",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          <i className="fas fa-arrow-left"></i> Back to Calculators
+        </Link>
+      </div>
+      {/* ------------------------------------------- */}
+
       <div className="card">
         <div
           style={{
@@ -90,6 +94,8 @@ const Dashboard: React.FC = () => {
             justifyContent: "space-between",
             alignItems: "center",
             marginBottom: "2rem",
+            borderBottom: "1px solid #eee",
+            paddingBottom: "1rem",
           }}
         >
           <h2
@@ -98,14 +104,19 @@ const Dashboard: React.FC = () => {
           >
             My Saved Projects
           </h2>
-          <Link to="/" className="btn">
-            <i className="fas fa-plus"></i> New Calculation
+          <Link
+            to="/"
+            className="btn btn-primary"
+            style={{ backgroundColor: "var(--accent-color)" }}
+          >
+            <i className="fas fa-plus"></i> New Project
           </Link>
         </div>
 
+        {/* ... (Keep existing project listing logic) ... */}
         {projects.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "3rem", color: "#666" }}>
-            <p>You haven't saved any projects yet.</p>
+          <div style={{ textAlign: "center", padding: "2rem" }}>
+            <p>No saved projects yet.</p>
           </div>
         ) : (
           <div style={{ display: "grid", gap: "1rem" }}>
@@ -114,84 +125,45 @@ const Dashboard: React.FC = () => {
                 key={project.id}
                 style={{
                   border: "1px solid var(--border-color)",
-                  borderRadius: "8px",
                   padding: "1.5rem",
-                  background: "#fff",
+                  borderRadius: "8px",
                 }}
               >
                 <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
+                  style={{ display: "flex", justifyContent: "space-between" }}
                 >
                   <div>
-                    <h3
-                      style={{
-                        fontSize: "1.2rem",
-                        color: "var(--secondary-color)",
-                        marginBottom: "0.5rem",
-                      }}
-                    >
-                      {project.name}
-                    </h3>
-                    <div style={{ fontSize: "0.9rem", color: "#666" }}>
-                      <span
-                        style={{
-                          padding: "0.2rem 0.6rem",
-                          borderRadius: "4px",
-                          background: "#eee",
-                          marginRight: "1rem",
-                          textTransform: "capitalize",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        {project.type.replace("-", " ")}
-                      </span>
-                      <span>
-                        <i className="far fa-calendar-alt"></i>{" "}
-                        {formatDate(project.created_at)}
-                      </span>
-                    </div>
+                    <h3>{project.name}</h3>
+                    <span style={{ color: "#666" }}>
+                      {formatDate(project.created_at)} • {project.type}
+                    </span>
                   </div>
-                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <div>
                     <button
                       onClick={() => toggleDetails(project.id)}
                       className="btn"
-                      style={{ padding: "0.5rem 1rem", fontSize: "0.9rem" }}
+                      style={{ marginRight: "10px" }}
                     >
-                      {expandedProjectId === project.id
-                        ? "Hide Details"
-                        : "View Details"}
+                      {expandedProjectId === project.id ? "Hide" : "View"}
                     </button>
                     <button
                       onClick={() => handleDelete(project.id)}
-                      className="btn btn-secondary"
-                      style={{
-                        color: "var(--danger-color)",
-                        background: "#fff",
-                        border: "1px solid var(--danger-color)",
-                        padding: "0.5rem",
-                      }}
+                      className="btn"
+                      style={{ background: "var(--danger-color)" }}
                     >
                       <i className="fas fa-trash"></i>
                     </button>
                   </div>
                 </div>
-
-                {/* --- EXPANDED DETAILS VIEW --- */}
+                {/* Expanded view logic... */}
                 {expandedProjectId === project.id && (
                   <div
                     style={{
-                      marginTop: "1.5rem",
+                      marginTop: "1rem",
                       paddingTop: "1rem",
-                      borderTop: "1px dashed #ddd",
+                      borderTop: "1px dashed #ccc",
                     }}
                   >
-                    <h4 style={{ marginBottom: "0.5rem" }}>
-                      Saved Estimate Details:
-                    </h4>
                     <div
                       style={{
                         display: "grid",
@@ -200,49 +172,21 @@ const Dashboard: React.FC = () => {
                         gap: "10px",
                       }}
                     >
-                      {Object.entries(project.data).map(([key, value]) => {
-                        if (
-                          key === "breakdown" ||
-                          key === "date" ||
-                          typeof value === "object"
-                        )
-                          return null; // Skip complex objects for summary
+                      {Object.entries(project.data).map(([k, v]) => {
+                        if (typeof v === "object" || k === "date") return null;
                         return (
                           <div
-                            key={key}
+                            key={k}
                             style={{
-                              background: "#f9f9f9",
-                              padding: "8px",
+                              background: "#f8f9fa",
+                              padding: "5px 10px",
                               borderRadius: "4px",
-                              fontSize: "0.9rem",
                             }}
                           >
-                            <strong style={{ textTransform: "capitalize" }}>
-                              {key.replace(/([A-Z])/g, " $1").trim()}:
-                            </strong>{" "}
-                            <br />
-                            {renderDataValue(key, value)}
+                            <strong>{k}:</strong> {renderDataValue(k, v)}
                           </div>
                         );
                       })}
-                      {/* Show Total Cost prominently if available */}
-                      {project.data.totalCost && (
-                        <div
-                          style={{
-                            background: "var(--primary-color)",
-                            color: "white",
-                            padding: "8px",
-                            borderRadius: "4px",
-                            fontSize: "1rem",
-                            fontWeight: "bold",
-                          }}
-                        >
-                          Total Estimate: <br />₹
-                          {Number(project.data.totalCost).toLocaleString(
-                            "en-IN"
-                          )}
-                        </div>
-                      )}
                     </div>
                   </div>
                 )}
