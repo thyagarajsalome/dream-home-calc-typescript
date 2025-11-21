@@ -1,3 +1,5 @@
+// src/components/CalculatorTabs.tsx
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -11,7 +13,7 @@ type CalculatorType =
   | "painting"
   | "plumbing"
   | "electrical"
-  | "materials"; // <-- ADDED
+  | "materials";
 
 interface CalculatorTabsProps {
   activeCalculator: CalculatorType;
@@ -43,14 +45,12 @@ const calculators: {
     icon: "fas fa-hand-holding-usd",
     isPremium: false,
   },
-  // --- NEW: Material Quantity Calculator ---
   {
     id: "materials",
     name: "Materials BOQ",
     icon: "fas fa-cubes",
     isPremium: true,
   },
-  // ----------------------------------------
   { id: "interior", name: "Interiors", icon: "fas fa-couch", isPremium: true },
   {
     id: "doors-windows",
@@ -87,6 +87,8 @@ const CalculatorTabs: React.FC<CalculatorTabsProps> = ({
   const navigate = useNavigate();
 
   const handleTabClick = (id: CalculatorType, isPremium: boolean) => {
+    // If it's premium and user hasn't paid, send them to upgrade page
+    // The Upgrade page is protected, so it will force them to Sign In/Up first
     if (isPremium && !hasPaid) {
       navigate("/upgrade");
     } else {
@@ -106,10 +108,17 @@ const CalculatorTabs: React.FC<CalculatorTabsProps> = ({
                 activeCalculator === id && !isLocked ? "active" : ""
               }`}
               onClick={() => handleTabClick(id, isPremium)}
+              style={isLocked ? { opacity: 0.7, cursor: "not-allowed" } : {}}
             >
               <i className={icon}></i>
               <span>
-                {name} {isLocked && "🔒"}
+                {name}{" "}
+                {isLocked && (
+                  <i
+                    className="fas fa-lock"
+                    style={{ marginLeft: "6px", fontSize: "0.8em" }}
+                  ></i>
+                )}
               </span>
             </button>
           );

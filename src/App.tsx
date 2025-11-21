@@ -32,6 +32,8 @@ import SignIn from "./components/SignIn";
 import SignUp from "./components/SignUp";
 import UpgradePage from "./components/UpgradePage";
 import MaterialQuantityCalculator from "./components/MaterialQuantityCalculator";
+// --- NEW: Import Dashboard ---
+import Dashboard from "./components/Dashboard";
 
 // --- Import Page Components ---
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -51,9 +53,8 @@ type CalculatorType =
   | "electrical"
   | "materials";
 
-// Main Layout is now the "Public" Home Page too
 const MainLayout = () => {
-  const { hasPaid } = useUser(); // Returns false if not logged in
+  const { hasPaid } = useUser();
   const [activeCalculator, setActiveCalculator] =
     React.useState<CalculatorType>("construction");
 
@@ -62,23 +63,23 @@ const MainLayout = () => {
       case "construction":
         return <Calculator />;
       case "eligibility":
-        return <LoanEligibilityCalculator hasPaid={hasPaid} />;
+        return <LoanEligibilityCalculator />;
       case "loan":
-        return <LoanCalculator hasPaid={hasPaid} />;
+        return <LoanCalculator />;
       case "materials":
-        return <MaterialQuantityCalculator hasPaid={hasPaid} />;
+        return <MaterialQuantityCalculator />;
       case "interior":
         return <InteriorCalculator hasPaid={hasPaid} />;
       case "doors-windows":
         return <DoorsWindowsCalculator hasPaid={hasPaid} />;
       case "flooring":
-        return <FlooringCalculator hasPaid={hasPaid} />;
+        return <FlooringCalculator />;
       case "painting":
-        return <PaintingCalculator hasPaid={hasPaid} />;
+        return <PaintingCalculator />;
       case "plumbing":
-        return <PlumbingCalculator hasPaid={hasPaid} />;
+        return <PlumbingCalculator />;
       case "electrical":
-        return <ElectricalCalculator hasPaid={hasPaid} />;
+        return <ElectricalCalculator />;
       default:
         return <Calculator />;
     }
@@ -86,13 +87,13 @@ const MainLayout = () => {
 
   return (
     <>
-      {/* Header handles Guest/User view internally via Context */}
       <Header />
       <main>
         <Hero />
         <CalculatorTabs
           activeCalculator={activeCalculator}
           setActiveCalculator={setActiveCalculator}
+          hasPaid={hasPaid}
         />
         {renderCalculator()}
         <FAQ />
@@ -102,7 +103,6 @@ const MainLayout = () => {
   );
 };
 
-// Layout for public static info pages
 const InfoLayout = () => (
   <>
     <Header />
@@ -113,7 +113,6 @@ const InfoLayout = () => (
   </>
 );
 
-// Protected Route - Only for pages that strictly require an account (like Payments)
 const ProtectedRoute = () => {
   const { user, loading } = useUser();
   if (loading) return <div className="loading-container">Loading...</div>;
@@ -133,10 +132,7 @@ const AuthHandler = () => {
         "Access denied. Could not verify email. Link might be expired."
       );
       navigate("/signup", { replace: true });
-    } else if (
-      hash.includes("access_token") &&
-      hash.includes("refresh_token")
-    ) {
+    } else if (hash.includes("access_token")) {
       navigate("/", { replace: true });
     }
   }, [location, navigate]);
@@ -166,7 +162,7 @@ const AppRoutes = () => {
     <Router>
       <AuthHandler />
       <Routes>
-        {/* Public Routes */}
+        {/* Auth Routes */}
         <Route
           path="/signin"
           element={user ? <Navigate to="/" /> : <SignIn />}
@@ -176,7 +172,7 @@ const AppRoutes = () => {
           element={user ? <Navigate to="/" /> : <SignUp />}
         />
 
-        {/* Static Info Pages */}
+        {/* Public Info Pages */}
         <Route element={<InfoLayout />}>
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
@@ -184,15 +180,16 @@ const AppRoutes = () => {
           <Route path="/disclaimer" element={<Disclaimer />} />
         </Route>
 
-        {/* OPEN ACCESS: The Main Calculator is now Public */}
+        {/* PUBLIC HOME: MainLayout is now accessible to everyone */}
         <Route path="/" element={<MainLayout />} />
 
-        {/* PROTECTED: Only Upgrade requires login */}
+        {/* PROTECTED ROUTES */}
         <Route element={<ProtectedRoute />}>
           <Route path="/upgrade" element={<UpgradePage />} />
+          {/* --- NEW: Dashboard Route --- */}
+          <Route path="/dashboard" element={<Dashboard />} />
         </Route>
 
-        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>

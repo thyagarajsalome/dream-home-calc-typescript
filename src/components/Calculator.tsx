@@ -1,10 +1,13 @@
-import React, { useState, useRef } from "react";
+// src/components/Calculator.tsx
+
+import React, { useState, useRef, useEffect } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { supabase } from "../supabaseClient"; // Import Supabase client
 import Chart from "./Chart";
 import { useUser } from "../context/UserContext";
 
-// Data for the cost breakdown percentages
 const mainBreakdown = {
   Foundation: 15,
   Structure: 35,
@@ -13,30 +16,21 @@ const mainBreakdown = {
   "Services (Elec/Plumb)": 15,
 };
 
-const qualityRates = {
-  basic: [1200, 1500, 1800],
-  standard: [1900, 2000, 2400],
-  premium: [2500, 2800, 3200],
-};
+// Default Market Rates
+const defaultQualityRates = { basic: 1500, standard: 2000, premium: 2800 };
 
-// New Add-on Costs
-const PARKING_RATE_FACTOR = 0.7; // Parking is 70% of main rate
-const COMPOUND_WALL_RATE = 800; // Rs per running foot
-const SUMP_TANK_COST = {
-  basic: 150000,
-  standard: 200000,
-  premium: 250000,
-};
+const PARKING_RATE_FACTOR = 0.7;
+const COMPOUND_WALL_RATE = 800;
+const SUMP_TANK_COST = { basic: 150000, standard: 200000, premium: 250000 };
 
 const mainChartColors = ["#D9A443", "#59483B", "#8C6A4E", "#D9A443", "#C4B594"];
 
 const Calculator: React.FC = () => {
-  const { hasPaid } = useUser(); // Use Context
+  const { hasPaid, user } = useUser(); // Get user from context
+  const navigate = useNavigate();
 
   const [totalCost, setTotalCost] = useState(0);
   const [area, setArea] = useState("");
-
-  // New State Inputs
   const [parkingArea, setParkingArea] = useState("");
   const [compoundWallLength, setCompoundWallLength] = useState("");
   const [includeSump, setIncludeSump] = useState(false);
@@ -44,12 +38,20 @@ const Calculator: React.FC = () => {
   const [quality, setQuality] = useState<"basic" | "standard" | "premium">(
     "basic"
   );
-  const [rate, setRate] = useState<number>(qualityRates.basic[0]);
+
+  // Editable Rate Logic
+  const [customRate, setCustomRate] = useState<number>(
+    defaultQualityRates.basic
+  );
+  const [isEditingRate, setIsEditingRate] = useState(false);
+
+  // Saving State
+  const [isSaving, setIsSaving] = useState(false);
+
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadFinished, setDownloadFinished] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  // Detailed cost states for display
   const [costDetails, setCostDetails] = useState({
     construction: 0,
     parking: 0,
@@ -57,11 +59,18 @@ const Calculator: React.FC = () => {
     sump: 0,
   });
 
+  // Update custom rate when quality changes
+  useEffect(() => {
+    if (!isEditingRate) {
+      setCustomRate(defaultQualityRates[quality]);
+    }
+  }, [quality, isEditingRate]);
+
   const handleQualityChange = (
     newQuality: "basic" | "standard" | "premium"
   ) => {
     setQuality(newQuality);
-    setRate(qualityRates[newQuality][0]);
+    setIsEditingRate(false);
   };
 
   const calculateCost = (e: React.FormEvent<HTMLFormElement>) => {
@@ -70,16 +79,9 @@ const Calculator: React.FC = () => {
     const parsedParking = parseFloat(parkingArea) || 0;
     const parsedWall = parseFloat(compoundWallLength) || 0;
 
-    // 1. Main Construction Cost
-    const mainConstructionCost = parsedArea * rate;
-
-    // 2. Parking Cost
-    const parkingCost = parsedParking * (rate * PARKING_RATE_FACTOR);
-
-    // 3. Compound Wall Cost
+    const mainConstructionCost = parsedArea * customRate;
+    const parkingCost = parsedParking * (customRate * PARKING_RATE_FACTOR);
     const wallCost = parsedWall * COMPOUND_WALL_RATE;
-
-    // 4. Sump & Septic Tank Cost
     const sumpCost = includeSump ? SUMP_TANK_COST[quality] : 0;
 
     const finalTotal = mainConstructionCost + parkingCost + wallCost + sumpCost;
@@ -93,6 +95,51 @@ const Calculator: React.FC = () => {
     setTotalCost(finalTotal);
   };
 
+  // --- NEW: Save Project Functionality ---
+  const handleSaveProject = async () => {
+    if (!user) {
+      alert("Please Sign In to save your project.");
+      navigate("/signin");
+      return;
+    }
+
+    const projectName = prompt(
+      "Enter a name for this project (e.g., 'My Dream Villa'):"
+    );
+    if (!projectName) return;
+
+    setIsSaving(true);
+
+    try {
+      const { error } = await supabase.from("projects").insert({
+        user_id: user.id,
+        name: projectName,
+        type: "construction",
+        data: {
+          area,
+          parkingArea,
+          compoundWallLength,
+          includeSump,
+          quality,
+          rate: customRate,
+          totalCost,
+          breakdown: costDetails,
+          date: new Date().toISOString(),
+        },
+      });
+
+      if (error) throw error;
+      alert("Project saved successfully!");
+      navigate("/dashboard"); // Redirect to dashboard
+    } catch (err: any) {
+      console.error("Error saving project:", err);
+      alert("Failed to save project. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  // ---------------------------------------
+
   const resetAll = () => {
     setTotalCost(0);
     setArea("");
@@ -100,7 +147,8 @@ const Calculator: React.FC = () => {
     setCompoundWallLength("");
     setIncludeSump(false);
     setQuality("basic");
-    setRate(qualityRates.basic[0]);
+    setIsEditingRate(false);
+    setCustomRate(defaultQualityRates.basic);
     setDownloadFinished(false);
   };
 
@@ -136,7 +184,6 @@ const Calculator: React.FC = () => {
       <div className="card">
         <h2 className="section-title">Detailed Construction Estimator</h2>
         <form id="calc-form" onSubmit={calculateCost}>
-          {/* Quality Selection (Top Priority) */}
           <div className="form-group full-width">
             <label>
               <i className="fas fa-paint-roller"></i> Finish Quality
@@ -181,35 +228,72 @@ const Calculator: React.FC = () => {
                 Upgrade to Pro to unlock Premium quality estimates.
               </p>
             )}
-            <div className="rate-selector">
-              <label htmlFor="rate">Base Rate (per sq. ft.)</label>
-              <select
-                id="rate"
-                value={rate}
-                onChange={(e) => setRate(Number(e.target.value))}
+
+            <div
+              className="rate-selector"
+              style={{
+                marginTop: "1.5rem",
+                padding: "1rem",
+                background: "#f9f9f9",
+                borderRadius: "8px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "0.5rem",
+                }}
               >
-                {qualityRates[quality].map((r) => (
-                  <option key={r} value={r}>
-                    {r} Rs
-                  </option>
-                ))}
-              </select>
+                <label htmlFor="rate" style={{ margin: 0 }}>
+                  Construction Rate (₹/sq.ft)
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingRate(!isEditingRate)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "var(--primary-color)",
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                    fontSize: "0.9rem",
+                  }}
+                >
+                  {isEditingRate ? "Reset to Default" : "Customize Rate"}
+                </button>
+              </div>
+              <input
+                type="number"
+                id="rate"
+                value={customRate}
+                onChange={(e) => {
+                  setCustomRate(Number(e.target.value));
+                  setIsEditingRate(true);
+                }}
+                disabled={!isEditingRate}
+                style={{
+                  background: isEditingRate ? "#fff" : "#eee",
+                  fontWeight: "bold",
+                  color: "var(--secondary-color)",
+                }}
+              />
+              {isEditingRate && (
+                <small style={{ color: "var(--accent-color)" }}>
+                  * Using custom market rate
+                </small>
+              )}
             </div>
           </div>
 
-          {/* Main Area Input */}
           <div className="form-group">
             <label htmlFor="area">
               <i className="fas fa-home"></i> Living Area (sq. ft.)
-              <i
-                className="fas fa-info-circle"
-                title="Enclosed area of the house (ground + upper floors)"
-              ></i>
             </label>
             <input
               type="number"
               id="area"
-              name="area"
               placeholder="e.g., 1200"
               value={area}
               onChange={(e) => setArea(e.target.value)}
@@ -217,14 +301,9 @@ const Calculator: React.FC = () => {
             />
           </div>
 
-          {/* Parking Area Input */}
           <div className="form-group">
             <label htmlFor="parking">
               <i className="fas fa-car"></i> Parking / Utility Area (sq. ft.)
-              <i
-                className="fas fa-info-circle"
-                title="Semi-covered areas cost approx 70% of main rate"
-              ></i>
             </label>
             <input
               type="number"
@@ -235,14 +314,9 @@ const Calculator: React.FC = () => {
             />
           </div>
 
-          {/* Compound Wall Input */}
           <div className="form-group">
             <label htmlFor="wall">
               <i className="fas fa-border-all"></i> Compound Wall Length (ft)
-              <i
-                className="fas fa-info-circle"
-                title="Total running feet of boundary wall"
-              ></i>
             </label>
             <input
               type="number"
@@ -253,11 +327,7 @@ const Calculator: React.FC = () => {
             />
           </div>
 
-          {/* Sump/Tank Checkbox */}
           <div className="form-group">
-            <label style={{ marginBottom: 0 }}>
-              <i className="fas fa-water"></i> Water Sump & Septic Tank
-            </label>
             <div className="checkbox-wrapper" style={{ marginTop: "0.5rem" }}>
               <input
                 type="checkbox"
@@ -267,7 +337,7 @@ const Calculator: React.FC = () => {
                 style={{ width: "auto", marginRight: "10px" }}
               />
               <label htmlFor="sump" style={{ display: "inline" }}>
-                Include in Estimate (+ ₹
+                Include Water Sump & Septic Tank (+ ₹
                 {SUMP_TANK_COST[quality].toLocaleString()})
               </label>
             </div>
@@ -280,15 +350,13 @@ const Calculator: React.FC = () => {
       </div>
 
       {totalCost > 0 && (
-        <div id="resultsSection" className={totalCost > 0 ? "visible" : ""}>
+        <div id="resultsSection" className="visible">
           <div className="card" ref={resultsRef}>
-            {/* Total Summary */}
             <div className="total-summary">
               <p>Total Estimated Project Cost</p>
               <span>{formatCurrency(totalCost)}</span>
             </div>
 
-            {/* Detailed Breakdown Table */}
             <div className="result-details" style={{ marginBottom: "2rem" }}>
               <h3>Project Cost Breakdown</h3>
               <table>
@@ -305,7 +373,7 @@ const Calculator: React.FC = () => {
                       <strong>Main Construction</strong>
                     </td>
                     <td>
-                      {area} sq.ft @ ₹{rate}/sq.ft
+                      {area} sq.ft @ ₹{customRate}/sq.ft
                     </td>
                     <td className="text-right">
                       {formatCurrency(costDetails.construction)}
@@ -352,7 +420,7 @@ const Calculator: React.FC = () => {
 
             <div className="results-grid">
               <div className="result-details">
-                <h3>Material & Labor Allocation (Main Building)</h3>
+                <h3>Material & Labor Allocation</h3>
                 <table>
                   <thead>
                     <tr>
@@ -364,7 +432,6 @@ const Calculator: React.FC = () => {
                   <tbody>
                     {Object.entries(mainBreakdown).map(
                       ([component, percentage]) => {
-                        // Only apply breakdown to main construction cost
                         const cost =
                           (costDetails.construction * percentage) / 100;
                         return (
@@ -397,6 +464,19 @@ const Calculator: React.FC = () => {
                   {isDownloading ? "Downloading..." : "Download PDF"}
                 </button>
               )}
+
+              {/* --- NEW: Save Button --- */}
+              <button
+                className="btn"
+                style={{ backgroundColor: "var(--secondary-color)" }}
+                onClick={handleSaveProject}
+                disabled={isSaving}
+              >
+                <i className="fas fa-save"></i>{" "}
+                {isSaving ? "Saving..." : "Save to Dashboard"}
+              </button>
+              {/* ------------------------ */}
+
               <button className="btn btn-secondary" onClick={resetAll}>
                 <i className="fas fa-sync-alt"></i> Reset
               </button>
