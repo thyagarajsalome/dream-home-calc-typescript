@@ -14,18 +14,28 @@ const SignUp = () => {
     e.preventDefault();
     setError("");
     setMessage("");
+
     if (password.length < 6) {
       setError("Password must be at least 6 characters long.");
       return;
     }
+
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        // IMPORTANT: Helps ensure the email link is generated correctly
+        options: {
+          emailRedirectTo: window.location.origin,
+        },
       });
+
       if (error) throw error;
+
       if (data.user) {
-        setMessage("Success! Please check your email to confirm your account.");
+        setMessage(
+          "Success! Confirmation email sent. Please check your inbox and spam folder."
+        );
       }
     } catch (err: any) {
       setError(
@@ -79,15 +89,23 @@ const SignUp = () => {
           </p>
         )}
         {message && (
-          <p style={{ color: "green", marginTop: "1rem", textAlign: "center" }}>
-            {message}
-          </p>
+          <div
+            style={{
+              marginTop: "1rem",
+              padding: "0.5rem",
+              backgroundColor: "#e6fffa",
+              border: "1px solid #38b2ac",
+              borderRadius: "4px",
+              textAlign: "center",
+            }}
+          >
+            <p style={{ color: "#2c7a7b", fontWeight: "bold" }}>{message}</p>
+          </div>
         )}
       </form>
       <p className="auth-switch-link">
         Already have an account? <Link to="/signin">Sign In</Link>
       </p>
-      {/* REMOVED: Guest Link Box */}
     </AuthLayout>
   );
 };
