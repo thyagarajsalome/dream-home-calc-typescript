@@ -3,9 +3,11 @@
 import React, { useState, useRef } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "../supabaseClient";
 import Chart from "./Chart";
+import { useUser } from "../context/UserContext";
 
-// --- ADD 'hasPaid' to the component's props ---
 interface InteriorCalculatorProps {
   hasPaid: boolean;
 }
@@ -40,15 +42,17 @@ const interiorBreakdown = {
 
 const chartColors = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594", "#A99A86"];
 
-// --- Accept 'hasPaid' prop ---
 const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
+  const { user } = useUser();
+  const navigate = useNavigate();
+
   const [area, setArea] = useState("1200");
   const [quality, setQuality] = useState<keyof typeof qualityRates>("standard");
   const [totalCost, setTotalCost] = useState(0);
 
-  // --- ADDITIONS FOR PDF ---
   const resultsRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const downloadPDF = () => {
     if (resultsRef.current) {
@@ -66,7 +70,39 @@ const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
       );
     }
   };
-  // --- END OF ADDITIONS ---
+
+  const handleSave = async () => {
+    if (!user) {
+      alert("Please Sign In to save.");
+      navigate("/signin");
+      return;
+    }
+    if (totalCost === 0) return;
+    const name = prompt("Project Name:");
+    if (!name) return;
+
+    setIsSaving(true);
+    try {
+      const { error } = await supabase.from("projects").insert({
+        user_id: user.id,
+        name,
+        type: "interior",
+        data: {
+          area,
+          quality,
+          totalCost,
+          date: new Date().toISOString(),
+        },
+      });
+      if (error) throw error;
+      alert("Saved!");
+      navigate("/dashboard");
+    } catch (e) {
+      alert("Error saving.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const calculateCost = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -127,7 +163,6 @@ const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
         </form>
 
         {totalCost > 0 && (
-          // --- ATTACH REF HERE ---
           <div id="resultsSection" className="visible" ref={resultsRef}>
             <div className="total-summary">
               <p>Total Estimated Interior Budget</p>
@@ -176,7 +211,7 @@ const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
                 <Chart data={interiorBreakdown} colors={chartColors} />
               </div>
             </div>
-            {/* --- ADD CONDITIONAL PDF BUTTON --- */}
+
             {hasPaid && (
               <div className="action-buttons">
                 <button
@@ -187,9 +222,20 @@ const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
                   <i className="fas fa-download"></i>{" "}
                   {isDownloading ? "Downloading..." : "Download PDF"}
                 </button>
+                <button
+                  className="btn"
+                  style={{
+                    backgroundColor: "var(--secondary-color)",
+                    marginLeft: "10px",
+                  }}
+                  onClick={handleSave}
+                  disabled={isSaving}
+                >
+                  <i className="fas fa-save"></i>{" "}
+                  {isSaving ? "Saving..." : "Save"}
+                </button>
               </div>
             )}
-            {/* --- END OF ADDITION --- */}
           </div>
         )}
       </div>

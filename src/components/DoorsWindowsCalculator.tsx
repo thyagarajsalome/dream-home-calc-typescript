@@ -3,8 +3,10 @@
 import React, { useState, useRef } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "../supabaseClient";
+import { useUser } from "../context/UserContext";
 
-// --- ADD 'hasPaid' to the component's props ---
 interface DoorsWindowsCalculatorProps {
   hasPaid: boolean;
 }
@@ -21,10 +23,12 @@ const windowTypes = {
   wood: { name: "Wooden Frame", rate: 1200 },
 };
 
-// --- Accept 'hasPaid' prop ---
 const DoorsWindowsCalculator: React.FC<DoorsWindowsCalculatorProps> = ({
   hasPaid,
 }) => {
+  const { user } = useUser();
+  const navigate = useNavigate();
+
   // Door States
   const [doorCount, setDoorCount] = useState("5");
   const [doorType, setDoorType] = useState<keyof typeof doorTypes>("flush");
@@ -41,9 +45,10 @@ const DoorsWindowsCalculator: React.FC<DoorsWindowsCalculatorProps> = ({
   const [doorCost, setDoorCost] = useState(0);
   const [windowCost, setWindowCost] = useState(0);
 
-  // --- ADDITIONS FOR PDF ---
+  // PDF & Save
   const resultsRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const downloadPDF = () => {
     if (resultsRef.current) {
@@ -61,7 +66,43 @@ const DoorsWindowsCalculator: React.FC<DoorsWindowsCalculatorProps> = ({
       );
     }
   };
-  // --- END OF ADDITIONS ---
+
+  const handleSave = async () => {
+    if (!user) {
+      alert("Please Sign In to save.");
+      navigate("/signin");
+      return;
+    }
+    if (totalCost === 0) return;
+    const name = prompt("Project Name:");
+    if (!name) return;
+
+    setIsSaving(true);
+    try {
+      const { error } = await supabase.from("projects").insert({
+        user_id: user.id,
+        name,
+        type: "doors-windows",
+        data: {
+          doorCount,
+          doorType,
+          windowCount,
+          windowType,
+          totalCost,
+          doorCost,
+          windowCost,
+          date: new Date().toISOString(),
+        },
+      });
+      if (error) throw error;
+      alert("Saved!");
+      navigate("/dashboard");
+    } catch (e) {
+      alert("Error saving.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const calculateCost = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -85,7 +126,6 @@ const DoorsWindowsCalculator: React.FC<DoorsWindowsCalculatorProps> = ({
       <div className="card">
         <h2 className="section-title">Doors & Windows Calculator</h2>
         <form onSubmit={calculateCost}>
-          {/* Doors Section */}
           <fieldset className="form-fieldset">
             <legend>Doors</legend>
             <div className="form-grid">
@@ -118,7 +158,6 @@ const DoorsWindowsCalculator: React.FC<DoorsWindowsCalculatorProps> = ({
             </div>
           </fieldset>
 
-          {/* Windows Section */}
           <fieldset className="form-fieldset">
             <legend>Windows</legend>
             <div className="form-grid">
@@ -177,7 +216,6 @@ const DoorsWindowsCalculator: React.FC<DoorsWindowsCalculatorProps> = ({
         </form>
 
         {totalCost > 0 && (
-          // --- ATTACH REF HERE ---
           <div id="resultsSection" className="visible" ref={resultsRef}>
             <div className="total-summary">
               <p>Total Estimated Doors & Windows Cost</p>
@@ -211,7 +249,7 @@ const DoorsWindowsCalculator: React.FC<DoorsWindowsCalculatorProps> = ({
                 </span>
               </div>
             </div>
-            {/* --- ADD CONDITIONAL PDF BUTTON --- */}
+
             {hasPaid && (
               <div className="action-buttons">
                 <button
@@ -222,9 +260,20 @@ const DoorsWindowsCalculator: React.FC<DoorsWindowsCalculatorProps> = ({
                   <i className="fas fa-download"></i>{" "}
                   {isDownloading ? "Downloading..." : "Download PDF"}
                 </button>
+                <button
+                  className="btn"
+                  style={{
+                    backgroundColor: "var(--secondary-color)",
+                    marginLeft: "10px",
+                  }}
+                  onClick={handleSave}
+                  disabled={isSaving}
+                >
+                  <i className="fas fa-save"></i>{" "}
+                  {isSaving ? "Saving..." : "Save"}
+                </button>
               </div>
             )}
-            {/* --- END OF ADDITION --- */}
           </div>
         )}
       </div>

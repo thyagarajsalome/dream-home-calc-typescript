@@ -3,6 +3,8 @@
 import React, { useState, useRef } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "../supabaseClient";
 import { useUser } from "../context/UserContext";
 
 const wallMaterialTypes = {
@@ -40,7 +42,7 @@ const qualityThumbRules = {
   premium: { cement: 0.5, steel: 4.5 },
 };
 
-// --- NEW: Default Market Prices (India) ---
+// Default Market Prices (India)
 const defaultPrices = {
   cement: 400, // Per Bag
   steel: 65, // Per Kg
@@ -71,7 +73,8 @@ interface CalculationResult {
 }
 
 const MaterialQuantityCalculator: React.FC = () => {
-  const { hasPaid } = useUser();
+  const { hasPaid, user } = useUser();
+  const navigate = useNavigate();
   const [area, setArea] = useState("");
 
   const [wallType, setWallType] =
@@ -87,6 +90,7 @@ const MaterialQuantityCalculator: React.FC = () => {
   const [results, setResults] = useState<CalculationResult | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handlePriceChange = (
     key: keyof typeof defaultPrices,
@@ -111,6 +115,51 @@ const MaterialQuantityCalculator: React.FC = () => {
       );
     }
   };
+
+  // --- Save Functionality ---
+  const handleSave = async () => {
+    if (!user) {
+      alert("Please Sign In to save your project.");
+      navigate("/signin");
+      return;
+    }
+    if (!results) return;
+
+    const projectName = prompt(
+      "Enter a name for this project (e.g., 'Material Estimate 1'):"
+    );
+    if (!projectName) return;
+
+    setIsSaving(true);
+
+    try {
+      const { error } = await supabase.from("projects").insert({
+        user_id: user.id,
+        name: projectName,
+        type: "materials",
+        data: {
+          area,
+          wallType,
+          grade,
+          quality,
+          prices, // Save custom prices too
+          results,
+          totalCost: results.totalMaterialCost, // For dashboard summary
+          date: new Date().toISOString(),
+        },
+      });
+
+      if (error) throw error;
+      alert("Project saved successfully!");
+      navigate("/dashboard");
+    } catch (err: any) {
+      console.error("Error saving project:", err);
+      alert("Failed to save project.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  // --------------------------
 
   const calculateQuantities = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -144,7 +193,7 @@ const MaterialQuantityCalculator: React.FC = () => {
     const costAggregate = aggregate * prices.aggregate;
 
     let brickPrice = prices.bricks;
-    if (wallType === "aac") brickPrice = prices.bricks * 5; // AAC expensive per piece
+    if (wallType === "aac") brickPrice = prices.bricks * 5;
     if (wallType === "flyAsh") brickPrice = prices.bricks * 0.8;
 
     const costWall = wallCount * brickPrice;
@@ -252,7 +301,7 @@ const MaterialQuantityCalculator: React.FC = () => {
             </div>
           </div>
 
-          {/* --- Price Editor Toggle --- */}
+          {/* Price Editor Toggle */}
           <div className="form-group" style={{ marginTop: "1rem" }}>
             <div className="checkbox-wrapper">
               <input
@@ -410,6 +459,18 @@ const MaterialQuantityCalculator: React.FC = () => {
                   >
                     <i className="fas fa-download"></i>{" "}
                     {isDownloading ? "Downloading..." : "Download PDF"}
+                  </button>
+                  <button
+                    className="btn"
+                    style={{
+                      backgroundColor: "var(--secondary-color)",
+                      marginLeft: "10px",
+                    }}
+                    onClick={handleSave}
+                    disabled={isSaving}
+                  >
+                    <i className="fas fa-save"></i>{" "}
+                    {isSaving ? "Saving..." : "Save"}
                   </button>
                 </div>
               )}
