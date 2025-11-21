@@ -1,29 +1,27 @@
+// src/components/Header.tsx
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
-import { User } from "@supabase/supabase-js";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
+import { useUser } from "../context/UserContext";
 
-interface HeaderProps {
-  user: User | null;
-  installPrompt: any;
-}
-
-const Header: React.FC<HeaderProps> = ({ user, installPrompt }) => {
+const Header: React.FC = () => {
+  const { user, installPrompt } = useUser(); // Access global user state
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLLIElement>(null);
+  const navigate = useNavigate();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+    navigate("/signin");
   };
 
   const handleInstallClick = async () => {
-    if (!installPrompt) {
-      return;
-    }
+    if (!installPrompt) return;
     await installPrompt.prompt();
   };
 
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -42,13 +40,10 @@ const Header: React.FC<HeaderProps> = ({ user, installPrompt }) => {
   return (
     <header className="header">
       <nav className="navbar container">
-        {/* --- MODIFIED LOGO LINK --- */}
         <Link to="/" className="logo">
           <img src="/icons/bg-logo.png" alt="DreamHomeCalc Logo" />
           <span>HDE</span>
         </Link>
-
-        {/* --- END OF MODIFICATION --- */}
 
         <ul className={isMenuOpen ? "nav-menu active" : "nav-menu"}>
           {installPrompt && (
@@ -58,7 +53,9 @@ const Header: React.FC<HeaderProps> = ({ user, installPrompt }) => {
               </button>
             </li>
           )}
-          {user && (
+
+          {/* --- LOGIC FOR GUEST VS USER --- */}
+          {user ? (
             <>
               <li className="user-info">
                 <span>{user.email}</span>
@@ -69,7 +66,19 @@ const Header: React.FC<HeaderProps> = ({ user, installPrompt }) => {
                 </button>
               </li>
             </>
+          ) : (
+            <li>
+              <Link
+                to="/signin"
+                className="btn"
+                style={{ padding: "0.5rem 1rem" }}
+              >
+                Sign In
+              </Link>
+            </li>
           )}
+          {/* ------------------------------- */}
+
           <li className="dropdown" ref={dropdownRef}>
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}

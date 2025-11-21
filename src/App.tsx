@@ -32,7 +32,6 @@ import SignIn from "./components/SignIn";
 import SignUp from "./components/SignUp";
 import UpgradePage from "./components/UpgradePage";
 import MaterialQuantityCalculator from "./components/MaterialQuantityCalculator";
-// REMOVED: import GuestCalculator from "./components/GuestCalculator";
 
 // --- Import Page Components ---
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -52,8 +51,9 @@ type CalculatorType =
   | "electrical"
   | "materials";
 
+// Main Layout is now the "Public" Home Page too
 const MainLayout = () => {
-  const { hasPaid } = useUser();
+  const { hasPaid } = useUser(); // Returns false if not logged in
   const [activeCalculator, setActiveCalculator] =
     React.useState<CalculatorType>("construction");
 
@@ -86,6 +86,7 @@ const MainLayout = () => {
 
   return (
     <>
+      {/* Header handles Guest/User view internally via Context */}
       <Header />
       <main>
         <Hero />
@@ -101,6 +102,7 @@ const MainLayout = () => {
   );
 };
 
+// Layout for public static info pages
 const InfoLayout = () => (
   <>
     <Header />
@@ -111,10 +113,10 @@ const InfoLayout = () => (
   </>
 );
 
+// Protected Route - Only for pages that strictly require an account (like Payments)
 const ProtectedRoute = () => {
   const { user, loading } = useUser();
   if (loading) return <div className="loading-container">Loading...</div>;
-  // This forces the Hard Wall: No user -> Redirect to SignIn
   if (!user) return <Navigate to="/signin" />;
   return <Outlet />;
 };
@@ -164,7 +166,7 @@ const AppRoutes = () => {
     <Router>
       <AuthHandler />
       <Routes>
-        {/* If user is logged in, send to Home, else show SignIn/SignUp */}
+        {/* Public Routes */}
         <Route
           path="/signin"
           element={user ? <Navigate to="/" /> : <SignIn />}
@@ -174,23 +176,24 @@ const AppRoutes = () => {
           element={user ? <Navigate to="/" /> : <SignUp />}
         />
 
-        {/* Public Info Pages */}
+        {/* Static Info Pages */}
         <Route element={<InfoLayout />}>
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/disclaimer" element={<Disclaimer />} />
-          {/* REMOVED: Guest Calculator Route */}
         </Route>
 
-        {/* Main App (Protected) */}
+        {/* OPEN ACCESS: The Main Calculator is now Public */}
+        <Route path="/" element={<MainLayout />} />
+
+        {/* PROTECTED: Only Upgrade requires login */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/" element={<MainLayout />} />
           <Route path="/upgrade" element={<UpgradePage />} />
         </Route>
 
-        {/* Fallback: If route unknown, check user status. If no user -> SignIn */}
-        <Route path="*" element={<Navigate to={user ? "/" : "/signin"} />} />
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
   );
