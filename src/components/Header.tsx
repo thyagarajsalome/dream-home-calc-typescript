@@ -21,6 +21,7 @@ const Header: React.FC = () => {
     await installPrompt.prompt();
   };
 
+  // Close dropdown logic (keep existing)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -38,25 +39,12 @@ const Header: React.FC = () => {
     <header className="header">
       <nav className="navbar container">
         <Link to="/" className="logo">
-          <img src="/icons/bg-logo.png" alt="DreamHomeCalc Logo" />
-          <span>HDE</span>
+          <img src="/icons/bg-logo.png" alt="Logo" />
+          <span>DreamHome</span>
         </Link>
 
         <ul className={isMenuOpen ? "nav-menu active" : "nav-menu"}>
-          {/* --- NEW: Dashboard Link for Logged In Users --- */}
-          {user && (
-            <li>
-              <Link
-                to="/dashboard"
-                className="nav-link"
-                style={{ fontWeight: "bold", color: "var(--primary-color)" }}
-              >
-                <i className="fas fa-columns"></i> Dashboard
-              </Link>
-            </li>
-          )}
-          {/* ----------------------------------------------- */}
-
+          {/* 1. Install Button */}
           {installPrompt && (
             <li>
               <button onClick={handleInstallClick} className="btn install-btn">
@@ -65,34 +53,17 @@ const Header: React.FC = () => {
             </li>
           )}
 
-          {user ? (
-            <>
-              <li className="user-info">
-                <span>{user.email}</span>
-              </li>
-              <li>
-                <button onClick={handleSignOut} className="sign-out-btn">
-                  Sign Out
-                </button>
-              </li>
-            </>
-          ) : (
-            <li>
-              <Link
-                to="/signin"
-                className="btn"
-                style={{ padding: "0.5rem 1rem" }}
-              >
-                Sign In
-              </Link>
-            </li>
-          )}
-
+          {/* 2. Resources Dropdown */}
           <li className="dropdown" ref={dropdownRef}>
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className="nav-link"
-              style={{ background: "none", border: "none", cursor: "pointer" }}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "1rem",
+              }}
             >
               Resources <i className="fas fa-chevron-down fa-xs"></i>
             </button>
@@ -104,13 +75,56 @@ const Header: React.FC = () => {
                 <Link to="/disclaimer">Disclaimer</Link>
               </li>
               <li>
-                <Link to="/privacy">Privacy Policy</Link>
+                <Link to="/privacy">Privacy</Link>
               </li>
               <li>
-                <Link to="/terms">Terms of Service</Link>
+                <Link to="/terms">Terms</Link>
               </li>
             </ul>
           </li>
+
+          {/* 3. Auth & Dashboard Section */}
+          {user ? (
+            <>
+              {/* MOVED: Dashboard is now a prominent button item */}
+              <li style={{ marginLeft: "10px" }}>
+                <Link
+                  to="/dashboard"
+                  className="btn"
+                  style={{
+                    backgroundColor: "var(--accent-color)",
+                    color: "#fff",
+                    padding: "0.5rem 1rem",
+                  }}
+                >
+                  <i className="fas fa-columns"></i> My Dashboard
+                </Link>
+              </li>
+              <li className="user-info" style={{ marginLeft: "15px" }}>
+                {/* Truncate long emails */}
+                <span>{user.email?.split("@")[0]}</span>
+              </li>
+              <li>
+                <button
+                  onClick={handleSignOut}
+                  className="sign-out-btn"
+                  style={{ marginLeft: "5px" }}
+                >
+                  Sign Out
+                </button>
+              </li>
+            </>
+          ) : (
+            <li>
+              <Link
+                to="/signin"
+                className="btn"
+                style={{ padding: "0.5rem 1.5rem" }}
+              >
+                Sign In
+              </Link>
+            </li>
+          )}
         </ul>
         <div className="hamburger" onClick={() => setIsMenuOpen(!isMenuOpen)}>
           <i className={isMenuOpen ? "fas fa-times" : "fas fa-bars"}></i>
