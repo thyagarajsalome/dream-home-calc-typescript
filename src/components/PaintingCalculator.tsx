@@ -3,6 +3,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "../supabaseClient";
 import Chart from "./Chart";
 import { useUser } from "../context/UserContext";
 
@@ -15,17 +17,18 @@ const paintTypes = {
 
 const processTypes = {
   repaint: { name: "Repainting (Touchup + 2 Coats)", factor: 1.0 },
-  fresh: { name: "Fresh Painting (Putty + Primer + 2 Coats)", factor: 1.6 }, // Costs 60% more
+  fresh: { name: "Fresh Painting (Putty + Primer + 2 Coats)", factor: 1.6 },
 };
 
 const chartColors = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
 
 const PaintingCalculator: React.FC = () => {
-  const { hasPaid } = useUser(); // Use Context
+  const { hasPaid, user } = useUser();
+  const navigate = useNavigate();
 
   // Inputs
-  const [carpetArea, setCarpetArea] = useState(""); // Helper input
-  const [wallArea, setWallArea] = useState(""); // Actual calc input
+  const [carpetArea, setCarpetArea] = useState("");
+  const [wallArea, setWallArea] = useState("");
   const [includeCeiling, setIncludeCeiling] = useState(true);
 
   const [paintType, setPaintType] =
@@ -37,13 +40,11 @@ const PaintingCalculator: React.FC = () => {
   // PDF Logic
   const resultsRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Helper: Auto-calculate wall area when carpet area changes
   useEffect(() => {
     const area = parseFloat(carpetArea);
     if (!isNaN(area)) {
-      // Thumb rule: Wall Area approx = Carpet Area x 3
-      // Ceiling Area approx = Carpet Area
       const walls = area * 3;
       const ceiling = includeCeiling ? area : 0;
       setWallArea(Math.round(walls + ceiling).toString());
@@ -64,6 +65,42 @@ const PaintingCalculator: React.FC = () => {
           setIsDownloading(false);
         }
       );
+    }
+  };
+
+  const handleSave = async () => {
+    if (!user) {
+      alert("Please Sign In to save.");
+      navigate("/signin");
+      return;
+    }
+    if (totalCost === 0) return;
+    const name = prompt("Project Name:");
+    if (!name) return;
+
+    setIsSaving(true);
+    try {
+      const { error } = await supabase.from("projects").insert({
+        user_id: user.id,
+        name,
+        type: "painting",
+        data: {
+          carpetArea,
+          wallArea,
+          paintType,
+          process,
+          includeCeiling,
+          totalCost,
+          date: new Date().toISOString(),
+        },
+      });
+      if (error) throw error;
+      alert("Saved!");
+      navigate("/dashboard");
+    } catch (e) {
+      alert("Error saving.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -94,7 +131,6 @@ const PaintingCalculator: React.FC = () => {
         )}
 
         <form onSubmit={calculateCost}>
-          {/* Smart Area Input */}
           <div className="form-grid">
             <div className="form-group">
               <label htmlFor="carpetArea">
@@ -243,6 +279,18 @@ const PaintingCalculator: React.FC = () => {
                   >
                     <i className="fas fa-download"></i>{" "}
                     {isDownloading ? "Downloading..." : "Download PDF"}
+                  </button>
+                  <button
+                    className="btn"
+                    style={{
+                      backgroundColor: "var(--secondary-color)",
+                      marginLeft: "10px",
+                    }}
+                    onClick={handleSave}
+                    disabled={isSaving}
+                  >
+                    <i className="fas fa-save"></i>{" "}
+                    {isSaving ? "Saving..." : "Save"}
                   </button>
                 </div>
               )}
