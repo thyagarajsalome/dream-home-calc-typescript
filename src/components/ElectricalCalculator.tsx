@@ -1,19 +1,19 @@
 // src/components/ElectricalCalculator.tsx
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import Chart from "./Chart";
 import { useUser } from "../context/UserContext";
 
-// Point Rates
+// Point Rates (Wiring + Switch + Labor) - NO FANCY FITTINGS INCLUDED
 const pointRates = {
-  light: 650,
-  fan: 750,
-  power: 1200,
-  mcb: 25000,
+  light: 650, // Per point
+  fan: 750, // Per point
+  power: 1200, // Per point (AC/Geyser/Fridge - 15A/20A)
+  mcb: 25000, // Lump sum for Distribution Board + MCBs/ELCB
 };
 
 const qualityMultipliers = {
@@ -25,8 +25,9 @@ const qualityMultipliers = {
 const chartColors = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
 
 const ElectricalCalculator: React.FC = () => {
-  const { hasPaid, user } = useUser();
+  const { hasPaid, user } = useUser(); // Use Context
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Inputs
   const [lightPoints, setLightPoints] = useState("20");
@@ -39,10 +40,24 @@ const ElectricalCalculator: React.FC = () => {
   const [totalCost, setTotalCost] = useState(0);
   const [breakdown, setBreakdown] = useState<any>(null);
 
-  // PDF Logic
+  // PDF & Save Logic
   const resultsRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // --- Load Data on Edit ---
+  useEffect(() => {
+    if (location.state && (location.state as any).projectData) {
+      const data = (location.state as any).projectData;
+      if (data.lightPoints && data.fanPoints) {
+        setLightPoints(data.lightPoints);
+        setFanPoints(data.fanPoints);
+        setPowerPoints(data.powerPoints);
+        setQuality(data.quality);
+      }
+    }
+  }, [location]);
+  // ------------------------
 
   const downloadPDF = () => {
     if (resultsRef.current) {
@@ -67,7 +82,7 @@ const ElectricalCalculator: React.FC = () => {
       navigate("/signin");
       return;
     }
-    if (!breakdown) return;
+    if (totalCost === 0) return;
     const name = prompt("Project Name:");
     if (!name) return;
 
@@ -88,10 +103,11 @@ const ElectricalCalculator: React.FC = () => {
         },
       });
       if (error) throw error;
-      alert("Saved!");
+      alert("Project saved successfully!");
       navigate("/dashboard");
     } catch (e) {
-      alert("Error saving.");
+      console.error(e);
+      alert("Error saving project.");
     } finally {
       setIsSaving(false);
     }
@@ -105,10 +121,12 @@ const ElectricalCalculator: React.FC = () => {
     const pCount = parseInt(powerPoints) || 0;
     const factor = qualityMultipliers[quality].factor;
 
+    // Material + Wiring + Labor cost per point
     const lightCost = lCount * pointRates.light * factor;
     const fanCost = fCount * pointRates.fan * factor;
     const powerCost = pCount * pointRates.power * factor;
 
+    // Main Board is mostly standard but varies slightly with premium brands
     const boardCost = pointRates.mcb * (factor > 1.5 ? 1.5 : factor);
 
     const total = lightCost + fanCost + powerCost + boardCost;
@@ -256,6 +274,17 @@ const ElectricalCalculator: React.FC = () => {
                       </tr>
                     </tbody>
                   </table>
+                  <div
+                    className="disclaimer-box"
+                    style={{
+                      marginTop: "1rem",
+                      padding: "0.5rem",
+                      fontSize: "0.8rem",
+                    }}
+                  >
+                    *Includes Wiring, Switches, Plates, Metal Boxes, and Labor.
+                    Does not include fancy light fixtures or fans themselves.
+                  </div>
                 </div>
                 <div className="chart-container">
                   <Chart
@@ -271,35 +300,28 @@ const ElectricalCalculator: React.FC = () => {
               </div>
 
               {hasPaid && (
-                // ... inside return statement ...
                 <div className="action-buttons">
-                  {hasPaid && (
-                    <>
-                      <button
-                        className="btn"
-                        onClick={downloadPDF}
-                        disabled={isDownloading}
-                      >
-                        <i className="fas fa-download"></i>{" "}
-                        {isDownloading ? "Downloading..." : "Download PDF"}
-                      </button>
-                      {/* UPDATED TEXT */}
-                      <button
-                        className="btn"
-                        style={{
-                          backgroundColor: "var(--accent-color)",
-                          marginLeft: "10px",
-                        }}
-                        onClick={handleSave}
-                        disabled={isSaving}
-                      >
-                        <i className="fas fa-save"></i>{" "}
-                        {isSaving ? "Saving..." : "Save to Dashboard"}
-                      </button>
-                    </>
-                  )}
+                  <button
+                    className="btn"
+                    onClick={downloadPDF}
+                    disabled={isDownloading}
+                  >
+                    <i className="fas fa-download"></i>{" "}
+                    {isDownloading ? "Downloading..." : "Download PDF"}
+                  </button>
+                  <button
+                    className="btn"
+                    style={{
+                      backgroundColor: "var(--secondary-color)",
+                      marginLeft: "10px",
+                    }}
+                    onClick={handleSave}
+                    disabled={isSaving}
+                  >
+                    <i className="fas fa-save"></i>{" "}
+                    {isSaving ? "Saving..." : "Save to Dashboard"}
+                  </button>
                 </div>
-                // ...
               )}
             </div>
           </div>

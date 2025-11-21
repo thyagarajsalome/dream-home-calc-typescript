@@ -21,7 +21,6 @@ const Header: React.FC = () => {
     await installPrompt.prompt();
   };
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -46,32 +45,33 @@ const Header: React.FC = () => {
         </Link>
 
         <ul className={isMenuOpen ? "nav-menu active" : "nav-menu"}>
-          {installPrompt && (
-            <li>
-              <button onClick={handleInstallClick} className="btn install-btn">
-                <i className="fas fa-download"></i> Install App
-              </button>
-            </li>
-          )}
-
-          {/* --- Dashboard Link (Visible only to Users) --- */}
+          {/* --- Dashboard Button (Gold) --- */}
           {user && (
-            <li>
+            <li style={{ marginRight: "10px" }}>
               <Link
                 to="/dashboard"
                 className="btn"
                 style={{
-                  padding: "0.5rem 1rem",
+                  padding: "0.6rem 1.2rem",
                   backgroundColor: "var(--primary-color)",
                   color: "white",
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",
-                  fontSize: "0.9rem",
+                  fontWeight: "600",
                 }}
               >
                 <i className="fas fa-columns"></i> Dashboard
               </Link>
+            </li>
+          )}
+          {/* ------------------------------ */}
+
+          {installPrompt && (
+            <li>
+              <button onClick={handleInstallClick} className="btn install-btn">
+                <i className="fas fa-download"></i> Install App
+              </button>
             </li>
           )}
 
@@ -81,16 +81,7 @@ const Header: React.FC = () => {
                 <span>{user.email?.split("@")[0]}</span>
               </li>
               <li>
-                <button
-                  onClick={handleSignOut}
-                  className="sign-out-btn"
-                  style={{
-                    padding: "0.5rem 1rem",
-                    fontSize: "0.9rem",
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
+                <button onClick={handleSignOut} className="sign-out-btn">
                   Sign Out
                 </button>
               </li>

@@ -1,9 +1,9 @@
 // src/components/InteriorCalculator.tsx
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import Chart from "./Chart";
 import { useUser } from "../context/UserContext";
@@ -43,8 +43,9 @@ const interiorBreakdown = {
 const chartColors = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594", "#A99A86"];
 
 const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
-  const { user } = useUser();
+  const { user } = useUser(); // Get user context
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [area, setArea] = useState("1200");
   const [quality, setQuality] = useState<keyof typeof qualityRates>("standard");
@@ -53,6 +54,19 @@ const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
   const resultsRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // --- Load Data on Edit ---
+  useEffect(() => {
+    if (location.state && (location.state as any).projectData) {
+      const data = (location.state as any).projectData;
+      if (data.area && data.quality && !data.doorCount) {
+        // Distinguish from doors
+        setArea(data.area);
+        setQuality(data.quality);
+      }
+    }
+  }, [location]);
+  // ------------------------
 
   const downloadPDF = () => {
     if (resultsRef.current) {
@@ -95,10 +109,11 @@ const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
         },
       });
       if (error) throw error;
-      alert("Saved!");
+      alert("Project saved successfully!");
       navigate("/dashboard");
     } catch (e) {
-      alert("Error saving.");
+      console.error(e);
+      alert("Error saving project.");
     } finally {
       setIsSaving(false);
     }
@@ -213,35 +228,28 @@ const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
             </div>
 
             {hasPaid && (
-              // ... inside return statement ...
               <div className="action-buttons">
-                {hasPaid && (
-                  <>
-                    <button
-                      className="btn"
-                      onClick={downloadPDF}
-                      disabled={isDownloading}
-                    >
-                      <i className="fas fa-download"></i>{" "}
-                      {isDownloading ? "Downloading..." : "Download PDF"}
-                    </button>
-                    {/* UPDATED TEXT */}
-                    <button
-                      className="btn"
-                      style={{
-                        backgroundColor: "var(--accent-color)",
-                        marginLeft: "10px",
-                      }}
-                      onClick={handleSave}
-                      disabled={isSaving}
-                    >
-                      <i className="fas fa-save"></i>{" "}
-                      {isSaving ? "Saving..." : "Save to Dashboard"}
-                    </button>
-                  </>
-                )}
+                <button
+                  className="btn"
+                  onClick={downloadPDF}
+                  disabled={isDownloading}
+                >
+                  <i className="fas fa-download"></i>{" "}
+                  {isDownloading ? "Downloading..." : "Download PDF"}
+                </button>
+                <button
+                  className="btn"
+                  style={{
+                    backgroundColor: "var(--secondary-color)",
+                    marginLeft: "10px",
+                  }}
+                  onClick={handleSave}
+                  disabled={isSaving}
+                >
+                  <i className="fas fa-save"></i>{" "}
+                  {isSaving ? "Saving..." : "Save to Dashboard"}
+                </button>
               </div>
-              // ...
             )}
           </div>
         )}
