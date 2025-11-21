@@ -5,8 +5,6 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { useUser } from "../context/UserContext";
 
-// --- Constants & Thumb Rules ---
-
 const wallMaterialTypes = {
   redBrick: {
     name: "Red Bricks (Standard)",
@@ -28,12 +26,12 @@ const wallMaterialTypes = {
     sandFactor: 0.4,
     unit: "Nos",
     countPerSqFt: 8,
-  }, // Uses significantly less mortar
+  },
 };
 
 const concreteGrades = {
-  M20: { name: "M20 (1:1.5:3) - Standard", cementMultiplier: 1.0 },
-  M25: { name: "M25 (1:1:2) - Stronger", cementMultiplier: 1.15 }, // Uses more cement
+  M20: { name: "M20 (Standard)", cementMultiplier: 1.0 },
+  M25: { name: "M25 (Stronger)", cementMultiplier: 1.15 },
 };
 
 const qualityThumbRules = {
@@ -42,22 +40,40 @@ const qualityThumbRules = {
   premium: { cement: 0.5, steel: 4.5 },
 };
 
+// --- NEW: Default Market Prices (India) ---
+const defaultPrices = {
+  cement: 400, // Per Bag
+  steel: 65, // Per Kg
+  sand: 60, // Per CFT
+  aggregate: 40, // Per CFT
+  paint: 350, // Per Liter
+  tiles: 600, // Per Box
+  bricks: 10, // Per Piece (Red Brick avg)
+};
+
 interface CalculationResult {
-  cement: number; // Bags
-  sand: number; // CFT
-  aggregate: number; // CFT
-  steel: number; // kg
+  cement: number;
+  sand: number;
+  aggregate: number;
+  steel: number;
   wallMaterialName: string;
-  wallMaterialCount: number; // Bricks/Blocks
-  paint: number; // Liters (Approx)
-  tiles: number; // Boxes (Approx)
+  wallMaterialCount: number;
+  paint: number;
+  tiles: number;
+  costCement: number;
+  costSteel: number;
+  costSand: number;
+  costAggregate: number;
+  costWall: number;
+  costPaint: number;
+  costTiles: number;
+  totalMaterialCost: number;
 }
 
 const MaterialQuantityCalculator: React.FC = () => {
-  const { hasPaid } = useUser(); // Use Context
+  const { hasPaid } = useUser();
   const [area, setArea] = useState("");
 
-  // New Inputs
   const [wallType, setWallType] =
     useState<keyof typeof wallMaterialTypes>("redBrick");
   const [grade, setGrade] = useState<keyof typeof concreteGrades>("M20");
@@ -65,9 +81,19 @@ const MaterialQuantityCalculator: React.FC = () => {
     "standard"
   );
 
+  const [prices, setPrices] = useState(defaultPrices);
+  const [showPrices, setShowPrices] = useState(false);
+
   const [results, setResults] = useState<CalculationResult | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+
+  const handlePriceChange = (
+    key: keyof typeof defaultPrices,
+    value: string
+  ) => {
+    setPrices((prev) => ({ ...prev, [key]: parseFloat(value) || 0 }));
+  };
 
   const downloadPDF = () => {
     if (resultsRef.current) {
@@ -79,7 +105,7 @@ const MaterialQuantityCalculator: React.FC = () => {
           const pdfWidth = pdf.internal.pageSize.getWidth();
           const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
           pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-          pdf.save("material-quantity-report.pdf");
+          pdf.save("material-boq-report.pdf");
           setIsDownloading(false);
         }
       );
@@ -98,29 +124,41 @@ const MaterialQuantityCalculator: React.FC = () => {
     const wRule = wallMaterialTypes[wallType];
     const cRule = concreteGrades[grade];
 
-    // 1. Cement Calculation
-    // Base cement * Grade Multiplier * Wall Type reduction (for mortar savings)
+    // Quantities
     const cement =
       parsedArea *
       qRule.cement *
       cRule.cementMultiplier *
       ((wRule.cementFactor + 1) / 2);
-
-    // 2. Sand & Aggregate
-    const sand = parsedArea * 1.8 * wRule.sandFactor; // Wall type affects sand usage in masonry
+    const sand = parsedArea * 1.8 * wRule.sandFactor;
     const aggregate = parsedArea * 1.35;
-
-    // 3. Steel
     const steel = parsedArea * qRule.steel;
-
-    // 4. Wall Material (Bricks/Blocks)
     const wallCount = parsedArea * wRule.countPerSqFt;
-
-    // 5. Paint (Interior + Exterior approx)
     const paintLiters = parsedArea * 0.18;
-
-    // 6. Tiles (Flooring Area ~ 70% of Built-up, 1 Box ~ 15 sq.ft)
     const tileBoxes = (parsedArea * 0.7) / 15;
+
+    // Costs
+    const costCement = cement * prices.cement;
+    const costSteel = steel * prices.steel;
+    const costSand = sand * prices.sand;
+    const costAggregate = aggregate * prices.aggregate;
+
+    let brickPrice = prices.bricks;
+    if (wallType === "aac") brickPrice = prices.bricks * 5; // AAC expensive per piece
+    if (wallType === "flyAsh") brickPrice = prices.bricks * 0.8;
+
+    const costWall = wallCount * brickPrice;
+    const costPaint = paintLiters * prices.paint;
+    const costTiles = tileBoxes * prices.tiles;
+
+    const totalMaterialCost =
+      costCement +
+      costSteel +
+      costSand +
+      costAggregate +
+      costWall +
+      costPaint +
+      costTiles;
 
     setResults({
       cement,
@@ -131,24 +169,37 @@ const MaterialQuantityCalculator: React.FC = () => {
       wallMaterialCount: wallCount,
       paint: paintLiters,
       tiles: tileBoxes,
+      costCement,
+      costSteel,
+      costSand,
+      costAggregate,
+      costWall,
+      costPaint,
+      costTiles,
+      totalMaterialCost,
     });
   };
 
   const formatNumber = (num: number) => Math.round(num).toLocaleString("en-IN");
+  const formatCurrency = (num: number) =>
+    "₹" + Math.round(num).toLocaleString("en-IN");
+
   const isLocked = !hasPaid;
 
   return (
     <section id="material-quantity-calculator" className="container">
       <div className="card">
-        <h2 className="section-title">Material BOQ Calculator</h2>
+        <h2 className="section-title">Material Cost Estimator (BOQ)</h2>
+
         {isLocked && (
           <div style={{ textAlign: "center", marginBottom: "2rem" }}>
             <p style={{ color: "var(--danger-color)", fontWeight: "600" }}>
               <i className="fas fa-lock"></i> This is a Pro Feature. Upgrade to
-              calculate raw material quantities.
+              unlock.
             </p>
           </div>
         )}
+
         <form onSubmit={calculateQuantities}>
           <div className="form-group">
             <label htmlFor="area">
@@ -201,23 +252,75 @@ const MaterialQuantityCalculator: React.FC = () => {
             </div>
           </div>
 
-          <div className="form-group full-width">
-            <label>
-              <i className="fas fa-gem"></i> Finish Quality
-            </label>
-            <select
-              value={quality}
-              onChange={(e) => setQuality(e.target.value as any)}
-              disabled={isLocked}
-            >
-              <option value="basic">Basic</option>
-              <option value="standard">Standard</option>
-              <option value="premium">Premium</option>
-            </select>
+          {/* --- Price Editor Toggle --- */}
+          <div className="form-group" style={{ marginTop: "1rem" }}>
+            <div className="checkbox-wrapper">
+              <input
+                type="checkbox"
+                checked={showPrices}
+                onChange={(e) => setShowPrices(e.target.checked)}
+                disabled={isLocked}
+                style={{ width: "auto", marginRight: "10px" }}
+              />
+              <label
+                style={{
+                  display: "inline",
+                  fontWeight: "600",
+                  color: "var(--primary-color)",
+                }}
+              >
+                Edit Material Market Prices (Optional)
+              </label>
+            </div>
           </div>
 
+          {showPrices && (
+            <div
+              className="form-grid"
+              style={{
+                background: "#f9f9f9",
+                padding: "15px",
+                borderRadius: "8px",
+                marginBottom: "15px",
+              }}
+            >
+              <div className="form-group">
+                <label>Cement Price / Bag</label>
+                <input
+                  type="number"
+                  value={prices.cement}
+                  onChange={(e) => handlePriceChange("cement", e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label>Steel Price / Kg</label>
+                <input
+                  type="number"
+                  value={prices.steel}
+                  onChange={(e) => handlePriceChange("steel", e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label>Sand Price / CFT</label>
+                <input
+                  type="number"
+                  value={prices.sand}
+                  onChange={(e) => handlePriceChange("sand", e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label>Paint Price / Liter</label>
+                <input
+                  type="number"
+                  value={prices.paint}
+                  onChange={(e) => handlePriceChange("paint", e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+
           <button type="submit" className="btn full-width" disabled={isLocked}>
-            <i className="fas fa-calculator"></i> Calculate Quantities
+            <i className="fas fa-calculator"></i> Calculate BOQ & Cost
           </button>
         </form>
 
@@ -228,72 +331,74 @@ const MaterialQuantityCalculator: React.FC = () => {
                 className="total-summary"
                 style={{ marginTop: "2rem", background: "var(--accent-color)" }}
               >
-                <p>Primary Materials Required</p>
-                <span>{formatNumber(results.cement)} Bags Cement</span>
+                <p>Est. Material Cost</p>
+                <span>{formatCurrency(results.totalMaterialCost)}</span>
               </div>
 
               <div className="result-details">
                 <h3 style={{ textAlign: "center", marginTop: "2rem" }}>
-                  Detailed Material List
+                  Detailed Bill of Quantities (BOQ)
                 </h3>
                 <table>
                   <thead>
                     <tr>
                       <th>Material</th>
-                      <th>Quantity (Approx)</th>
-                      <th className="text-right">Unit</th>
+                      <th>Quantity</th>
+                      <th className="text-right">Est. Cost</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
                       <td>Cement ({grade})</td>
-                      <td>{formatNumber(results.cement)}</td>
-                      <td className="text-right">Bags (50kg)</td>
+                      <td>{formatNumber(results.cement)} Bags</td>
+                      <td className="text-right">
+                        {formatCurrency(results.costCement)}
+                      </td>
                     </tr>
                     <tr>
                       <td>Steel (Rebar)</td>
-                      <td>{formatNumber(results.steel)}</td>
-                      <td className="text-right">kg</td>
+                      <td>{formatNumber(results.steel)} kg</td>
+                      <td className="text-right">
+                        {formatCurrency(results.costSteel)}
+                      </td>
                     </tr>
                     <tr>
-                      <td>River Sand / M-Sand</td>
-                      <td>{formatNumber(results.sand)}</td>
-                      <td className="text-right">Cubic Feet (CFT)</td>
+                      <td>Sand</td>
+                      <td>{formatNumber(results.sand)} CFT</td>
+                      <td className="text-right">
+                        {formatCurrency(results.costSand)}
+                      </td>
                     </tr>
                     <tr>
-                      <td>Aggregate (Jelly)</td>
-                      <td>{formatNumber(results.aggregate)}</td>
-                      <td className="text-right">Cubic Feet (CFT)</td>
+                      <td>Aggregate</td>
+                      <td>{formatNumber(results.aggregate)} CFT</td>
+                      <td className="text-right">
+                        {formatCurrency(results.costAggregate)}
+                      </td>
                     </tr>
                     <tr>
                       <td>{results.wallMaterialName}</td>
-                      <td>{formatNumber(results.wallMaterialCount)}</td>
-                      <td className="text-right">Nos</td>
-                    </tr>
-                    <tr style={{ background: "#f9f9f9" }}>
-                      <td>
-                        <strong>Finish Materials</strong>
+                      <td>{formatNumber(results.wallMaterialCount)} Nos</td>
+                      <td className="text-right">
+                        {formatCurrency(results.costWall)}
                       </td>
-                      <td></td>
-                      <td></td>
                     </tr>
                     <tr>
-                      <td>Paint (Int + Ext)</td>
-                      <td>{formatNumber(results.paint)}</td>
-                      <td className="text-right">Liters</td>
+                      <td>Paint</td>
+                      <td>{formatNumber(results.paint)} Liters</td>
+                      <td className="text-right">
+                        {formatCurrency(results.costPaint)}
+                      </td>
                     </tr>
                     <tr>
-                      <td>Flooring Tiles</td>
-                      <td>{formatNumber(results.tiles)}</td>
-                      <td className="text-right">Boxes</td>
+                      <td>Tiles</td>
+                      <td>{formatNumber(results.tiles)} Boxes</td>
+                      <td className="text-right">
+                        {formatCurrency(results.costTiles)}
+                      </td>
                     </tr>
                   </tbody>
                 </table>
-              </div>
-
-              <div className="disclaimer-box" style={{ marginTop: "2rem" }}>
-                <strong>Note:</strong> AAC Blocks reduce structural dead load
-                and save approx 15-20% on cement mortar compared to Red Bricks.
               </div>
 
               {hasPaid && (
