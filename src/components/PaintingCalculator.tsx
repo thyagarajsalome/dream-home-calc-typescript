@@ -271,28 +271,35 @@ const PaintingCalculator: React.FC = () => {
               </div>
 
               {hasPaid && (
+                // ... inside return statement ...
                 <div className="action-buttons">
-                  <button
-                    className="btn"
-                    onClick={downloadPDF}
-                    disabled={isDownloading}
-                  >
-                    <i className="fas fa-download"></i>{" "}
-                    {isDownloading ? "Downloading..." : "Download PDF"}
-                  </button>
-                  <button
-                    className="btn"
-                    style={{
-                      backgroundColor: "var(--secondary-color)",
-                      marginLeft: "10px",
-                    }}
-                    onClick={handleSave}
-                    disabled={isSaving}
-                  >
-                    <i className="fas fa-save"></i>{" "}
-                    {isSaving ? "Saving..." : "Save"}
-                  </button>
+                  {hasPaid && (
+                    <>
+                      <button
+                        className="btn"
+                        onClick={downloadPDF}
+                        disabled={isDownloading}
+                      >
+                        <i className="fas fa-download"></i>{" "}
+                        {isDownloading ? "Downloading..." : "Download PDF"}
+                      </button>
+                      {/* UPDATED TEXT */}
+                      <button
+                        className="btn"
+                        style={{
+                          backgroundColor: "var(--accent-color)",
+                          marginLeft: "10px",
+                        }}
+                        onClick={handleSave}
+                        disabled={isSaving}
+                      >
+                        <i className="fas fa-save"></i>{" "}
+                        {isSaving ? "Saving..." : "Save to Dashboard"}
+                      </button>
+                    </>
+                  )}
                 </div>
+                // ...
               )}
             </div>
           </div>
