@@ -1,38 +1,42 @@
+// src/components/ElectricalCalculator.tsx
+
 import React, { useState, useRef } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import Chart from "./Chart";
+import { useUser } from "../context/UserContext";
 
-// --- ADD 'hasPaid' to the component's props ---
-interface ElectricalCalculatorProps {
-  hasPaid: boolean;
-}
-
-const electricalQualities = {
-  basic: { name: "Basic", ratePerSqFt: 100 },
-  standard: { name: "Standard (Concealed)", ratePerSqFt: 180 },
-  premium: { name: "Premium (Smart Features)", ratePerSqFt: 300 },
+// Point Rates (Wiring + Switch + Labor) - NO FANCY FITTINGS INCLUDED
+const pointRates = {
+  light: 650, // Per point
+  fan: 750, // Per point
+  power: 1200, // Per point (AC/Geyser/Fridge - 15A/20A)
+  mcb: 25000, // Lump sum for Distribution Board + MCBs/ELCB
 };
 
-const electricalBreakdown = {
-  Wiring: 40,
-  "Switches & Sockets": 25,
-  "Main Board & Breakers": 15,
-  Labor: 20,
+const qualityMultipliers = {
+  basic: { name: "Basic (Anchor/Roma)", factor: 1.0 },
+  premium: { name: "Premium (Legrand/Schneider)", factor: 1.5 },
+  smart: { name: "Smart Home Ready (WiFi Switches)", factor: 3.5 },
 };
 
 const chartColors = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
 
-// --- Accept 'hasPaid' prop ---
-const ElectricalCalculator: React.FC<ElectricalCalculatorProps> = ({
-  hasPaid,
-}) => {
-  const [area, setArea] = useState("");
-  const [quality, setQuality] =
-    useState<keyof typeof electricalQualities>("basic");
-  const [totalCost, setTotalCost] = useState(0);
+const ElectricalCalculator: React.FC = () => {
+  const { hasPaid } = useUser(); // Use Context
 
-  // --- ADDITIONS FOR PDF ---
+  // Inputs
+  const [lightPoints, setLightPoints] = useState("20");
+  const [fanPoints, setFanPoints] = useState("5");
+  const [powerPoints, setPowerPoints] = useState("4");
+  const [quality, setQuality] =
+    useState<keyof typeof qualityMultipliers>("basic");
+
+  // Results
+  const [totalCost, setTotalCost] = useState(0);
+  const [breakdown, setBreakdown] = useState<any>(null);
+
+  // PDF Logic
   const resultsRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -52,60 +56,117 @@ const ElectricalCalculator: React.FC<ElectricalCalculatorProps> = ({
       );
     }
   };
-  // --- END OF ADDITIONS ---
 
   const calculateCost = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const parsedArea = parseFloat(area) || 0;
-    const cost = parsedArea * electricalQualities[quality].ratePerSqFt;
-    setTotalCost(cost);
+
+    const lCount = parseInt(lightPoints) || 0;
+    const fCount = parseInt(fanPoints) || 0;
+    const pCount = parseInt(powerPoints) || 0;
+    const factor = qualityMultipliers[quality].factor;
+
+    // Material + Wiring + Labor cost per point
+    const lightCost = lCount * pointRates.light * factor;
+    const fanCost = fCount * pointRates.fan * factor;
+    const powerCost = pCount * pointRates.power * factor;
+
+    // Main Board is mostly standard but varies slightly with premium brands
+    const boardCost = pointRates.mcb * (factor > 1.5 ? 1.5 : factor);
+
+    const total = lightCost + fanCost + powerCost + boardCost;
+
+    setBreakdown({
+      light: lightCost,
+      fan: fanCost,
+      power: powerCost,
+      board: boardCost,
+      counts: { lCount, fCount, pCount },
+    });
+    setTotalCost(total);
   };
+
+  const isLocked = !hasPaid;
 
   return (
     <section id="electrical-calculator" className="container">
       <div className="card">
-        <h2 className="section-title">Electrical Cost Calculator</h2>
+        <h2 className="section-title">Electrical Point Estimator</h2>
+
+        {isLocked && (
+          <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+            <p style={{ color: "var(--danger-color)", fontWeight: "600" }}>
+              <i className="fas fa-lock"></i> Upgrade to Pro for Points-based
+              calculation.
+            </p>
+          </div>
+        )}
+
         <form onSubmit={calculateCost}>
-          <div className="form-group">
-            <label htmlFor="area">
-              <i className="fas fa-ruler-combined"></i> Built-up Area (sq. ft.)
-            </label>
-            <input
-              type="number"
-              id="area"
-              name="area"
-              placeholder="e.g., 1500"
-              value={area}
-              onChange={(e) => setArea(e.target.value)}
-              required
-            />
+          <div className="form-grid">
+            <div className="form-group">
+              <label>
+                <i className="far fa-lightbulb"></i> Light/Plug Points (6A)
+              </label>
+              <input
+                type="number"
+                value={lightPoints}
+                onChange={(e) => setLightPoints(e.target.value)}
+                min="0"
+                disabled={isLocked}
+              />
+            </div>
+            <div className="form-group">
+              <label>
+                <i className="fas fa-fan"></i> Fan Points
+              </label>
+              <input
+                type="number"
+                value={fanPoints}
+                onChange={(e) => setFanPoints(e.target.value)}
+                min="0"
+                disabled={isLocked}
+              />
+            </div>
+            <div className="form-group">
+              <label>
+                <i className="fas fa-plug"></i> Power Points (15A - AC/Geyser)
+              </label>
+              <input
+                type="number"
+                value={powerPoints}
+                onChange={(e) => setPowerPoints(e.target.value)}
+                min="0"
+                disabled={isLocked}
+              />
+            </div>
+            <div className="form-group">
+              <label>
+                <i className="fas fa-toggle-on"></i> Switch/Wire Quality
+              </label>
+              <select
+                value={quality}
+                onChange={(e) => setQuality(e.target.value as any)}
+                disabled={isLocked}
+              >
+                {Object.entries(qualityMultipliers).map(([key, val]) => (
+                  <option key={key} value={key}>
+                    {val.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-          <div className="form-group full-width">
-            <label>
-              <i className="fas fa-bolt"></i> Wiring & Fixture Quality
-            </label>
-            <select
-              value={quality}
-              onChange={(e) =>
-                setQuality(e.target.value as keyof typeof electricalQualities)
-              }
-            >
-              {Object.entries(electricalQualities).map(([key, { name }]) => (
-                <option key={key} value={key}>
-                  {name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button type="submit" className="btn full-width">
-            <i className="fas fa-calculator"></i> Calculate Cost
+
+          <button type="submit" className="btn full-width" disabled={isLocked}>
+            <i className="fas fa-calculator"></i> Calculate Estimate
           </button>
         </form>
-        {totalCost > 0 && (
-          <div id="resultsSection" className={totalCost > 0 ? "visible" : ""}>
+
+        {totalCost > 0 && breakdown && (
+          <div id="resultsSection" className="visible">
             <div className="card" ref={resultsRef}>
               <div className="total-summary" style={{ marginTop: "2rem" }}>
-                <p>Total Estimated Electrical Cost</p>
+                <p>Total Electrical Estimate</p>
                 <span>
                   {totalCost.toLocaleString("en-IN", {
                     style: "currency",
@@ -114,6 +175,7 @@ const ElectricalCalculator: React.FC<ElectricalCalculatorProps> = ({
                   })}
                 </span>
               </div>
+
               <div className="results-grid">
                 <div className="result-details">
                   <h3>Cost Breakdown</h3>
@@ -121,37 +183,66 @@ const ElectricalCalculator: React.FC<ElectricalCalculatorProps> = ({
                     <thead>
                       <tr>
                         <th>Component</th>
-                        <th>Allocation</th>
-                        <th className="text-right">Cost (INR)</th>
+                        <th>Count</th>
+                        <th className="text-right">Cost</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {Object.entries(electricalBreakdown).map(
-                        ([component, percentage]) => {
-                          const cost = (totalCost * percentage) / 100;
-                          return (
-                            <tr key={component}>
-                              <td>{component}</td>
-                              <td>{percentage}%</td>
-                              <td className="text-right">
-                                {cost.toLocaleString("en-IN", {
-                                  style: "currency",
-                                  currency: "INR",
-                                  maximumFractionDigits: 0,
-                                })}
-                              </td>
-                            </tr>
-                          );
-                        }
-                      )}
+                      <tr>
+                        <td>Lights & Plugs (6A)</td>
+                        <td>{breakdown.counts.lCount} pts</td>
+                        <td className="text-right">
+                          ₹{Math.round(breakdown.light).toLocaleString()}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Fan Points</td>
+                        <td>{breakdown.counts.fCount} pts</td>
+                        <td className="text-right">
+                          ₹{Math.round(breakdown.fan).toLocaleString()}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Power Sockets (AC/Geyser)</td>
+                        <td>{breakdown.counts.pCount} pts</td>
+                        <td className="text-right">
+                          ₹{Math.round(breakdown.power).toLocaleString()}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Dist. Board & MCBs</td>
+                        <td>Lump sum</td>
+                        <td className="text-right">
+                          ₹{Math.round(breakdown.board).toLocaleString()}
+                        </td>
+                      </tr>
                     </tbody>
                   </table>
+                  <div
+                    className="disclaimer-box"
+                    style={{
+                      marginTop: "1rem",
+                      padding: "0.5rem",
+                      fontSize: "0.8rem",
+                    }}
+                  >
+                    *Includes Wiring, Switches, Plates, Metal Boxes, and Labor.
+                    Does not include fancy light fixtures or fans themselves.
+                  </div>
                 </div>
                 <div className="chart-container">
-                  <Chart data={electricalBreakdown} colors={chartColors} />
+                  <Chart
+                    data={{
+                      "Wiring Material": totalCost * 0.4,
+                      "Switches & Plates": totalCost * 0.3,
+                      Labor: totalCost * 0.2,
+                      "MCB/DB": totalCost * 0.1,
+                    }}
+                    colors={chartColors}
+                  />
                 </div>
               </div>
-              {/* --- UPDATE: PDF BUTTON IS NOW CONDITIONAL --- */}
+
               {hasPaid && (
                 <div className="action-buttons">
                   <button
@@ -164,7 +255,6 @@ const ElectricalCalculator: React.FC<ElectricalCalculatorProps> = ({
                   </button>
                 </div>
               )}
-              {/* --- END OF UPDATE --- */}
             </div>
           </div>
         )}

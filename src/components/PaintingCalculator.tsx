@@ -1,40 +1,54 @@
-import React, { useState, useRef } from "react";
+// src/components/PaintingCalculator.tsx
+
+import React, { useState, useRef, useEffect } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import Chart from "./Chart";
-
-// --- ADD 'hasPaid' to the component's props ---
-interface PaintingCalculatorProps {
-  hasPaid: boolean;
-}
+import { useUser } from "../context/UserContext";
 
 const paintTypes = {
-  distemper: { name: "Distemper", rate: 20 },
-  emulsion: { name: "Emulsion", rate: 35 },
-  enamel: { name: "Enamel", rate: 50 },
-  polyurethane: { name: "Polyurethane", rate: 70 },
+  distemper: { name: "Distemper (Economy)", rate: 22 },
+  emulsion: { name: "Tractor Emulsion (Std)", rate: 38 },
+  royal: { name: "Royal/Premium Emulsion", rate: 55 },
+  texture: { name: "Texture Paint (Highlight)", rate: 120 },
 };
 
-const paintingBreakdown = {
-  "Paint Material": 40,
-  "Primer & Putty": 15,
-  Labor: 35,
-  "Tools & Supplies": 10,
+const processTypes = {
+  repaint: { name: "Repainting (Touchup + 2 Coats)", factor: 1.0 },
+  fresh: { name: "Fresh Painting (Putty + Primer + 2 Coats)", factor: 1.6 }, // Costs 60% more
 };
 
 const chartColors = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
 
-// --- Accept 'hasPaid' prop ---
-const PaintingCalculator: React.FC<PaintingCalculatorProps> = ({ hasPaid }) => {
-  const [wallArea, setWallArea] = useState("");
+const PaintingCalculator: React.FC = () => {
+  const { hasPaid } = useUser(); // Use Context
+
+  // Inputs
+  const [carpetArea, setCarpetArea] = useState(""); // Helper input
+  const [wallArea, setWallArea] = useState(""); // Actual calc input
+  const [includeCeiling, setIncludeCeiling] = useState(true);
+
   const [paintType, setPaintType] =
-    useState<keyof typeof paintTypes>("distemper");
-  const [coats, setCoats] = useState("2");
+    useState<keyof typeof paintTypes>("emulsion");
+  const [process, setProcess] = useState<keyof typeof processTypes>("repaint");
+
   const [totalCost, setTotalCost] = useState(0);
 
-  // --- ADDITIONS FOR PDF ---
+  // PDF Logic
   const resultsRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+
+  // Helper: Auto-calculate wall area when carpet area changes
+  useEffect(() => {
+    const area = parseFloat(carpetArea);
+    if (!isNaN(area)) {
+      // Thumb rule: Wall Area approx = Carpet Area x 3
+      // Ceiling Area approx = Carpet Area
+      const walls = area * 3;
+      const ceiling = includeCeiling ? area : 0;
+      setWallArea(Math.round(walls + ceiling).toString());
+    }
+  }, [carpetArea, includeCeiling]);
 
   const downloadPDF = () => {
     if (resultsRef.current) {
@@ -52,75 +66,129 @@ const PaintingCalculator: React.FC<PaintingCalculatorProps> = ({ hasPaid }) => {
       );
     }
   };
-  // --- END OF ADDITIONS ---
 
   const calculateCost = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const parsedWallArea = parseFloat(wallArea) || 0;
-    const parsedCoats = parseInt(coats) || 0;
-    const cost = parsedWallArea * paintTypes[paintType].rate * parsedCoats;
+    const parsedArea = parseFloat(wallArea) || 0;
+    const baseRate = paintTypes[paintType].rate;
+    const processFactor = processTypes[process].factor;
+
+    const cost = parsedArea * baseRate * processFactor;
     setTotalCost(cost);
   };
+
+  const isLocked = !hasPaid;
 
   return (
     <section id="painting-calculator" className="container">
       <div className="card">
-        <h2 className="section-title">Painting Cost Calculator</h2>
+        <h2 className="section-title">Painting Cost Estimator</h2>
+
+        {isLocked && (
+          <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+            <p style={{ color: "var(--danger-color)", fontWeight: "600" }}>
+              <i className="fas fa-lock"></i> Upgrade to Pro to use this
+              calculator.
+            </p>
+          </div>
+        )}
+
         <form onSubmit={calculateCost}>
+          {/* Smart Area Input */}
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="carpetArea">
+                <i className="fas fa-ruler-combined"></i> Carpet/Floor Area
+                (sq.ft)
+              </label>
+              <input
+                type="number"
+                id="carpetArea"
+                placeholder="e.g., 1000"
+                value={carpetArea}
+                onChange={(e) => setCarpetArea(e.target.value)}
+                disabled={isLocked}
+              />
+              <small style={{ color: "#666", marginTop: "5px" }}>
+                Auto-calculates wall area (~3x)
+              </small>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="wallArea">
+                <i className="fas fa-paint-roller"></i> Total Paintable Area
+              </label>
+              <input
+                type="number"
+                id="wallArea"
+                value={wallArea}
+                onChange={(e) => setWallArea(e.target.value)}
+                required
+                disabled={isLocked}
+              />
+            </div>
+          </div>
+
           <div className="form-group">
-            <label htmlFor="wallArea">
-              <i className="fas fa-ruler-combined"></i> Wall Area (sq. ft.)
-            </label>
-            <input
-              type="number"
-              id="wallArea"
-              name="wallArea"
-              placeholder="e.g., 800"
-              value={wallArea}
-              onChange={(e) => setWallArea(e.target.value)}
-              required
-            />
+            <div className="checkbox-wrapper">
+              <input
+                type="checkbox"
+                checked={includeCeiling}
+                onChange={(e) => setIncludeCeiling(e.target.checked)}
+                disabled={isLocked}
+                style={{ width: "auto", marginRight: "10px" }}
+              />
+              <label style={{ display: "inline" }}>
+                Include Ceiling Painting (usually White Distemper)
+              </label>
+            </div>
           </div>
-          <div className="form-group">
-            <label htmlFor="coats">
-              <i className="fas fa-brush"></i> Number of Coats
-            </label>
-            <input
-              type="number"
-              id="coats"
-              name="coats"
-              placeholder="e.g., 2"
-              value={coats}
-              onChange={(e) => setCoats(e.target.value)}
-              required
-            />
+
+          <div className="form-grid">
+            <div className="form-group">
+              <label>
+                <i className="fas fa-brush"></i> Paint Type
+              </label>
+              <select
+                value={paintType}
+                onChange={(e) => setPaintType(e.target.value as any)}
+                disabled={isLocked}
+              >
+                {Object.entries(paintTypes).map(([key, val]) => (
+                  <option key={key} value={key}>
+                    {val.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>
+                <i className="fas fa-layer-group"></i> Process Type
+              </label>
+              <select
+                value={process}
+                onChange={(e) => setProcess(e.target.value as any)}
+                disabled={isLocked}
+              >
+                {Object.entries(processTypes).map(([key, val]) => (
+                  <option key={key} value={key}>
+                    {val.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-          <div className="form-group full-width">
-            <label>
-              <i className="fas fa-paint-roller"></i> Paint Type
-            </label>
-            <select
-              value={paintType}
-              onChange={(e) =>
-                setPaintType(e.target.value as keyof typeof paintTypes)
-              }
-            >
-              {Object.entries(paintTypes).map(([key, { name }]) => (
-                <option key={key} value={key}>
-                  {name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button type="submit" className="btn full-width">
-            <i className="fas fa-calculator"></i> Calculate Cost
+
+          <button type="submit" className="btn full-width" disabled={isLocked}>
+            <i className="fas fa-calculator"></i> Calculate Estimate
           </button>
         </form>
+
         {totalCost > 0 && (
-          <div id="resultsSection" className={totalCost > 0 ? "visible" : ""}>
+          <div id="resultsSection" className="visible">
             <div className="card" ref={resultsRef}>
               <div className="total-summary" style={{ marginTop: "2rem" }}>
-                <p>Total Estimated Painting Cost</p>
+                <p>Total Painting Cost</p>
                 <span>
                   {totalCost.toLocaleString("en-IN", {
                     style: "currency",
@@ -129,44 +197,43 @@ const PaintingCalculator: React.FC<PaintingCalculatorProps> = ({ hasPaid }) => {
                   })}
                 </span>
               </div>
+
               <div className="results-grid">
                 <div className="result-details">
                   <h3>Cost Breakdown</h3>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Component</th>
-                        <th>Allocation</th>
-                        <th className="text-right">Cost (INR)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {Object.entries(paintingBreakdown).map(
-                        ([component, percentage]) => {
-                          const cost = (totalCost * percentage) / 100;
-                          return (
-                            <tr key={component}>
-                              <td>{component}</td>
-                              <td>{percentage}%</td>
-                              <td className="text-right">
-                                {cost.toLocaleString("en-IN", {
-                                  style: "currency",
-                                  currency: "INR",
-                                  maximumFractionDigits: 0,
-                                })}
-                              </td>
-                            </tr>
-                          );
-                        }
-                      )}
-                    </tbody>
-                  </table>
+                  <ul>
+                    <li style={{ marginBottom: "10px" }}>
+                      <strong>Area:</strong> {wallArea} sq.ft
+                    </li>
+                    <li style={{ marginBottom: "10px" }}>
+                      <strong>Paint:</strong> {paintTypes[paintType].name}
+                    </li>
+                    <li style={{ marginBottom: "10px" }}>
+                      <strong>Process:</strong> {processTypes[process].name}
+                    </li>
+                  </ul>
+                  <div
+                    style={{
+                      marginTop: "1rem",
+                      fontSize: "0.9rem",
+                      color: "#666",
+                    }}
+                  >
+                    *Includes Material (Paint, Putty, Primer) + Labor charges.
+                  </div>
                 </div>
                 <div className="chart-container">
-                  <Chart data={paintingBreakdown} colors={chartColors} />
+                  <Chart
+                    data={{
+                      "Paint Material": 45,
+                      "Putty & Primer": process === "fresh" ? 25 : 10,
+                      Labor: process === "fresh" ? 30 : 45,
+                    }}
+                    colors={chartColors}
+                  />
                 </div>
               </div>
-              {/* --- UPDATE: PDF BUTTON IS NOW CONDITIONAL --- */}
+
               {hasPaid && (
                 <div className="action-buttons">
                   <button
@@ -179,7 +246,6 @@ const PaintingCalculator: React.FC<PaintingCalculatorProps> = ({ hasPaid }) => {
                   </button>
                 </div>
               )}
-              {/* --- END OF UPDATE --- */}
             </div>
           </div>
         )}

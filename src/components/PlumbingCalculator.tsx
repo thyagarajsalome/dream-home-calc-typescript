@@ -1,36 +1,44 @@
+// src/components/PlumbingCalculator.tsx
+
 import React, { useState, useRef } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import Chart from "./Chart";
+import { useUser } from "../context/UserContext";
 
-// --- ADD 'hasPaid' to the component's props ---
-interface PlumbingCalculatorProps {
-  hasPaid: boolean;
-}
-
-const fixtureQualities = {
-  basic: { name: "Basic", ratePerWetArea: 15000 },
-  standard: { name: "Standard", ratePerWetArea: 25000 },
-  premium: { name: "Premium", ratePerWetArea: 45000 },
+// Rates per unit (Average for Standard Quality)
+const unitRates = {
+  kitchen: { name: "Kitchen (Sink + Taps)", rate: 12000 },
+  commonBath: { name: "Common Bathroom (Basic)", rate: 25000 },
+  masterBath: { name: "Master Bathroom (Premium)", rate: 45000 }, // Higher due to diverters, etc.
+  motor: { name: "Motor & Pump Installation", rate: 15000 },
 };
 
-const plumbingBreakdown = {
-  "Pipes & Fittings": 30,
-  "Sanitary Ware": 25,
-  "Fixtures (Taps, etc.)": 20,
-  Labor: 25,
+// Quality Multipliers
+const qualityMultipliers = {
+  basic: { name: "Basic (PVC/Chrome Plated)", factor: 0.8 },
+  standard: { name: "Standard (Jaguar/Parryware)", factor: 1.0 },
+  premium: { name: "Premium (Grohe/Kohler)", factor: 1.8 },
 };
 
 const chartColors = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
 
-// --- Accept 'hasPaid' prop ---
-const PlumbingCalculator: React.FC<PlumbingCalculatorProps> = ({ hasPaid }) => {
-  const [wetAreas, setWetAreas] = useState("");
-  const [quality, setQuality] =
-    useState<keyof typeof fixtureQualities>("basic");
-  const [totalCost, setTotalCost] = useState(0);
+const PlumbingCalculator: React.FC = () => {
+  const { hasPaid } = useUser(); // Use Context
 
-  // --- ADDITIONS FOR PDF ---
+  // Inputs
+  const [kitchens, setKitchens] = useState("1");
+  const [commonBaths, setCommonBaths] = useState("1");
+  const [masterBaths, setMasterBaths] = useState("1");
+  const [includeMotor, setIncludeMotor] = useState(true);
+  const [quality, setQuality] =
+    useState<keyof typeof qualityMultipliers>("standard");
+
+  // Results
+  const [totalCost, setTotalCost] = useState(0);
+  const [costBreakdown, setCostBreakdown] = useState<any>(null);
+
+  // PDF Logic
   const resultsRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -50,61 +58,137 @@ const PlumbingCalculator: React.FC<PlumbingCalculatorProps> = ({ hasPaid }) => {
       );
     }
   };
-  // --- END OF ADDITIONS ---
 
   const calculateCost = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const parsedWetAreas = parseInt(wetAreas) || 0;
-    const cost = parsedWetAreas * fixtureQualities[quality].ratePerWetArea;
-    setTotalCost(cost);
+
+    const kCount = parseInt(kitchens) || 0;
+    const cCount = parseInt(commonBaths) || 0;
+    const mCount = parseInt(masterBaths) || 0;
+    const factor = qualityMultipliers[quality].factor;
+
+    // Calculate Base Costs (Material + Labor integrated in unit rates)
+    const kitchenCost = kCount * unitRates.kitchen.rate * factor;
+    const commonBathCost = cCount * unitRates.commonBath.rate * factor;
+    const masterBathCost = mCount * unitRates.masterBath.rate * factor;
+    const motorCost = includeMotor ? unitRates.motor.rate : 0; // Motor cost doesn't scale much with fixture quality
+
+    const total = kitchenCost + commonBathCost + masterBathCost + motorCost;
+
+    // Approximate split for chart
+    const piping = total * 0.35;
+    const fixtures = total * 0.4;
+    const labor = total * 0.25;
+
+    setCostBreakdown({
+      kitchen: kitchenCost,
+      common: commonBathCost,
+      master: masterBathCost,
+      motor: motorCost,
+      piping,
+      fixtures,
+      labor,
+    });
+    setTotalCost(total);
   };
+
+  const isLocked = !hasPaid;
 
   return (
     <section id="plumbing-calculator" className="container">
       <div className="card">
         <h2 className="section-title">Plumbing Cost Calculator</h2>
+
+        {isLocked && (
+          <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+            <p style={{ color: "var(--danger-color)", fontWeight: "600" }}>
+              <i className="fas fa-lock"></i> Upgrade to Pro to use the
+              Room-wise estimator.
+            </p>
+          </div>
+        )}
+
         <form onSubmit={calculateCost}>
+          <div className="form-grid">
+            <div className="form-group">
+              <label>
+                <i className="fas fa-utensils"></i> Kitchens / Utility
+              </label>
+              <input
+                type="number"
+                value={kitchens}
+                onChange={(e) => setKitchens(e.target.value)}
+                min="0"
+                disabled={isLocked}
+              />
+            </div>
+            <div className="form-group">
+              <label>
+                <i className="fas fa-bath"></i> Master Bathrooms
+              </label>
+              <input
+                type="number"
+                value={masterBaths}
+                onChange={(e) => setMasterBaths(e.target.value)}
+                min="0"
+                disabled={isLocked}
+              />
+            </div>
+            <div className="form-group">
+              <label>
+                <i className="fas fa-toilet"></i> Common Bathrooms
+              </label>
+              <input
+                type="number"
+                value={commonBaths}
+                onChange={(e) => setCommonBaths(e.target.value)}
+                min="0"
+                disabled={isLocked}
+              />
+            </div>
+            <div className="form-group">
+              <label>
+                <i className="fas fa-gem"></i> Fixture Quality
+              </label>
+              <select
+                value={quality}
+                onChange={(e) => setQuality(e.target.value as any)}
+                disabled={isLocked}
+              >
+                {Object.entries(qualityMultipliers).map(([key, val]) => (
+                  <option key={key} value={key}>
+                    {val.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
           <div className="form-group">
-            <label htmlFor="wetAreas">
-              <i className="fas fa-bath"></i> Number of Wet Areas (Bathrooms +
-              Kitchen)
-            </label>
-            <input
-              type="number"
-              id="wetAreas"
-              name="wetAreas"
-              placeholder="e.g., 3"
-              value={wetAreas}
-              onChange={(e) => setWetAreas(e.target.value)}
-              required
-            />
+            <div className="checkbox-wrapper">
+              <input
+                type="checkbox"
+                checked={includeMotor}
+                onChange={(e) => setIncludeMotor(e.target.checked)}
+                disabled={isLocked}
+                style={{ width: "auto", marginRight: "10px" }}
+              />
+              <label style={{ display: "inline" }}>
+                Include Overhead Tank & Motor Pump
+              </label>
+            </div>
           </div>
-          <div className="form-group full-width">
-            <label>
-              <i className="fas fa-gem"></i> Fixture Quality
-            </label>
-            <select
-              value={quality}
-              onChange={(e) =>
-                setQuality(e.target.value as keyof typeof fixtureQualities)
-              }
-            >
-              {Object.entries(fixtureQualities).map(([key, { name }]) => (
-                <option key={key} value={key}>
-                  {name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button type="submit" className="btn full-width">
-            <i className="fas fa-calculator"></i> Calculate Cost
+
+          <button type="submit" className="btn full-width" disabled={isLocked}>
+            <i className="fas fa-calculator"></i> Calculate Estimate
           </button>
         </form>
-        {totalCost > 0 && (
-          <div id="resultsSection" className={totalCost > 0 ? "visible" : ""}>
+
+        {totalCost > 0 && costBreakdown && (
+          <div id="resultsSection" className="visible">
             <div className="card" ref={resultsRef}>
               <div className="total-summary" style={{ marginTop: "2rem" }}>
-                <p>Total Estimated Plumbing Cost</p>
+                <p>Total Plumbing Estimate</p>
                 <span>
                   {totalCost.toLocaleString("en-IN", {
                     style: "currency",
@@ -113,44 +197,59 @@ const PlumbingCalculator: React.FC<PlumbingCalculatorProps> = ({ hasPaid }) => {
                   })}
                 </span>
               </div>
+
               <div className="results-grid">
                 <div className="result-details">
-                  <h3>Cost Breakdown</h3>
+                  <h3>Cost Allocation</h3>
                   <table>
                     <thead>
                       <tr>
-                        <th>Component</th>
-                        <th>Allocation</th>
-                        <th className="text-right">Cost (INR)</th>
+                        <th>Item</th>
+                        <th>Est. Cost</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {Object.entries(plumbingBreakdown).map(
-                        ([component, percentage]) => {
-                          const cost = (totalCost * percentage) / 100;
-                          return (
-                            <tr key={component}>
-                              <td>{component}</td>
-                              <td>{percentage}%</td>
-                              <td className="text-right">
-                                {cost.toLocaleString("en-IN", {
-                                  style: "currency",
-                                  currency: "INR",
-                                  maximumFractionDigits: 0,
-                                })}
-                              </td>
-                            </tr>
-                          );
-                        }
+                      <tr>
+                        <td>Master Bathrooms ({masterBaths})</td>
+                        <td className="text-right">
+                          ₹{Math.round(costBreakdown.master).toLocaleString()}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Common Bathrooms ({commonBaths})</td>
+                        <td className="text-right">
+                          ₹{Math.round(costBreakdown.common).toLocaleString()}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Kitchens ({kitchens})</td>
+                        <td className="text-right">
+                          ₹{Math.round(costBreakdown.kitchen).toLocaleString()}
+                        </td>
+                      </tr>
+                      {costBreakdown.motor > 0 && (
+                        <tr>
+                          <td>Motor & Tank</td>
+                          <td className="text-right">
+                            ₹{Math.round(costBreakdown.motor).toLocaleString()}
+                          </td>
+                        </tr>
                       )}
                     </tbody>
                   </table>
                 </div>
                 <div className="chart-container">
-                  <Chart data={plumbingBreakdown} colors={chartColors} />
+                  <Chart
+                    data={{
+                      "Fixtures (Taps/Sanitary)": costBreakdown.fixtures,
+                      "Pipes & Fittings (CPVC)": costBreakdown.piping,
+                      "Labor Charges": costBreakdown.labor,
+                    }}
+                    colors={chartColors}
+                  />
                 </div>
               </div>
-              {/* --- UPDATE: PDF BUTTON IS NOW CONDITIONAL --- */}
+
               {hasPaid && (
                 <div className="action-buttons">
                   <button
@@ -163,7 +262,6 @@ const PlumbingCalculator: React.FC<PlumbingCalculatorProps> = ({ hasPaid }) => {
                   </button>
                 </div>
               )}
-              {/* --- END OF UPDATE --- */}
             </div>
           </div>
         )}

@@ -1,37 +1,35 @@
+// src/components/FlooringCalculator.tsx
+
 import React, { useState, useRef } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import Chart from "./Chart";
-
-// --- ADD 'hasPaid' to the component's props ---
-interface FlooringCalculatorProps {
-  hasPaid: boolean;
-}
+import { useUser } from "../context/UserContext";
 
 const flooringTypes = {
-  vitrified: { name: "Vitrified Tiles", rate: 150 },
-  marble: { name: "Marble", rate: 250 },
-  granite: { name: "Granite", rate: 450 },
-  wood: { name: "Wooden Flooring", rate: 600 },
-};
-
-const flooringBreakdown = {
-  Material: 60,
-  Labor: 30,
-  "Subfloor Preparation": 5,
-  "Wastage and Other": 5,
+  vitrified: { name: "Vitrified Tiles (Standard)", rate: 120, wastage: 0.1 },
+  gvt: { name: "GVT / PGVT (High Gloss)", rate: 180, wastage: 0.1 },
+  marble: { name: "Indian Marble", rate: 250, wastage: 0.15 },
+  granite: { name: "Granite", rate: 350, wastage: 0.1 },
+  wood: { name: "Wooden Laminate", rate: 150, wastage: 0.05 },
 };
 
 const chartColors = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
 
-// --- Accept 'hasPaid' prop ---
-const FlooringCalculator: React.FC<FlooringCalculatorProps> = ({ hasPaid }) => {
+const FlooringCalculator: React.FC = () => {
+  const { hasPaid } = useUser(); // Use Context
+
+  // Inputs
   const [area, setArea] = useState("");
   const [flooringType, setFlooringType] =
     useState<keyof typeof flooringTypes>("vitrified");
-  const [totalCost, setTotalCost] = useState(0);
+  const [includeSkirting, setIncludeSkirting] = useState(true);
 
-  // --- ADDITIONS FOR PDF ---
+  // Results
+  const [totalCost, setTotalCost] = useState(0);
+  const [breakdown, setBreakdown] = useState<any>(null);
+
+  // PDF Logic
   const resultsRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -51,43 +49,90 @@ const FlooringCalculator: React.FC<FlooringCalculatorProps> = ({ hasPaid }) => {
       );
     }
   };
-  // --- END OF ADDITIONS ---
 
   const calculateCost = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const parsedArea = parseFloat(area) || 0;
-    const cost = parsedArea * flooringTypes[flooringType].rate;
-    setTotalCost(cost);
+    if (parsedArea === 0) return;
+
+    const selectedType = flooringTypes[flooringType];
+
+    // 1. Material Cost (including wastage)
+    const materialArea = parsedArea * (1 + selectedType.wastage);
+    const materialCost = materialArea * selectedType.rate;
+
+    // 2. Labor Cost (Avg ₹35/sq.ft for tiles, ₹50 for marble)
+    const laborRate =
+      flooringType === "marble" || flooringType === "granite" ? 60 : 35;
+    const laborCost = parsedArea * laborRate;
+
+    // 3. Skirting Cost (Approx Perimeter = sqrt(Area) * 4)
+    let skirtingCost = 0;
+    let skirtingLen = 0;
+
+    if (includeSkirting) {
+      // Estimate perimeter assuming square room
+      skirtingLen = Math.sqrt(parsedArea) * 4;
+      // Skirting roughly costs same per R.ft as material per Sq.ft + fixing
+      skirtingCost = skirtingLen * (selectedType.rate * 0.8 + 20);
+    }
+
+    // 4. Supplies (Cement, Sand, Grout) ~ ₹25/sq.ft
+    const suppliesCost = parsedArea * 25;
+
+    const total = materialCost + laborCost + skirtingCost + suppliesCost;
+
+    setBreakdown({
+      material: materialCost,
+      labor: laborCost,
+      skirting: skirtingCost,
+      supplies: suppliesCost,
+      skirtingLen: Math.round(skirtingLen),
+      wastageArea: Math.round(materialArea - parsedArea),
+    });
+    setTotalCost(total);
   };
+
+  const isLocked = !hasPaid;
 
   return (
     <section id="flooring-calculator" className="container">
       <div className="card">
         <h2 className="section-title">Flooring Cost Calculator</h2>
+
+        {isLocked && (
+          <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+            <p style={{ color: "var(--danger-color)", fontWeight: "600" }}>
+              <i className="fas fa-lock"></i> Upgrade to Pro for detailed
+              Flooring estimates.
+            </p>
+          </div>
+        )}
+
         <form onSubmit={calculateCost}>
           <div className="form-group">
             <label htmlFor="area">
-              <i className="fas fa-ruler-combined"></i> Area (sq. ft.)
+              <i className="fas fa-ruler-combined"></i> Carpet Area (sq. ft.)
             </label>
             <input
               type="number"
               id="area"
-              name="area"
-              placeholder="e.g., 1200"
+              placeholder="e.g., 800"
               value={area}
               onChange={(e) => setArea(e.target.value)}
               required
+              disabled={isLocked}
             />
           </div>
+
           <div className="form-group full-width">
             <label>
-              <i className="fas fa-layer-group"></i> Flooring Type
+              <i className="fas fa-layer-group"></i> Material Type
             </label>
             <select
               value={flooringType}
-              onChange={(e) =>
-                setFlooringType(e.target.value as keyof typeof flooringTypes)
-              }
+              onChange={(e) => setFlooringType(e.target.value as any)}
+              disabled={isLocked}
             >
               {Object.entries(flooringTypes).map(([key, { name }]) => (
                 <option key={key} value={key}>
@@ -96,16 +141,32 @@ const FlooringCalculator: React.FC<FlooringCalculatorProps> = ({ hasPaid }) => {
               ))}
             </select>
           </div>
-          <button type="submit" className="btn full-width">
+
+          <div className="form-group">
+            <div className="checkbox-wrapper">
+              <input
+                type="checkbox"
+                checked={includeSkirting}
+                onChange={(e) => setIncludeSkirting(e.target.checked)}
+                disabled={isLocked}
+                style={{ width: "auto", marginRight: "10px" }}
+              />
+              <label style={{ display: "inline" }}>
+                Include Skirting (4" Wall Borders)
+              </label>
+            </div>
+          </div>
+
+          <button type="submit" className="btn full-width" disabled={isLocked}>
             <i className="fas fa-calculator"></i> Calculate Cost
           </button>
         </form>
-        {totalCost > 0 && (
-          <div id="resultsSection" className={totalCost > 0 ? "visible" : ""}>
-            {/* ATTACH THE REF HERE */}
+
+        {totalCost > 0 && breakdown && (
+          <div id="resultsSection" className="visible">
             <div className="card" ref={resultsRef}>
               <div className="total-summary" style={{ marginTop: "2rem" }}>
-                <p>Total Estimated Flooring Cost</p>
+                <p>Total Flooring Estimate</p>
                 <span>
                   {totalCost.toLocaleString("en-IN", {
                     style: "currency",
@@ -114,6 +175,7 @@ const FlooringCalculator: React.FC<FlooringCalculatorProps> = ({ hasPaid }) => {
                   })}
                 </span>
               </div>
+
               <div className="results-grid">
                 <div className="result-details">
                   <h3>Cost Breakdown</h3>
@@ -121,37 +183,57 @@ const FlooringCalculator: React.FC<FlooringCalculatorProps> = ({ hasPaid }) => {
                     <thead>
                       <tr>
                         <th>Component</th>
-                        <th>Allocation</th>
-                        <th className="text-right">Cost (INR)</th>
+                        <th>Details</th>
+                        <th className="text-right">Cost</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {Object.entries(flooringBreakdown).map(
-                        ([component, percentage]) => {
-                          const cost = (totalCost * percentage) / 100;
-                          return (
-                            <tr key={component}>
-                              <td>{component}</td>
-                              <td>{percentage}%</td>
-                              <td className="text-right">
-                                {cost.toLocaleString("en-IN", {
-                                  style: "currency",
-                                  currency: "INR",
-                                  maximumFractionDigits: 0,
-                                })}
-                              </td>
-                            </tr>
-                          );
-                        }
+                      <tr>
+                        <td>Material</td>
+                        <td>Incl. {breakdown.wastageArea} sq.ft wastage</td>
+                        <td className="text-right">
+                          ₹{Math.round(breakdown.material).toLocaleString()}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Labor</td>
+                        <td>Installation</td>
+                        <td className="text-right">
+                          ₹{Math.round(breakdown.labor).toLocaleString()}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Supplies</td>
+                        <td>Cement, Sand, Grout</td>
+                        <td className="text-right">
+                          ₹{Math.round(breakdown.supplies).toLocaleString()}
+                        </td>
+                      </tr>
+                      {breakdown.skirting > 0 && (
+                        <tr>
+                          <td>Skirting</td>
+                          <td>Approx {breakdown.skirtingLen} R.ft</td>
+                          <td className="text-right">
+                            ₹{Math.round(breakdown.skirting).toLocaleString()}
+                          </td>
+                        </tr>
                       )}
                     </tbody>
                   </table>
                 </div>
                 <div className="chart-container">
-                  <Chart data={flooringBreakdown} colors={chartColors} />
+                  <Chart
+                    data={{
+                      Material: breakdown.material,
+                      Labor: breakdown.labor,
+                      Supplies: breakdown.supplies,
+                      Skirting: breakdown.skirting,
+                    }}
+                    colors={chartColors}
+                  />
                 </div>
               </div>
-              {/* --- UPDATE: PDF BUTTON IS NOW CONDITIONAL --- */}
+
               {hasPaid && (
                 <div className="action-buttons">
                   <button
@@ -164,7 +246,6 @@ const FlooringCalculator: React.FC<FlooringCalculatorProps> = ({ hasPaid }) => {
                   </button>
                 </div>
               )}
-              {/* --- END OF UPDATE --- */}
             </div>
           </div>
         )}
