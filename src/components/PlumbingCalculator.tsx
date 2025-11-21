@@ -3,18 +3,19 @@
 import React, { useState, useRef } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "../supabaseClient";
 import Chart from "./Chart";
 import { useUser } from "../context/UserContext";
 
-// Rates per unit (Average for Standard Quality)
+// Rates per unit
 const unitRates = {
   kitchen: { name: "Kitchen (Sink + Taps)", rate: 12000 },
   commonBath: { name: "Common Bathroom (Basic)", rate: 25000 },
-  masterBath: { name: "Master Bathroom (Premium)", rate: 45000 }, // Higher due to diverters, etc.
+  masterBath: { name: "Master Bathroom (Premium)", rate: 45000 },
   motor: { name: "Motor & Pump Installation", rate: 15000 },
 };
 
-// Quality Multipliers
 const qualityMultipliers = {
   basic: { name: "Basic (PVC/Chrome Plated)", factor: 0.8 },
   standard: { name: "Standard (Jaguar/Parryware)", factor: 1.0 },
@@ -24,7 +25,8 @@ const qualityMultipliers = {
 const chartColors = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
 
 const PlumbingCalculator: React.FC = () => {
-  const { hasPaid } = useUser(); // Use Context
+  const { hasPaid, user } = useUser();
+  const navigate = useNavigate();
 
   // Inputs
   const [kitchens, setKitchens] = useState("1");
@@ -41,6 +43,7 @@ const PlumbingCalculator: React.FC = () => {
   // PDF Logic
   const resultsRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const downloadPDF = () => {
     if (resultsRef.current) {
@@ -59,6 +62,43 @@ const PlumbingCalculator: React.FC = () => {
     }
   };
 
+  const handleSave = async () => {
+    if (!user) {
+      alert("Please Sign In to save.");
+      navigate("/signin");
+      return;
+    }
+    if (!costBreakdown) return;
+    const name = prompt("Project Name:");
+    if (!name) return;
+
+    setIsSaving(true);
+    try {
+      const { error } = await supabase.from("projects").insert({
+        user_id: user.id,
+        name,
+        type: "plumbing",
+        data: {
+          kitchens,
+          commonBaths,
+          masterBaths,
+          includeMotor,
+          quality,
+          totalCost,
+          breakdown: costBreakdown,
+          date: new Date().toISOString(),
+        },
+      });
+      if (error) throw error;
+      alert("Saved!");
+      navigate("/dashboard");
+    } catch (e) {
+      alert("Error saving.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const calculateCost = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -67,15 +107,13 @@ const PlumbingCalculator: React.FC = () => {
     const mCount = parseInt(masterBaths) || 0;
     const factor = qualityMultipliers[quality].factor;
 
-    // Calculate Base Costs (Material + Labor integrated in unit rates)
     const kitchenCost = kCount * unitRates.kitchen.rate * factor;
     const commonBathCost = cCount * unitRates.commonBath.rate * factor;
     const masterBathCost = mCount * unitRates.masterBath.rate * factor;
-    const motorCost = includeMotor ? unitRates.motor.rate : 0; // Motor cost doesn't scale much with fixture quality
+    const motorCost = includeMotor ? unitRates.motor.rate : 0;
 
     const total = kitchenCost + commonBathCost + masterBathCost + motorCost;
 
-    // Approximate split for chart
     const piping = total * 0.35;
     const fixtures = total * 0.4;
     const labor = total * 0.25;
@@ -259,6 +297,18 @@ const PlumbingCalculator: React.FC = () => {
                   >
                     <i className="fas fa-download"></i>{" "}
                     {isDownloading ? "Downloading..." : "Download PDF"}
+                  </button>
+                  <button
+                    className="btn"
+                    style={{
+                      backgroundColor: "var(--secondary-color)",
+                      marginLeft: "10px",
+                    }}
+                    onClick={handleSave}
+                    disabled={isSaving}
+                  >
+                    <i className="fas fa-save"></i>{" "}
+                    {isSaving ? "Saving..." : "Save"}
                   </button>
                 </div>
               )}

@@ -5,7 +5,7 @@ import { supabase } from "../supabaseClient";
 import { useUser } from "../context/UserContext";
 
 const Header: React.FC = () => {
-  const { user, installPrompt } = useUser(); // Access global user state
+  const { user, installPrompt } = useUser();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLLIElement>(null);
@@ -21,7 +21,6 @@ const Header: React.FC = () => {
     await installPrompt.prompt();
   };
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -32,9 +31,7 @@ const Header: React.FC = () => {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
@@ -46,15 +43,28 @@ const Header: React.FC = () => {
         </Link>
 
         <ul className={isMenuOpen ? "nav-menu active" : "nav-menu"}>
+          {/* --- NEW: Dashboard Link for Logged In Users --- */}
+          {user && (
+            <li>
+              <Link
+                to="/dashboard"
+                className="nav-link"
+                style={{ fontWeight: "bold", color: "var(--primary-color)" }}
+              >
+                <i className="fas fa-columns"></i> Dashboard
+              </Link>
+            </li>
+          )}
+          {/* ----------------------------------------------- */}
+
           {installPrompt && (
             <li>
               <button onClick={handleInstallClick} className="btn install-btn">
-                <i className="fas fa-download"></i> Install App
+                <i className="fas fa-download"></i> Install
               </button>
             </li>
           )}
 
-          {/* --- LOGIC FOR GUEST VS USER --- */}
           {user ? (
             <>
               <li className="user-info">
@@ -77,7 +87,6 @@ const Header: React.FC = () => {
               </Link>
             </li>
           )}
-          {/* ------------------------------- */}
 
           <li className="dropdown" ref={dropdownRef}>
             <button
@@ -89,24 +98,16 @@ const Header: React.FC = () => {
             </button>
             <ul className={`dropdown-menu ${isDropdownOpen ? "show" : ""}`}>
               <li>
-                <Link to="/contact" onClick={() => setIsDropdownOpen(false)}>
-                  Contact
-                </Link>
+                <Link to="/contact">Contact</Link>
               </li>
               <li>
-                <Link to="/disclaimer" onClick={() => setIsDropdownOpen(false)}>
-                  Disclaimer
-                </Link>
+                <Link to="/disclaimer">Disclaimer</Link>
               </li>
               <li>
-                <Link to="/privacy" onClick={() => setIsDropdownOpen(false)}>
-                  Privacy Policy
-                </Link>
+                <Link to="/privacy">Privacy Policy</Link>
               </li>
               <li>
-                <Link to="/terms" onClick={() => setIsDropdownOpen(false)}>
-                  Terms of Service
-                </Link>
+                <Link to="/terms">Terms of Service</Link>
               </li>
             </ul>
           </li>

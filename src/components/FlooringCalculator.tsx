@@ -3,6 +3,8 @@
 import React, { useState, useRef } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "../supabaseClient";
 import Chart from "./Chart";
 import { useUser } from "../context/UserContext";
 
@@ -17,7 +19,8 @@ const flooringTypes = {
 const chartColors = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
 
 const FlooringCalculator: React.FC = () => {
-  const { hasPaid } = useUser(); // Use Context
+  const { hasPaid, user } = useUser();
+  const navigate = useNavigate();
 
   // Inputs
   const [area, setArea] = useState("");
@@ -32,6 +35,7 @@ const FlooringCalculator: React.FC = () => {
   // PDF Logic
   const resultsRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const downloadPDF = () => {
     if (resultsRef.current) {
@@ -50,6 +54,41 @@ const FlooringCalculator: React.FC = () => {
     }
   };
 
+  const handleSave = async () => {
+    if (!user) {
+      alert("Please Sign In to save.");
+      navigate("/signin");
+      return;
+    }
+    if (!breakdown) return;
+    const name = prompt("Project Name:");
+    if (!name) return;
+
+    setIsSaving(true);
+    try {
+      const { error } = await supabase.from("projects").insert({
+        user_id: user.id,
+        name,
+        type: "flooring",
+        data: {
+          area,
+          flooringType,
+          includeSkirting,
+          totalCost,
+          breakdown,
+          date: new Date().toISOString(),
+        },
+      });
+      if (error) throw error;
+      alert("Saved!");
+      navigate("/dashboard");
+    } catch (e) {
+      alert("Error saving.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const calculateCost = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const parsedArea = parseFloat(area) || 0;
@@ -61,23 +100,21 @@ const FlooringCalculator: React.FC = () => {
     const materialArea = parsedArea * (1 + selectedType.wastage);
     const materialCost = materialArea * selectedType.rate;
 
-    // 2. Labor Cost (Avg ₹35/sq.ft for tiles, ₹50 for marble)
+    // 2. Labor Cost
     const laborRate =
       flooringType === "marble" || flooringType === "granite" ? 60 : 35;
     const laborCost = parsedArea * laborRate;
 
-    // 3. Skirting Cost (Approx Perimeter = sqrt(Area) * 4)
+    // 3. Skirting Cost
     let skirtingCost = 0;
     let skirtingLen = 0;
 
     if (includeSkirting) {
-      // Estimate perimeter assuming square room
       skirtingLen = Math.sqrt(parsedArea) * 4;
-      // Skirting roughly costs same per R.ft as material per Sq.ft + fixing
       skirtingCost = skirtingLen * (selectedType.rate * 0.8 + 20);
     }
 
-    // 4. Supplies (Cement, Sand, Grout) ~ ₹25/sq.ft
+    // 4. Supplies
     const suppliesCost = parsedArea * 25;
 
     const total = materialCost + laborCost + skirtingCost + suppliesCost;
@@ -243,6 +280,18 @@ const FlooringCalculator: React.FC = () => {
                   >
                     <i className="fas fa-download"></i>{" "}
                     {isDownloading ? "Downloading..." : "Download PDF"}
+                  </button>
+                  <button
+                    className="btn"
+                    style={{
+                      backgroundColor: "var(--secondary-color)",
+                      marginLeft: "10px",
+                    }}
+                    onClick={handleSave}
+                    disabled={isSaving}
+                  >
+                    <i className="fas fa-save"></i>{" "}
+                    {isSaving ? "Saving..." : "Save"}
                   </button>
                 </div>
               )}
