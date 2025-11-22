@@ -50,16 +50,20 @@ const Calculator: React.FC = () => {
 
   useEffect(() => {
     if (location.state && (location.state as any).projectData) {
-      const data = (location.state as any).projectData;
-      if (data.area && data.quality) {
-        setArea(data.area);
-        setParkingArea(data.parkingArea || "");
-        setCompoundWallLength(data.compoundWallLength || "");
-        setIncludeSump(data.includeSump || false);
-        setQuality(data.quality);
-        if (data.rate) {
-          setCustomRate(data.rate);
-          setIsEditingRate(true);
+      const state = location.state as any;
+      // --- FIX: Check calculator type before loading data ---
+      if (state.calculatorType === "construction") {
+        const data = state.projectData;
+        if (data.area && data.quality) {
+          setArea(data.area);
+          setParkingArea(data.parkingArea || "");
+          setCompoundWallLength(data.compoundWallLength || "");
+          setIncludeSump(data.includeSump || false);
+          setQuality(data.quality);
+          if (data.rate) {
+            setCustomRate(data.rate);
+            setIsEditingRate(true);
+          }
         }
       }
     }
