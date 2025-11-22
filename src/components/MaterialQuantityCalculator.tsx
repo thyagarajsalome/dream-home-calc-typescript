@@ -1,5 +1,4 @@
 // src/components/MaterialQuantityCalculator.tsx
-// (Previous implementation + Edit Logic + Save to Dashboard)
 
 import React, { useState, useRef, useEffect } from "react";
 import jsPDF from "jspdf";
@@ -71,15 +70,19 @@ const MaterialQuantityCalculator: React.FC = () => {
 
   useEffect(() => {
     if (location.state && (location.state as any).projectData) {
-      const data = (location.state as any).projectData;
-      if (data.wallType && data.grade) {
-        setArea(data.area);
-        setWallType(data.wallType);
-        setGrade(data.grade);
-        setQuality(data.quality);
-        if (data.prices) {
-          setPrices(data.prices);
-          setShowPrices(true);
+      const state = location.state as any;
+      // --- FIX: Check calculator type before loading data ---
+      if (state.calculatorType === "materials") {
+        const data = state.projectData;
+        if (data.wallType && data.grade) {
+          setArea(data.area);
+          setWallType(data.wallType);
+          setGrade(data.grade);
+          setQuality(data.quality);
+          if (data.prices) {
+            setPrices(data.prices);
+            setShowPrices(true);
+          }
         }
       }
     }
@@ -114,9 +117,6 @@ const MaterialQuantityCalculator: React.FC = () => {
       setIsSaving(false);
     }
   };
-
-  // ... calculateQuantities function (same as before) ...
-  // ... formatNumber functions ...
 
   const calculateQuantities = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -180,8 +180,22 @@ const MaterialQuantityCalculator: React.FC = () => {
   const formatNumber = (num: number) => Math.round(num).toLocaleString("en-IN");
   const formatCurrency = (num: number) =>
     "₹" + Math.round(num).toLocaleString("en-IN");
+
   const downloadPDF = () => {
-    /* ... */
+    if (resultsRef.current) {
+      setIsDownloading(true);
+      html2canvas(resultsRef.current, { scale: 2, useCORS: true }).then(
+        (canvas) => {
+          const imgData = canvas.toDataURL("image/png");
+          const pdf = new jsPDF("p", "mm", "a4");
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+          pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+          pdf.save("material-boq-estimate.pdf");
+          setIsDownloading(false);
+        }
+      );
+    }
   };
 
   return (
@@ -196,17 +210,46 @@ const MaterialQuantityCalculator: React.FC = () => {
           </div>
         )}
         <form onSubmit={calculateQuantities}>
-          {/* Form Inputs ... */}
           <div className="form-group">
-            <label>Area</label>
+            <label>Built-up Area (sq. ft.)</label>
             <input
               type="number"
               value={area}
               onChange={(e) => setArea(e.target.value)}
               disabled={!hasPaid}
+              placeholder="e.g. 1000"
             />
           </div>
-          {/* ... Other inputs ... */}
+          <div className="form-grid">
+            <div className="form-group">
+              <label>Wall Material</label>
+              <select
+                value={wallType}
+                onChange={(e) => setWallType(e.target.value as any)}
+                disabled={!hasPaid}
+              >
+                {Object.entries(wallMaterialTypes).map(([key, val]) => (
+                  <option key={key} value={key}>
+                    {val.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Concrete Grade</label>
+              <select
+                value={grade}
+                onChange={(e) => setGrade(e.target.value as any)}
+                disabled={!hasPaid}
+              >
+                {Object.entries(concreteGrades).map(([key, val]) => (
+                  <option key={key} value={key}>
+                    {val.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
           <button type="submit" className="btn full-width" disabled={!hasPaid}>
             <i className="fas fa-calculator"></i> Calculate
           </button>
@@ -214,21 +257,101 @@ const MaterialQuantityCalculator: React.FC = () => {
         {results && (
           <div id="resultsSection" className="visible">
             <div className="card" ref={resultsRef}>
-              {/* Results Display */}
               <div className="total-summary">
-                <p>Est. Cost</p>
+                <p>Est. Material Cost</p>
                 <span>{formatCurrency(results.totalMaterialCost)}</span>
               </div>
-              {/* Details ... */}
+
+              <div
+                className="results-grid"
+                style={{ gridTemplateColumns: "1fr" }}
+              >
+                <div className="result-details">
+                  <h3>Quantity Breakdown</h3>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Material</th>
+                        <th>Quantity</th>
+                        <th className="text-right">Approx Cost</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>Cement</td>
+                        <td>{formatNumber(results.cement)} Bags</td>
+                        <td className="text-right">
+                          {formatCurrency(results.costCement)}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Steel</td>
+                        <td>{formatNumber(results.steel)} kg</td>
+                        <td className="text-right">
+                          {formatCurrency(results.costSteel)}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Sand</td>
+                        <td>{formatNumber(results.sand)} cft</td>
+                        <td className="text-right">
+                          {formatCurrency(results.costSand)}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Aggregate</td>
+                        <td>{formatNumber(results.aggregate)} cft</td>
+                        <td className="text-right">
+                          {formatCurrency(results.costAggregate)}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>{results.wallMaterialName}</td>
+                        <td>
+                          {formatNumber(results.wallMaterialCount)}{" "}
+                          {
+                            wallMaterialTypes[
+                              wallType as keyof typeof wallMaterialTypes
+                            ].unit
+                          }
+                        </td>
+                        <td className="text-right">
+                          {formatCurrency(results.costWall)}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Paint</td>
+                        <td>{formatNumber(results.paint)} L</td>
+                        <td className="text-right">
+                          {formatCurrency(results.costPaint)}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Tiles</td>
+                        <td>{formatNumber(results.tiles)} Boxes</td>
+                        <td className="text-right">
+                          {formatCurrency(results.costTiles)}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
               {hasPaid && (
                 <div className="action-buttons">
-                  <button className="btn" onClick={downloadPDF}>
-                    <i className="fas fa-download"></i> Download PDF
+                  <button
+                    className="btn"
+                    onClick={downloadPDF}
+                    disabled={isDownloading}
+                  >
+                    <i className="fas fa-download"></i>{" "}
+                    {isDownloading ? "Processing..." : "Download PDF"}
                   </button>
                   <button
                     className="btn"
                     style={{
-                      backgroundColor: "var(--accent-color)",
+                      backgroundColor: "var(--secondary-color)",
                       marginLeft: "10px",
                     }}
                     onClick={handleSave}
