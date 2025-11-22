@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import Chart from "./Chart";
 import { useUser } from "../context/UserContext";
@@ -23,7 +23,6 @@ const mainChartColors = ["#D9A443", "#59483B", "#8C6A4E", "#D9A443", "#C4B594"];
 const Calculator: React.FC = () => {
   const { hasPaid, user } = useUser();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [totalCost, setTotalCost] = useState(0);
   const [area, setArea] = useState("");
@@ -47,27 +46,6 @@ const Calculator: React.FC = () => {
     wall: 0,
     sump: 0,
   });
-
-  useEffect(() => {
-    if (location.state && (location.state as any).projectData) {
-      const state = location.state as any;
-      // --- FIX: Check calculator type before loading data ---
-      if (state.calculatorType === "construction") {
-        const data = state.projectData;
-        if (data.area && data.quality) {
-          setArea(data.area);
-          setParkingArea(data.parkingArea || "");
-          setCompoundWallLength(data.compoundWallLength || "");
-          setIncludeSump(data.includeSump || false);
-          setQuality(data.quality);
-          if (data.rate) {
-            setCustomRate(data.rate);
-            setIsEditingRate(true);
-          }
-        }
-      }
-    }
-  }, [location]);
 
   useEffect(() => {
     if (!isEditingRate) {

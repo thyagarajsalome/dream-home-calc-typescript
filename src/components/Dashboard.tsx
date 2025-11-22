@@ -55,12 +55,6 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleEdit = (project: Project) => {
-    navigate("/", {
-      state: { calculatorType: project.type, projectData: project.data },
-    });
-  };
-
   const toggleDetails = (id: string) => {
     setExpandedProjectId(expandedProjectId === id ? null : id);
   };
@@ -194,18 +188,6 @@ const Dashboard: React.FC = () => {
                   </div>
 
                   <div style={{ display: "flex", gap: "1rem" }}>
-                    {/* Edit Button */}
-                    <button
-                      onClick={() => handleEdit(project)}
-                      className="btn"
-                      style={{
-                        backgroundColor: "var(--primary-color)",
-                        padding: "0.5rem 1rem",
-                      }}
-                    >
-                      <i className="fas fa-edit"></i> Edit
-                    </button>
-
                     <button
                       onClick={() => toggleDetails(project.id)}
                       className="btn btn-secondary"
