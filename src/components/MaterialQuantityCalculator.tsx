@@ -1,9 +1,9 @@
 // src/components/MaterialQuantityCalculator.tsx
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import { useUser } from "../context/UserContext";
 
@@ -52,7 +52,6 @@ const defaultPrices = {
 const MaterialQuantityCalculator: React.FC = () => {
   const { hasPaid, user } = useUser();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [area, setArea] = useState("");
   const [wallType, setWallType] =
@@ -62,31 +61,10 @@ const MaterialQuantityCalculator: React.FC = () => {
     "standard"
   );
   const [prices, setPrices] = useState(defaultPrices);
-  const [showPrices, setShowPrices] = useState(false);
   const [results, setResults] = useState<any>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-
-  useEffect(() => {
-    if (location.state && (location.state as any).projectData) {
-      const state = location.state as any;
-      // --- FIX: Check calculator type before loading data ---
-      if (state.calculatorType === "materials") {
-        const data = state.projectData;
-        if (data.wallType && data.grade) {
-          setArea(data.area);
-          setWallType(data.wallType);
-          setGrade(data.grade);
-          setQuality(data.quality);
-          if (data.prices) {
-            setPrices(data.prices);
-            setShowPrices(true);
-          }
-        }
-      }
-    }
-  }, [location]);
 
   const handleSave = async () => {
     if (!user || !results) return;
