@@ -1,5 +1,5 @@
 // src/App.tsx
-import React, { useEffect } from "react";
+import React from "react";
 import {
   HashRouter as Router,
   Routes,
@@ -8,7 +8,6 @@ import {
   Outlet,
   useNavigate,
   useLocation,
-  Link,
 } from "react-router-dom";
 import { UserProvider, useUser } from "./context/UserContext";
 import Header from "./components/Header";
@@ -49,24 +48,9 @@ type CalculatorType =
 
 const MainLayout = () => {
   const { hasPaid } = useUser();
-  const location = useLocation();
 
-  // --- FIX: Lazy initialization to set state immediately on load ---
   const [activeCalculator, setActiveCalculator] =
-    React.useState<CalculatorType>(() => {
-      if (location.state && (location.state as any).calculatorType) {
-        return (location.state as any).calculatorType;
-      }
-      return "construction";
-    });
-  // ----------------------------------------------------------------
-
-  // Keep this for updates if the location state changes while component is mounted
-  useEffect(() => {
-    if (location.state && (location.state as any).calculatorType) {
-      setActiveCalculator((location.state as any).calculatorType);
-    }
-  }, [location]);
+    React.useState<CalculatorType>("construction");
 
   const renderCalculator = () => {
     switch (activeCalculator) {
