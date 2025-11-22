@@ -11,7 +11,6 @@ import {
   Link,
 } from "react-router-dom";
 import { UserProvider, useUser } from "./context/UserContext";
-// ... existing imports ...
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Hero from "./components/Hero";
@@ -51,10 +50,18 @@ type CalculatorType =
 const MainLayout = () => {
   const { hasPaid } = useUser();
   const location = useLocation();
-  const [activeCalculator, setActiveCalculator] =
-    React.useState<CalculatorType>("construction");
 
-  // Handle navigation from Dashboard Edit button
+  // --- FIX: Lazy initialization to set state immediately on load ---
+  const [activeCalculator, setActiveCalculator] =
+    React.useState<CalculatorType>(() => {
+      if (location.state && (location.state as any).calculatorType) {
+        return (location.state as any).calculatorType;
+      }
+      return "construction";
+    });
+  // ----------------------------------------------------------------
+
+  // Keep this for updates if the location state changes while component is mounted
   useEffect(() => {
     if (location.state && (location.state as any).calculatorType) {
       setActiveCalculator((location.state as any).calculatorType);
@@ -106,7 +113,6 @@ const MainLayout = () => {
   );
 };
 
-// ... Keep InfoLayout, ProtectedRoute, AuthHandler, AppRoutes, App same as before ...
 const InfoLayout = () => (
   <>
     <Header />
@@ -116,6 +122,7 @@ const InfoLayout = () => (
     <Footer />
   </>
 );
+
 const ProtectedRoute = () => {
   const { user, loading } = useUser();
   if (loading) return <div className="loading-container">Loading...</div>;
