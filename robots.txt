@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /upgrade
+Disallow: /signin
+Disallow: /signup
+
+Sitemap: https://homedesignenglish.com/sitemap.xml
