@@ -31,24 +31,25 @@ const authenticateUser = async (req, res, next) => {
   }
 };
 
-// --- Razorpay Configuration ---
-// FIX: Using process.env instead of deprecated functions.config()
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
-
 // --- API Endpoints ---
 app.post("/create-order", authenticateUser, async (req, res) => {
   const amount = parseInt(req.body.amount, 10);
   if (isNaN(amount) || amount <= 0) {
     return res.status(400).send("Invalid amount specified.");
   }
+
+  // 💡 FIX: Initialize Razorpay INSIDE the request so it runs at runtime, not deploy time!
+  const razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
+
   const options = {
     amount,
     currency: "INR",
     receipt: `rcpt_${req.user.uid.slice(0, 10)}_${Date.now()}`,
   };
+  
   try {
     const order = await razorpay.orders.create(options);
     res.json(order);
@@ -64,7 +65,7 @@ app.post("/verify-payment", authenticateUser, async (req, res) => {
     const userId = req.user.uid; 
     const body = razorpay_order_id + "|" + razorpay_payment_id;
     
-    // FIX: Using process.env instead of deprecated functions.config()
+    // 💡 FIX: Access the secret directly from process.env here
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(body.toString())
