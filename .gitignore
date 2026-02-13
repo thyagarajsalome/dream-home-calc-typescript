@@ -6,11 +6,25 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+firebase-debug.log*
 
+# Dependencies
 node_modules
+functions/node_modules
+
+# Build Outputs
 dist
 dist-ssr
+
+# Environment Variables (Keep Secrets Safe!)
+.env
+.env.local
+.env.production
+functions/.env
 *.local
+
+# Firebase Cache
+.firebase/
 
 # Editor directories and files
 .vscode/*
@@ -22,10 +36,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-.env
-.env.local
 
-# Firebase Service Account Key
-*.json
+# Deprecated/Old Keys (If they still exist locally)
 firebase-service-account.json
-/server/firebase-service-account.json
