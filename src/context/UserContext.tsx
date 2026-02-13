@@ -1,14 +1,15 @@
+// src/context/UserContext.tsx
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { auth } from "../firebaseConfig"; // Ensure this path matches your firebase setup
+import { auth, db } from "../firebaseConfig"; // Import db from firebaseConfig
 import { onAuthStateChanged, User } from "firebase/auth";
-import { supabase } from "../supabaseClient"; // Used to fetch profile data from DB
+import { doc, getDoc } from "firebase/firestore"; // Import Firestore functions
 
 interface UserContextType {
   user: User | null;
   hasPaid: boolean;
   setHasPaid: (status: boolean) => void;
   loading: boolean;
-  installPrompt: any; // For PWA
+  installPrompt: any;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -21,7 +22,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading, setLoading] = useState(true);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
 
-  // 1. PWA Install Prompt Logic
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
@@ -35,46 +35,33 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
       );
   }, []);
 
-  // 2. Firebase Auth Observer
   useEffect(() => {
-    // onAuthStateChanged is the Firebase equivalent of onAuthStateChange
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
-      
-      if (!firebaseUser) {
+
+      if (firebaseUser) {
+        // FETCH PROFILE FROM FIRESTORE
+        try {
+          const docRef = doc(db, "profiles", firebaseUser.uid);
+          const docSnap = await getDoc(docRef);
+
+          if (docSnap.exists()) {
+            setHasPaid(docSnap.data().has_paid || false);
+          } else {
+            setHasPaid(false);
+          }
+        } catch (err) {
+          console.error("Error fetching user profile from Firestore:", err);
+          setHasPaid(false);
+        }
+      } else {
         setHasPaid(false);
-        setLoading(false);
       }
-      // If user exists, loading remains true until fetchUserProfile finishes below
+      setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
-
-  // 3. Fetch "has_paid" status from Supabase DB using Firebase UID
-  useEffect(() => {
-    const fetchUserProfile = async (uid: string) => {
-      try {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("has_paid")
-          .eq("id", uid) // We assume Firebase UID matches the 'id' in your profiles table
-          .single();
-
-        if (data) {
-          setHasPaid(data.has_paid);
-        }
-      } catch (err) {
-        console.error("Error fetching user profile:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (user) {
-      fetchUserProfile(user.uid);
-    }
-  }, [user]);
 
   return (
     <UserContext.Provider
