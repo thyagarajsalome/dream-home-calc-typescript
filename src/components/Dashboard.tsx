@@ -1,8 +1,8 @@
 // src/components/Dashboard.tsx
-
 import React, { useEffect, useState } from "react";
 import { useUser } from "../context/UserContext";
-import { supabase } from "../supabaseClient";
+import { db } from "../firebaseConfig"; // Import Firestore db
+import { collection, query, where, getDocs, deleteDoc, doc } from "firebase/firestore"; // Firestore functions
 import { Link, useNavigate } from "react-router-dom";
 
 interface Project {
@@ -17,9 +17,7 @@ const Dashboard: React.FC = () => {
   const { user, loading } = useUser();
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [expandedProjectId, setExpandedProjectId] = useState<string | null>(
-    null
-  );
+  const [expandedProjectId, setExpandedProjectId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,13 +30,30 @@ const Dashboard: React.FC = () => {
 
   const fetchProjects = async () => {
     try {
-      const { data, error } = await supabase
-        .from("projects")
-        .select("*")
-        .order("created_at", { ascending: false });
+      // Create a query against the 'projects' collection
+      const q = query(
+        collection(db, "projects"),
+        where("user_id", "==", user!.uid)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const fetchedProjects: Project[] = [];
+      
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        fetchedProjects.push({
+          id: doc.id,
+          name: data.name,
+          type: data.type,
+          data: data.data,
+          created_at: data.date || new Date().toISOString() // Fallback if date is missing
+        });
+      });
 
-      if (error) throw error;
-      setProjects(data || []);
+      // Sort by date (newest first)
+      fetchedProjects.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      setProjects(fetchedProjects);
     } catch (error) {
       console.error("Error fetching projects:", error);
     } finally {
@@ -49,9 +64,12 @@ const Dashboard: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this project?")) return;
 
-    const { error } = await supabase.from("projects").delete().eq("id", id);
-    if (!error) {
+    try {
+      await deleteDoc(doc(db, "projects", id));
       setProjects(projects.filter((p) => p.id !== id));
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      alert("Failed to delete project.");
     }
   };
 
@@ -60,6 +78,7 @@ const Dashboard: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString("en-IN", {
       year: "numeric",
       month: "short",
@@ -83,7 +102,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <section className="container">
-      {/* --- Back Button with correct padding and Gold/Brown theme --- */}
+      {/* --- Back Button --- */}
       <div style={{ marginTop: "2rem", marginBottom: "2rem" }}>
         <Link
           to="/"
@@ -102,7 +121,6 @@ const Dashboard: React.FC = () => {
           <i className="fas fa-arrow-left"></i> Back to Calculators
         </Link>
       </div>
-      {/* ---------------------------------------------------------- */}
 
       <div className="card">
         <div
@@ -115,10 +133,7 @@ const Dashboard: React.FC = () => {
             borderBottom: "1px solid var(--border-color)",
           }}
         >
-          <h2
-            className="section-title"
-            style={{ marginBottom: 0, textAlign: "left" }}
-          >
+          <h2 className="section-title" style={{ marginBottom: 0, textAlign: "left" }}>
             My Saved Projects
           </h2>
           <Link to="/" className="btn" style={{ padding: "0.8rem 1.5rem" }}>
@@ -128,10 +143,7 @@ const Dashboard: React.FC = () => {
 
         {projects.length === 0 ? (
           <div style={{ textAlign: "center", padding: "3rem", color: "#666" }}>
-            <i
-              className="fas fa-folder-open"
-              style={{ fontSize: "3rem", marginBottom: "1rem", opacity: 0.5 }}
-            ></i>
+            <i className="fas fa-folder-open" style={{ fontSize: "3rem", marginBottom: "1rem", opacity: 0.5 }}></i>
             <p>You haven't saved any projects yet.</p>
             <p>Go to a calculator and click "Save to Dashboard" to start.</p>
           </div>
@@ -216,28 +228,18 @@ const Dashboard: React.FC = () => {
                       borderTop: "1px dashed #ddd",
                     }}
                   >
-                    <h4
-                      style={{
-                        marginBottom: "0.5rem",
-                        color: "var(--primary-color)",
-                      }}
-                    >
+                    <h4 style={{ marginBottom: "0.5rem", color: "var(--primary-color)" }}>
                       Estimate Details:
                     </h4>
                     <div
                       style={{
                         display: "grid",
-                        gridTemplateColumns:
-                          "repeat(auto-fill, minmax(180px, 1fr))",
+                        gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
                         gap: "10px",
                       }}
                     >
                       {Object.entries(project.data).map(([key, value]) => {
-                        if (
-                          key === "breakdown" ||
-                          key === "date" ||
-                          typeof value === "object"
-                        )
+                        if (key === "breakdown" || key === "date" || typeof value === "object")
                           return null;
                         return (
                           <div
@@ -268,10 +270,7 @@ const Dashboard: React.FC = () => {
                             fontWeight: "bold",
                           }}
                         >
-                          Total: ₹
-                          {Number(project.data.totalCost).toLocaleString(
-                            "en-IN"
-                          )}
+                          Total: ₹{Number(project.data.totalCost).toLocaleString("en-IN")}
                         </div>
                       )}
                     </div>

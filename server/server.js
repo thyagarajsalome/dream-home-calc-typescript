@@ -4,36 +4,35 @@ const Razorpay = require("razorpay");
 const cors = require("cors");
 const crypto = require("crypto");
 const admin = require("firebase-admin");
-const { createClient } = require("@supabase/supabase-js");
 
-// --- Initialize Firebase Admin (For Token Verification Only) ---
-// You must set FIREBASE_SERVICE_ACCOUNT as an environment variable in production (Render/RailWay)
-// containing the raw JSON string of your service account file.
-const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT 
-  ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-  : require("./firebase-service-account.json");
+// --- Initialize Firebase Admin ---
+// Check if running in production with ENV variable, otherwise look for local file
+let serviceAccount;
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  // Parse the JSON string from the environment variable (Production)
+  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+} else {
+  // Local development fallback (looks for file in server folder)
+  serviceAccount = require("./firebase-service-account.json");
+}
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
-// --- Initialize Supabase Admin (For Database Updates) ---
-// Use the SERVICE_ROLE_KEY here, not the Anon key, to bypass RLS policies on the backend
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
+const db = admin.firestore();
 const app = express();
 
+// --- Scalable CORS Configuration ---
 const allowedOrigins = [
   "https://homedesignenglish.com",
-  "http://localhost:5173",
+  "http://localhost:5173", // Vite local dev URL
 ];
 
 app.use(
   cors({
     origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or local testing)
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -46,6 +45,7 @@ app.use(
 app.use(express.json());
 
 // --- Authenticated Middleware ---
+// Verifies the Firebase ID Token sent from Frontend
 const authenticateUser = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -55,7 +55,7 @@ const authenticateUser = async (req, res, next) => {
   const token = authHeader.split("Bearer ")[1];
   try {
     const decodedToken = await admin.auth().verifyIdToken(token);
-    req.user = decodedToken;
+    req.user = decodedToken; // contains uid, email, etc.
     next();
   } catch (error) {
     console.error("Auth Token Verification Error:", error.message);
@@ -63,6 +63,7 @@ const authenticateUser = async (req, res, next) => {
   }
 };
 
+// --- Razorpay Configuration ---
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
@@ -70,16 +71,21 @@ const razorpay = new Razorpay({
 
 // --- API Endpoints ---
 
+// Health Check
 app.get("/", (req, res) => {
-  res.send("Dream Home Calc Backend is running!");
+  res.send("Dream Home Calc (Firebase) Backend is running!");
 });
 
+// Create Order (Protected)
 app.post("/create-order", authenticateUser, async (req, res) => {
   const amount = parseInt(req.body.amount, 10);
-  if (isNaN(amount) || amount <= 0) return res.status(400).send("Invalid amount");
+
+  if (isNaN(amount) || amount <= 0) {
+    return res.status(400).send("Invalid amount specified.");
+  }
 
   const options = {
-    amount,
+    amount, // Amount in paise
     currency: "INR",
     receipt: `rcpt_${req.user.uid.slice(0, 10)}_${Date.now()}`,
   };
@@ -88,46 +94,45 @@ app.post("/create-order", authenticateUser, async (req, res) => {
     const order = await razorpay.orders.create(options);
     res.json(order);
   } catch (error) {
-    console.error("Razorpay Error:", error);
+    console.error("Error creating Razorpay order:", error);
     res.status(500).send("Error creating order");
   }
 });
 
+// Verify Payment and Update Firestore (Protected)
 app.post("/verify-payment", authenticateUser, async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
     const userId = req.user.uid; 
-    const userEmail = req.user.email;
 
     const body = razorpay_order_id + "|" + razorpay_payment_id;
+
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(body.toString())
       .digest("hex");
 
     if (expectedSignature === razorpay_signature) {
-      // FIX: Update SUPABASE 'profiles' table instead of Firestore
-      const { error } = await supabase
-        .from("profiles")
-        .upsert({ 
-          id: userId, // Assuming your profiles table uses the Auth UID as primary key
-          email: userEmail,
-          has_paid: true, 
-          updated_at: new Date().toISOString() 
-        });
+      // GOOGLE STACK: Update Cloud Firestore
+      await db.collection("profiles").doc(userId).set({
+        has_paid: true,
+        updated_at: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
 
-      if (error) throw error;
-
-      res.json({ status: "success", message: "Payment verified and Supabase updated." });
+      res.json({
+        status: "success",
+        message: "Payment verified and Firestore profile updated.",
+      });
     } else {
       res.status(400).json({ status: "failure", message: "Invalid signature." });
     }
   } catch (error) {
-    console.error("Backend Error:", error);
-    res.status(500).send("Internal Server Error");
+    console.error("Error verifying payment:", error);
+    res.status(500).send("Internal Server Error during payment verification.");
   }
 });
 
+// --- Server Initialization ---
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Backend running on port ${PORT}`);
