@@ -13,7 +13,12 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
+// Add this check
+if (!firebaseConfig.apiKey) {
+  throw new Error("Missing Firebase API Key. Check your .env file.");
+}
+
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app); 
-export const googleProvider = new GoogleAuthProvider(); // Added Google Provider
+export const googleProvider = new GoogleAuthProvider();
