@@ -1,7 +1,9 @@
 // src/components/UpgradePage.tsx
 
 import React, { useState, useEffect } from "react";
-import { User } from "@supabase/supabase-js";
+// Change 1: Import User from firebase/auth instead of supabase
+import { User } from "firebase/auth";
+import { auth } from "../firebaseConfig"; // Import your firebase config
 import { useNavigate } from "react-router-dom";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -36,20 +38,17 @@ const plans = {
 type PlanID = "monthly" | "annual";
 
 const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
-  // State to track loading for a specific plan
   const [loadingPlan, setLoadingPlan] = useState<PlanID | null>(null);
   const [error, setError] = useState("");
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const navigate = useNavigate();
 
-  // --- WARM-UP THE SERVER ON PAGE LOAD ---
   useEffect(() => {
     if (API_URL) {
       fetch(API_URL).catch((err) =>
         console.error("Server warm-up failed:", err)
       );
     }
-    // Preload the Razorpay script
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
     script.async = true;
@@ -66,10 +65,15 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
     setError("");
 
     try {
+      // Change 2: Get Firebase ID Token before creating the order
+      const token = await auth.currentUser?.getIdToken();
+
       const response = await fetch(`${API_URL}/create-order`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        // Send the amount for the selected plan
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}` // Add Bearer Token
+        },
         body: JSON.stringify({ amount: selectedPlan.amount }),
       });
 
@@ -84,21 +88,26 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
         amount: order.amount,
         currency: order.currency,
         name: "DreamHomeCalc Pro",
-        // Use the plan's description
         description: selectedPlan.description,
         order_id: order.id,
         handler: async (response: any) => {
           try {
+            // Change 3: Get a fresh token for the verification call
+            const verifyToken = await auth.currentUser?.getIdToken();
+
             const verificationResponse = await fetch(
               `${API_URL}/verify-payment`,
               {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { 
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${verifyToken}` // Add Bearer Token
+                },
                 body: JSON.stringify({
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_signature: response.razorpay_signature,
-                  userId: user?.id,
+                  // userId: user?.id, // Change 4: Removed userId (backend gets it from the token)
                 }),
               }
             );
@@ -130,7 +139,6 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
     } catch (err) {
       setError("Error creating payment order. Please try again.");
     } finally {
-      // Stop loading for this specific plan
       setLoadingPlan(null);
     }
   };
@@ -150,7 +158,6 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
               <p>Choose the plan that works best for you.</p>
             </div>
 
-            {/* --- NEW PRICING GRID --- */}
             <div className="pricing-grid">
               {/* Monthly Plan */}
               <div className="pricing-card">
@@ -160,7 +167,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
                 <p>Perfect for a single project.</p>
                 <button
                   onClick={() => handlePayment("monthly")}
-                  className="btn btn-secondary" // Use secondary style for the less popular option
+                  className="btn btn-secondary"
                   disabled={loadingPlan !== null}
                 >
                   {loadingPlan === "monthly"
@@ -180,14 +187,13 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
                 </p>
                 <button
                   onClick={() => handlePayment("annual")}
-                  className="btn" // Use primary style for the popular option
+                  className="btn"
                   disabled={loadingPlan !== null}
                 >
                   {loadingPlan === "annual" ? "Processing..." : "Choose Annual"}
                 </button>
               </div>
             </div>
-            {/* --- END PRICING GRID --- */}
 
             <ul className="features-list" style={{ marginTop: "2.5rem" }}>
               <li>
