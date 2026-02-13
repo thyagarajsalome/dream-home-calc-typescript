@@ -4,7 +4,9 @@ import React, { useState, useRef, useEffect } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { useNavigate, useLocation } from "react-router-dom";
-import { supabase } from "../supabaseClient";
+// FIX: Imported Firebase Firestore instead of Supabase
+import { db } from "../firebaseConfig";
+import { collection, addDoc } from "firebase/firestore";
 import Chart from "./Chart";
 import { useUser } from "../context/UserContext";
 
@@ -91,8 +93,9 @@ const PlumbingCalculator: React.FC = () => {
 
     setIsSaving(true);
     try {
-      const { error } = await supabase.from("projects").insert({
-        user_id: user.id,
+      // FIX: Migrated from Supabase .insert() to Firebase Firestore addDoc()
+      await addDoc(collection(db, "projects"), {
+        user_id: user.uid, // Use Firebase UID format instead of user.id
         name,
         type: "plumbing",
         data: {
@@ -105,8 +108,9 @@ const PlumbingCalculator: React.FC = () => {
           breakdown: costBreakdown,
           date: new Date().toISOString(),
         },
+        date: new Date().toISOString(), // Top-level date for easier sorting in the dashboard
       });
-      if (error) throw error;
+      
       alert("Project saved successfully!");
       navigate("/dashboard");
     } catch (e) {
