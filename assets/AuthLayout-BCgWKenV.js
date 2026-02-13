@@ -1,1 +1,0 @@
-import{j as a}from"./index-BjkoefZK.js";const r=({children:s})=>a.jsxs("div",{className:"auth-container",children:[a.jsxs("a",{href:"/",className:"auth-logo",children:[a.jsx("i",{className:"fas fa-home"})," DreamHomeCalc"]}),a.jsx("div",{className:"card auth-card",children:s})]});export{r as A};
