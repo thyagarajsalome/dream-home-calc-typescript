@@ -1,7 +1,8 @@
 // src/components/Header.tsx
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "../supabaseClient";
+import { auth } from "../firebaseConfig"; // Import auth from firebaseConfig
+import { signOut } from "firebase/auth"; // Import signOut from firebase/auth
 import { useUser } from "../context/UserContext";
 
 const Header: React.FC = () => {
@@ -12,8 +13,12 @@ const Header: React.FC = () => {
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/signin");
+    try {
+      await signOut(auth); // Use Firebase signOut
+      navigate("/signin");
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
   };
 
   const handleInstallClick = async () => {
@@ -36,6 +41,7 @@ const Header: React.FC = () => {
     };
   }, []);
 
+  // ... (Rest of the JSX remains exactly the same as your original file)
   return (
     <header className="header">
       <nav className="navbar container">
@@ -45,7 +51,6 @@ const Header: React.FC = () => {
         </Link>
 
         <ul className={isMenuOpen ? "nav-menu active" : "nav-menu"}>
-          {/* --- Dashboard Button (Gold) --- */}
           {user && (
             <li style={{ marginRight: "10px" }}>
               <Link
@@ -65,7 +70,6 @@ const Header: React.FC = () => {
               </Link>
             </li>
           )}
-          {/* ------------------------------ */}
 
           {installPrompt && (
             <li>
