@@ -1,8 +1,8 @@
 // src/components/SignUp.tsx
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../firebaseConfig";
+import { createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "../firebaseConfig";
 import AuthLayout from "./AuthLayout";
 
 const SignUp = () => {
@@ -25,18 +25,11 @@ const SignUp = () => {
     setIsSubmitting(true);
 
     try {
-      // Firebase Sign Up logic
       await createUserWithEmailAndPassword(auth, email, password);
-      
-      // Success message
       setMessage("Account created successfully! Redirecting...");
-      
-      // Note: The UserContext listener (onAuthStateChanged) will 
-      // detect the new user and handle the dashboard redirection.
     } catch (err: any) {
-      console.error("Firebase Sign Up Error:", err.code, err.message);
+      console.error("Firebase Sign Up Error:", err);
 
-      // Scalable error handling based on Firebase error codes
       if (err.code === "auth/email-already-in-use") {
         setError("This email is already in use. Please sign in instead.");
       } else if (err.code === "auth/invalid-email") {
@@ -45,6 +38,25 @@ const SignUp = () => {
         setError("The password is too weak.");
       } else {
         setError("Failed to create an account. Please try again later.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleSignUp = async () => {
+    setError("");
+    setMessage("");
+    setIsSubmitting(true);
+    try {
+      await signInWithPopup(auth, googleProvider);
+      setMessage("Account linked successfully! Redirecting...");
+    } catch (err: any) {
+      console.error("Google Sign Up Error:", err);
+      if (err.code === "auth/popup-closed-by-user") {
+        setError("Sign-up popup was closed. Please try again.");
+      } else {
+        setError("Failed to sign up with Google. Please try again.");
       }
     } finally {
       setIsSubmitting(false);
@@ -63,6 +75,39 @@ const SignUp = () => {
       >
         Unlock all features by creating a free account.
       </p>
+
+      {/* Google Sign-Up Button */}
+      <button
+        type="button"
+        className="btn full-width"
+        onClick={handleGoogleSignUp}
+        disabled={isSubmitting}
+        style={{
+          backgroundColor: "#fff",
+          color: "#333",
+          border: "1px solid #ccc",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "10px",
+          marginBottom: "1.5rem"
+        }}
+      >
+        <img 
+          src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+          alt="Google logo" 
+          style={{ width: "20px", height: "20px" }} 
+        />
+        {isSubmitting ? "Creating Account..." : "Sign up with Google"}
+      </button>
+
+      {/* Divider */}
+      <div style={{ display: "flex", alignItems: "center", marginBottom: "1.5rem" }}>
+        <div style={{ flex: 1, height: "1px", backgroundColor: "#e0e0e0" }}></div>
+        <span style={{ padding: "0 10px", color: "#666", fontSize: "0.9rem" }}>OR</span>
+        <div style={{ flex: 1, height: "1px", backgroundColor: "#e0e0e0" }}></div>
+      </div>
+
       <form onSubmit={handleSignUp}>
         <div className="form-group">
           <label htmlFor="email">Email</label>
@@ -89,7 +134,7 @@ const SignUp = () => {
           />
         </div>
         <button type="submit" className="btn full-width" disabled={isSubmitting}>
-          {isSubmitting ? "Creating Account..." : "Sign Up"}
+          {isSubmitting ? "Creating Account..." : "Sign Up with Email"}
         </button>
         
         {error && (
@@ -114,7 +159,7 @@ const SignUp = () => {
           </div>
         )}
       </form>
-      <p className="auth-switch-link">
+      <p className="auth-switch-link" style={{ marginTop: "1rem" }}>
         Already have an account? <Link to="/signin">Sign In</Link>
       </p>
     </AuthLayout>
