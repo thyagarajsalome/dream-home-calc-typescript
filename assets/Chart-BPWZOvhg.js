@@ -1,4 +1,4 @@
-import{r as Ue,j as oo}from"./index-C63zaC24.js";/*!
+import{r as Ue,j as oo}from"./index-CSLOw54L.js";/*!
  * @kurkle/color v0.3.4
  * https://github.com/kurkle/color#readme
  * (c) 2024 Jukka Kurkela
