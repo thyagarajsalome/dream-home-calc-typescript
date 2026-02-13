@@ -1,7 +1,8 @@
 // src/components/SignUp.tsx
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "../supabaseClient";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../firebaseConfig";
 import AuthLayout from "./AuthLayout";
 
 const SignUp = () => {
@@ -9,35 +10,44 @@ const SignUp = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setMessage("");
+    
     if (password.length < 6) {
       setError("Password must be at least 6 characters long.");
       return;
     }
+
+    setIsSubmitting(true);
+
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          // This ensures the user is redirected back to your site after clicking the email link
-          emailRedirectTo: window.location.origin,
-        },
-      });
-      if (error) throw error;
-      if (data.user) {
-        setMessage(
-          "Success! Please check your email (and spam folder) to confirm your account."
-        );
-      }
+      // Firebase Sign Up logic
+      await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Success message
+      setMessage("Account created successfully! Redirecting...");
+      
+      // Note: The UserContext listener (onAuthStateChanged) will 
+      // detect the new user and handle the dashboard redirection.
     } catch (err: any) {
-      setError(
-        err.message ||
-          "Failed to create an account. The email may already be in use."
-      );
+      console.error("Firebase Sign Up Error:", err.code, err.message);
+
+      // Scalable error handling based on Firebase error codes
+      if (err.code === "auth/email-already-in-use") {
+        setError("This email is already in use. Please sign in instead.");
+      } else if (err.code === "auth/invalid-email") {
+        setError("Invalid email address format.");
+      } else if (err.code === "auth/weak-password") {
+        setError("The password is too weak.");
+      } else {
+        setError("Failed to create an account. Please try again later.");
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -63,6 +73,7 @@ const SignUp = () => {
             onChange={(e) => setEmail(e.target.value)}
             required
             placeholder="name@example.com"
+            disabled={isSubmitting}
           />
         </div>
         <div className="form-group">
@@ -74,16 +85,19 @@ const SignUp = () => {
             onChange={(e) => setPassword(e.target.value)}
             required
             placeholder="At least 6 characters"
+            disabled={isSubmitting}
           />
         </div>
-        <button type="submit" className="btn full-width">
-          Sign Up
+        <button type="submit" className="btn full-width" disabled={isSubmitting}>
+          {isSubmitting ? "Creating Account..." : "Sign Up"}
         </button>
+        
         {error && (
-          <p style={{ color: "red", marginTop: "1rem", textAlign: "center" }}>
+          <p style={{ color: "var(--danger-color)", marginTop: "1rem", textAlign: "center", fontWeight: "500" }}>
             {error}
           </p>
         )}
+        
         {message && (
           <div
             style={{
@@ -91,8 +105,9 @@ const SignUp = () => {
               padding: "10px",
               backgroundColor: "#d4edda",
               color: "#155724",
-              borderRadius: "5px",
+              borderRadius: "8px",
               textAlign: "center",
+              fontWeight: "500"
             }}
           >
             {message}

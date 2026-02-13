@@ -1,25 +1,43 @@
 // src/components/SignIn.tsx
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "../supabaseClient";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../firebaseConfig";
 import AuthLayout from "./AuthLayout";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsSubmitting(true);
+
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
+      // Firebase Sign In logic
+      await signInWithEmailAndPassword(auth, email, password);
+      // The UserContext listener (onAuthStateChanged) will automatically 
+      // handle the redirection to the home page or dashboard.
     } catch (err: any) {
-      setError("Failed to sign in. Please check your email and password.");
+      console.error("Firebase Sign In Error:", err.code, err.message);
+      
+      // Scalable error handling based on Firebase error codes
+      if (err.code === "auth/invalid-credential") {
+        setError("Invalid email or password. Please try again.");
+      } else if (err.code === "auth/user-not-found") {
+        setError("No account found with this email.");
+      } else if (err.code === "auth/wrong-password") {
+        setError("Incorrect password.");
+      } else if (err.code === "auth/too-many-requests") {
+        setError("Too many failed attempts. Please try again later.");
+      } else {
+        setError("Failed to sign in. Please check your connection.");
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -36,6 +54,7 @@ const SignIn = () => {
             onChange={(e) => setEmail(e.target.value)}
             required
             placeholder="name@example.com"
+            disabled={isSubmitting}
           />
         </div>
         <div className="form-group">
@@ -47,13 +66,14 @@ const SignIn = () => {
             onChange={(e) => setPassword(e.target.value)}
             required
             placeholder="••••••••"
+            disabled={isSubmitting}
           />
         </div>
-        <button type="submit" className="btn full-width">
-          Sign In
+        <button type="submit" className="btn full-width" disabled={isSubmitting}>
+          {isSubmitting ? "Signing In..." : "Sign In"}
         </button>
         {error && (
-          <p style={{ color: "red", marginTop: "1rem", textAlign: "center" }}>
+          <p style={{ color: "var(--danger-color)", marginTop: "1rem", textAlign: "center", fontWeight: "500" }}>
             {error}
           </p>
         )}
@@ -75,7 +95,6 @@ const SignIn = () => {
           <Link to="/signup">Sign Up Now</Link>
         </p>
       </div>
-      {/* REMOVED: Guest Link Box */}
     </AuthLayout>
   );
 };
