@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { User } from "@supabase/supabase-js";
+// Change: Import User from firebase/auth instead of supabase
+import { User } from "firebase/auth"; 
+import { auth } from "../firebaseConfig"; // Import your firebase config
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -24,10 +26,14 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
     };
     script.onload = async () => {
       try {
+        // Change: Get the Firebase ID Token before creating the order
+        const token = await auth.currentUser?.getIdToken();
+
         const response = await fetch(`${API_URL}/create-order`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}` // Add: Bearer Token
           },
           body: JSON.stringify({ amount: 9900 }), // Amount in paise (99 INR)
         });
@@ -47,18 +53,22 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
           order_id: order.id,
           handler: async (response: any) => {
             try {
+              // Change: Get a fresh token for verification
+              const verifyToken = await auth.currentUser?.getIdToken();
+
               const verificationResponse = await fetch(
                 `${API_URL}/verify-payment`,
                 {
                   method: "POST",
                   headers: {
                     "Content-Type": "application/json",
+                    "Authorization": `Bearer ${verifyToken}` // Add: Bearer Token
                   },
                   body: JSON.stringify({
                     razorpay_order_id: response.razorpay_order_id,
                     razorpay_payment_id: response.razorpay_payment_id,
                     razorpay_signature: response.razorpay_signature,
-                    userId: user?.id,
+                    // userId: user?.id, // Remove: Backend now uses the token for identity
                   }),
                 }
               );
@@ -78,7 +88,7 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
             email: user?.email,
           },
           theme: {
-            color: "#d9a443", // This line has been updated
+            color: "#d9a443",
           },
         };
 
