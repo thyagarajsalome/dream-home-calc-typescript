@@ -12,35 +12,19 @@ import Footer from "./components/Footer";
 import Hero from "./components/Hero";
 import CalculatorTabs from "./components/CalculatorTabs";
 import FAQ from "./components/FAQ";
-import SEO from "./components/SEO"; // Import SEO Component
+import SEO from "./components/SEO";
 
-// Lazy Load Components for Performance
+// Lazy Load Components
 const Calculator = lazy(() => import("./components/Calculator"));
-const FlooringCalculator = lazy(
-  () => import("./components/FlooringCalculator")
-);
-const PaintingCalculator = lazy(
-  () => import("./components/PaintingCalculator")
-);
-const PlumbingCalculator = lazy(
-  () => import("./components/PlumbingCalculator")
-);
-const ElectricalCalculator = lazy(
-  () => import("./components/ElectricalCalculator")
-);
+const FlooringCalculator = lazy(() => import("./components/FlooringCalculator"));
+const PaintingCalculator = lazy(() => import("./components/PaintingCalculator"));
+const PlumbingCalculator = lazy(() => import("./components/PlumbingCalculator"));
+const ElectricalCalculator = lazy(() => import("./components/ElectricalCalculator"));
 const LoanCalculator = lazy(() => import("./components/LoanCalculator"));
-const LoanEligibilityCalculator = lazy(
-  () => import("./components/LoanEligibilityCalculator")
-);
-const DoorsWindowsCalculator = lazy(
-  () => import("./components/DoorsWindowsCalculator")
-);
-const InteriorCalculator = lazy(
-  () => import("./components/InteriorCalculator")
-);
-const MaterialQuantityCalculator = lazy(
-  () => import("./components/MaterialQuantityCalculator")
-);
+const LoanEligibilityCalculator = lazy(() => import("./components/LoanEligibilityCalculator"));
+const DoorsWindowsCalculator = lazy(() => import("./components/DoorsWindowsCalculator"));
+const InteriorCalculator = lazy(() => import("./components/InteriorCalculator"));
+const MaterialQuantityCalculator = lazy(() => import("./components/MaterialQuantityCalculator"));
 const SignIn = lazy(() => import("./components/SignIn"));
 const SignUp = lazy(() => import("./components/SignUp"));
 const UpgradePage = lazy(() => import("./components/UpgradePage"));
@@ -67,33 +51,21 @@ type CalculatorType =
 
 const MainLayout = () => {
   const { hasPaid } = useUser();
-  const [activeCalculator, setActiveCalculator] =
-    React.useState<CalculatorType>("construction");
+  const [activeCalculator, setActiveCalculator] = React.useState<CalculatorType>("construction");
 
   const renderCalculator = () => {
     switch (activeCalculator) {
-      case "construction":
-        return <Calculator />;
-      case "eligibility":
-        return <LoanEligibilityCalculator />;
-      case "loan":
-        return <LoanCalculator hasPaid={hasPaid} />;
-      case "materials":
-        return <MaterialQuantityCalculator />;
-      case "interior":
-        return <InteriorCalculator hasPaid={hasPaid} />;
-      case "doors-windows":
-        return <DoorsWindowsCalculator hasPaid={hasPaid} />;
-      case "flooring":
-        return <FlooringCalculator />;
-      case "painting":
-        return <PaintingCalculator />;
-      case "plumbing":
-        return <PlumbingCalculator />;
-      case "electrical":
-        return <ElectricalCalculator />;
-      default:
-        return <Calculator />;
+      case "construction": return <Calculator />;
+      case "eligibility": return <LoanEligibilityCalculator />;
+      case "loan": return <LoanCalculator hasPaid={hasPaid} />;
+      case "materials": return <MaterialQuantityCalculator />;
+      case "interior": return <InteriorCalculator hasPaid={hasPaid} />;
+      case "doors-windows": return <DoorsWindowsCalculator hasPaid={hasPaid} />;
+      case "flooring": return <FlooringCalculator />;
+      case "painting": return <PaintingCalculator />;
+      case "plumbing": return <PlumbingCalculator />;
+      case "electrical": return <ElectricalCalculator />;
+      default: return <Calculator />;
     }
   };
 
@@ -123,7 +95,7 @@ const MainLayout = () => {
 const InfoLayout = () => (
   <>
     <Header />
-    <main>
+    <main style={{ minHeight: "60vh", padding: "2rem 0" }}>
       <Suspense fallback={<Loading />}>
         <Outlet />
       </Suspense>
@@ -137,25 +109,27 @@ const ProtectedRoute = () => {
   if (loading) return <Loading />;
   if (!user) return <Navigate to="/signin" />;
   return (
-    <Suspense fallback={<Loading />}>
-      <Outlet />
-    </Suspense>
+    <>
+      <Header /> 
+      <main>
+        <Suspense fallback={<Loading />}>
+          <Outlet />
+        </Suspense>
+      </main>
+      <Footer />
+    </>
   );
-};
-
-const AuthHandler = () => {
-  // Logic from original file to handle auth redirects
-  return null;
 };
 
 const AppRoutes = () => {
   const { user, loading } = useUser();
+  
   if (loading) return <Loading />;
 
   return (
     <Router>
-      <AuthHandler />
       <Routes>
+        {/* Auth Routes */}
         <Route
           path="/signin"
           element={
@@ -175,80 +149,24 @@ const AppRoutes = () => {
           }
         />
 
+        {/* Info Pages Layout */}
         <Route element={<InfoLayout />}>
-          <Route
-            path="/privacy"
-            element={
-              <>
-                <SEO title="Privacy Policy" description="Our privacy policy." />
-                <PrivacyPolicy />
-              </>
-            }
-          />
-          <Route
-            path="/terms"
-            element={
-              <>
-                <SEO
-                  title="Terms of Service"
-                  description="Read our terms of service."
-                />
-                <TermsOfService />
-              </>
-            }
-          />
-          <Route
-            path="/contact"
-            element={
-              <>
-                <SEO
-                  title="Contact Us"
-                  description="Get in touch with the DreamHomeCalc team."
-                />
-                <Contact />
-              </>
-            }
-          />
-          <Route
-            path="/disclaimer"
-            element={
-              <>
-                <SEO title="Disclaimer" description="Usage disclaimer." />
-                <Disclaimer />
-              </>
-            }
-          />
+          <Route path="/privacy" element={<><SEO title="Privacy Policy" /><PrivacyPolicy /></>} />
+          <Route path="/terms" element={<><SEO title="Terms of Service" /><TermsOfService /></>} />
+          <Route path="/contact" element={<><SEO title="Contact Us" /><Contact /></>} />
+          <Route path="/disclaimer" element={<><SEO title="Disclaimer" /><Disclaimer /></>} />
         </Route>
 
+        {/* Protected Routes */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/upgrade" element={<><SEO title="Upgrade to Pro" /><UpgradePage /></>} />
+          <Route path="/dashboard" element={<><SEO title="My Dashboard" /><Dashboard /></>} />
+        </Route>
+
+        {/* Home Route - Placed last to avoid aggressive matching */}
         <Route path="/" element={<MainLayout />} />
 
-        <Route element={<ProtectedRoute />}>
-          <Route
-            path="/upgrade"
-            element={
-              <>
-                <SEO
-                  title="Upgrade to Pro"
-                  description="Unlock premium features."
-                />
-                <UpgradePage />
-              </>
-            }
-          />
-          <Route
-            path="/dashboard"
-            element={
-              <>
-                <SEO
-                  title="My Dashboard"
-                  description="Manage your saved projects."
-                />
-                <Dashboard />
-              </>
-            }
-          />
-        </Route>
-
+        {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
