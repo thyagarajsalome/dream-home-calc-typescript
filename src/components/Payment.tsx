@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-// Change: Import User from firebase/auth instead of supabase
+// Import User from firebase/auth for identity verification
 import { User } from "firebase/auth"; 
-import { auth } from "../firebaseConfig"; // Import your firebase config
+import { auth } from "../firebaseConfig"; 
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -26,14 +26,14 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
     };
     script.onload = async () => {
       try {
-        // Change: Get the Firebase ID Token before creating the order
+        // Retrieve the Firebase ID Token before creating the order
         const token = await auth.currentUser?.getIdToken();
 
         const response = await fetch(`${API_URL}/create-order`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}` // Add: Bearer Token
+            "Authorization": `Bearer ${token}` 
           },
           body: JSON.stringify({ amount: 9900 }), // Amount in paise (99 INR)
         });
@@ -48,12 +48,13 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
           key: import.meta.env.VITE_RAZORPAY_KEY_ID,
           amount: order.amount,
           currency: order.currency,
-          name: "DreamHomeCalc Pro",
+          // Updated brand name to match your custom domain
+          name: "Home Design English Pro", 
           description: "Lifetime Access",
           order_id: order.id,
           handler: async (response: any) => {
             try {
-              // Change: Get a fresh token for verification
+              // Retrieve a fresh token for secure backend verification
               const verifyToken = await auth.currentUser?.getIdToken();
 
               const verificationResponse = await fetch(
@@ -62,13 +63,12 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
                   method: "POST",
                   headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${verifyToken}` // Add: Bearer Token
+                    "Authorization": `Bearer ${verifyToken}` 
                   },
                   body: JSON.stringify({
                     razorpay_order_id: response.razorpay_order_id,
                     razorpay_payment_id: response.razorpay_payment_id,
                     razorpay_signature: response.razorpay_signature,
-                    // userId: user?.id, // Remove: Backend now uses the token for identity
                   }),
                 }
               );
@@ -88,7 +88,7 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
             email: user?.email,
           },
           theme: {
-            color: "#d9a443",
+            color: "#d9a443", // Matches your existing branding
           },
         };
 

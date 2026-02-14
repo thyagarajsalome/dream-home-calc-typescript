@@ -1,6 +1,6 @@
-// src/App.tsx
 import React, { Suspense, lazy } from "react";
-import { HashRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
+// Changed HashRouter to BrowserRouter for cleaner URLs on your custom domain
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { UserProvider, useUser } from "./context/UserContext";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
@@ -55,7 +55,11 @@ const MainLayout = () => {
 
   return (
     <>
-      <SEO title="Cost Calculator" description="Build your dream home." />
+      {/* Updated branding name for SEO */}
+      <SEO 
+        title="Home Design English" 
+        description="Calculate construction and interior costs for your dream home in India." 
+      />
       <Header />
       <main>
         <Hero />
