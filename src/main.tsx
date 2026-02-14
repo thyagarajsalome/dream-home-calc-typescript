@@ -1,19 +1,24 @@
+// src/main.tsx
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { HelmetProvider } from "react-helmet-async";
 import App from "./App";
 import "./styles/global.css";
 
-// register service worker for PWA (basic)
+// Basic Service Worker registration
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register(`${import.meta.env.BASE_URL}service-worker.js`)
-      .catch((err) => console.warn("SW registration failed:", err));
+      .register("/service-worker.js")
+      .catch((err) => console.log("SW registration failed", err));
   });
 }
 
-createRoot(document.getElementById("root")!).render(
+// This is the critical part that mounts your app
+const rootElement = document.getElementById("root");
+if (!rootElement) throw new Error("Failed to find the root element");
+
+createRoot(rootElement).render(
   <React.StrictMode>
     <HelmetProvider>
       <App />
