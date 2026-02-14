@@ -1,20 +1,23 @@
-const functions = require("firebase-functions");
+const { onRequest } = require("firebase-functions/v2/https");
 const express = require("express");
 const Razorpay = require("razorpay");
 const cors = require("cors");
 const crypto = require("crypto");
 const admin = require("firebase-admin");
 
+// Initialize Firebase Admin
 admin.initializeApp();
 const db = admin.firestore();
 
 const app = express();
 
-// Allow all CORS since Firebase Hosting serves this from the same domain
+// Allow all CORS for development and same-domain production
 app.use(cors({ origin: true }));
 app.use(express.json());
 
-// --- Authenticated Middleware ---
+/**
+ * Middleware: Verify Firebase Auth Token
+ */
 const authenticateUser = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -31,21 +34,31 @@ const authenticateUser = async (req, res, next) => {
   }
 };
 
-// --- API Endpoints ---
+/**
+ * Health Check Endpoint
+ * Useful for checking if the backend is alive: yoursite.com/api/status
+ */
+app.get("/status", (req, res) => {
+  res.json({ status: "online", timestamp: new Date().toISOString() });
+});
+
+/**
+ * Create Razorpay Order
+ */
 app.post("/create-order", authenticateUser, async (req, res) => {
   const amount = parseInt(req.body.amount, 10);
   if (isNaN(amount) || amount <= 0) {
     return res.status(400).send("Invalid amount specified.");
   }
 
-  // 💡 FIX: Initialize Razorpay INSIDE the request so it runs at runtime, not deploy time!
+  // Initialize Razorpay with Cloud Environment Variables
   const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_KEY_SECRET,
   });
 
   const options = {
-    amount,
+    amount, // amount in the smallest currency unit (paise for INR)
     currency: "INR",
     receipt: `rcpt_${req.user.uid.slice(0, 10)}_${Date.now()}`,
   };
@@ -59,23 +72,27 @@ app.post("/create-order", authenticateUser, async (req, res) => {
   }
 });
 
+/**
+ * Verify Razorpay Payment Signature
+ */
 app.post("/verify-payment", authenticateUser, async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
     const userId = req.user.uid; 
     const body = razorpay_order_id + "|" + razorpay_payment_id;
     
-    // 💡 FIX: Access the secret directly from process.env here
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(body.toString())
       .digest("hex");
 
     if (expectedSignature === razorpay_signature) {
+      // Update User Profile in Firestore
       await db.collection("profiles").doc(userId).set({
         has_paid: true,
         updated_at: admin.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
+
       res.json({ status: "success", message: "Payment verified." });
     } else {
       res.status(400).json({ status: "failure", message: "Invalid signature." });
@@ -86,5 +103,8 @@ app.post("/verify-payment", authenticateUser, async (req, res) => {
   }
 });
 
-// Expose the Express app as a single Cloud Function named 'api'
-exports.api = functions.https.onRequest(app);
+/**
+ * Expose the Express app as a single Cloud Function named 'api'
+ * This MUST match the name in your firebase.json rewrites
+ */
+exports.api = onRequest({ region: "asia-south1" }, app);
