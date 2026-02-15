@@ -18,6 +18,7 @@
     }
   ],
   "hosting": {
+    "site": "home-design-english",
     "public": "dist",
     "ignore": [
       "firebase.json",
@@ -31,7 +32,6 @@
       {
         "source": "/api/**",
         "function": "api"
-     
       },
       {
         "source": "**",
