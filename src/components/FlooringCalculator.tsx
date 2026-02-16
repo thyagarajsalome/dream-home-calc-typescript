@@ -1,12 +1,10 @@
 // src/components/FlooringCalculator.tsx
-
 import React, { useState, useRef, useEffect } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { useNavigate, useLocation } from "react-router-dom";
-// FIX 1: Import Firebase instead of Supabase
-import { db } from "../firebaseConfig";
-import { collection, addDoc } from "firebase/firestore";
+// FIX: Import Supabase
+import { supabase } from "../supabaseClient";
 import Chart from "./Chart";
 import { useUser } from "../context/UserContext";
 
@@ -21,26 +19,20 @@ const flooringTypes = {
 const chartColors = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
 
 const FlooringCalculator: React.FC = () => {
-  const { hasPaid, user } = useUser(); // Use Context
+  const { hasPaid, user } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Inputs
   const [area, setArea] = useState("");
-  const [flooringType, setFlooringType] =
-    useState<keyof typeof flooringTypes>("vitrified");
+  const [flooringType, setFlooringType] = useState<keyof typeof flooringTypes>("vitrified");
   const [includeSkirting, setIncludeSkirting] = useState(true);
-
-  // Results
   const [totalCost, setTotalCost] = useState(0);
   const [breakdown, setBreakdown] = useState<any>(null);
 
-  // PDF & Save Logic
   const resultsRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // --- Load Data on Edit ---
   useEffect(() => {
     if (location.state && (location.state as any).projectData) {
       const data = (location.state as any).projectData;
@@ -51,7 +43,6 @@ const FlooringCalculator: React.FC = () => {
       }
     }
   }, [location]);
-  // ------------------------
 
   const downloadPDF = () => {
     if (resultsRef.current) {
@@ -81,10 +72,10 @@ const FlooringCalculator: React.FC = () => {
     if (!name) return;
 
     setIsSaving(true);
-    // FIX 2: Save to Firestore
     try {
-      await addDoc(collection(db, "projects"), {
-        user_id: user.uid, // Use Firebase UID
+      // FIX: Use Supabase insert
+      const { error } = await supabase.from('projects').insert({
+        user_id: user.id, // Supabase ID
         name,
         type: "flooring",
         data: {
@@ -97,6 +88,8 @@ const FlooringCalculator: React.FC = () => {
         },
         date: new Date().toISOString(),
       });
+      if(error) throw error;
+      
       alert("Project saved successfully!");
       navigate("/dashboard");
     } catch (e) {
@@ -113,30 +106,20 @@ const FlooringCalculator: React.FC = () => {
     if (parsedArea === 0) return;
 
     const selectedType = flooringTypes[flooringType];
-
-    // 1. Material Cost (including wastage)
     const materialArea = parsedArea * (1 + selectedType.wastage);
     const materialCost = materialArea * selectedType.rate;
-
-    // 2. Labor Cost (Avg ₹35/sq.ft for tiles, ₹50 for marble)
-    const laborRate =
-      flooringType === "marble" || flooringType === "granite" ? 60 : 35;
+    const laborRate = flooringType === "marble" || flooringType === "granite" ? 60 : 35;
     const laborCost = parsedArea * laborRate;
 
-    // 3. Skirting Cost (Approx Perimeter = sqrt(Area) * 4)
     let skirtingCost = 0;
     let skirtingLen = 0;
 
     if (includeSkirting) {
-      // Estimate perimeter assuming square room
       skirtingLen = Math.sqrt(parsedArea) * 4;
-      // Skirting roughly costs same per R.ft as material per Sq.ft + fixing
       skirtingCost = skirtingLen * (selectedType.rate * 0.8 + 20);
     }
 
-    // 4. Supplies (Cement, Sand, Grout) ~ ₹25/sq.ft
     const suppliesCost = parsedArea * 25;
-
     const total = materialCost + laborCost + skirtingCost + suppliesCost;
 
     setBreakdown({
@@ -156,21 +139,16 @@ const FlooringCalculator: React.FC = () => {
     <section id="flooring-calculator" className="container">
       <div className="card">
         <h2 className="section-title">Flooring Cost Calculator</h2>
-
         {isLocked && (
           <div style={{ textAlign: "center", marginBottom: "2rem" }}>
             <p style={{ color: "var(--danger-color)", fontWeight: "600" }}>
-              <i className="fas fa-lock"></i> Upgrade to Pro for detailed
-              Flooring estimates.
+              <i className="fas fa-lock"></i> Upgrade to Pro for detailed Flooring estimates.
             </p>
           </div>
         )}
-
         <form onSubmit={calculateCost}>
           <div className="form-group">
-            <label htmlFor="area">
-              <i className="fas fa-ruler-combined"></i> Carpet Area (sq. ft.)
-            </label>
+            <label htmlFor="area"><i className="fas fa-ruler-combined"></i> Carpet Area (sq. ft.)</label>
             <input
               type="number"
               id="area"
@@ -181,24 +159,18 @@ const FlooringCalculator: React.FC = () => {
               disabled={isLocked}
             />
           </div>
-
           <div className="form-group full-width">
-            <label>
-              <i className="fas fa-layer-group"></i> Material Type
-            </label>
+            <label><i className="fas fa-layer-group"></i> Material Type</label>
             <select
               value={flooringType}
               onChange={(e) => setFlooringType(e.target.value as any)}
               disabled={isLocked}
             >
               {Object.entries(flooringTypes).map(([key, { name }]) => (
-                <option key={key} value={key}>
-                  {name}
-                </option>
+                <option key={key} value={key}>{name}</option>
               ))}
             </select>
           </div>
-
           <div className="form-group">
             <div className="checkbox-wrapper">
               <input
@@ -208,12 +180,9 @@ const FlooringCalculator: React.FC = () => {
                 disabled={isLocked}
                 style={{ width: "auto", marginRight: "10px" }}
               />
-              <label style={{ display: "inline" }}>
-                Include Skirting (4" Wall Borders)
-              </label>
+              <label style={{ display: "inline" }}>Include Skirting (4" Wall Borders)</label>
             </div>
           </div>
-
           <button type="submit" className="btn full-width" disabled={isLocked}>
             <i className="fas fa-calculator"></i> Calculate Cost
           </button>
@@ -232,48 +201,19 @@ const FlooringCalculator: React.FC = () => {
                   })}
                 </span>
               </div>
-
               <div className="results-grid">
                 <div className="result-details">
                   <h3>Cost Breakdown</h3>
                   <table>
                     <thead>
-                      <tr>
-                        <th>Component</th>
-                        <th>Details</th>
-                        <th className="text-right">Cost</th>
-                      </tr>
+                      <tr><th>Component</th><th>Details</th><th className="text-right">Cost</th></tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        <td>Material</td>
-                        <td>Incl. {breakdown.wastageArea} sq.ft wastage</td>
-                        <td className="text-right">
-                          ₹{Math.round(breakdown.material).toLocaleString()}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>Labor</td>
-                        <td>Installation</td>
-                        <td className="text-right">
-                          ₹{Math.round(breakdown.labor).toLocaleString()}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>Supplies</td>
-                        <td>Cement, Sand, Grout</td>
-                        <td className="text-right">
-                          ₹{Math.round(breakdown.supplies).toLocaleString()}
-                        </td>
-                      </tr>
+                      <tr><td>Material</td><td>Incl. {breakdown.wastageArea} sq.ft wastage</td><td className="text-right">₹{Math.round(breakdown.material).toLocaleString()}</td></tr>
+                      <tr><td>Labor</td><td>Installation</td><td className="text-right">₹{Math.round(breakdown.labor).toLocaleString()}</td></tr>
+                      <tr><td>Supplies</td><td>Cement, Sand, Grout</td><td className="text-right">₹{Math.round(breakdown.supplies).toLocaleString()}</td></tr>
                       {breakdown.skirting > 0 && (
-                        <tr>
-                          <td>Skirting</td>
-                          <td>Approx {breakdown.skirtingLen} R.ft</td>
-                          <td className="text-right">
-                            ₹{Math.round(breakdown.skirting).toLocaleString()}
-                          </td>
-                        </tr>
+                        <tr><td>Skirting</td><td>Approx {breakdown.skirtingLen} R.ft</td><td className="text-right">₹{Math.round(breakdown.skirting).toLocaleString()}</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -290,28 +230,18 @@ const FlooringCalculator: React.FC = () => {
                   />
                 </div>
               </div>
-
               {hasPaid && (
                 <div className="action-buttons">
-                  <button
-                    className="btn"
-                    onClick={downloadPDF}
-                    disabled={isDownloading}
-                  >
-                    <i className="fas fa-download"></i>{" "}
-                    {isDownloading ? "Downloading..." : "Download PDF"}
+                  <button className="btn" onClick={downloadPDF} disabled={isDownloading}>
+                    <i className="fas fa-download"></i> {isDownloading ? "Downloading..." : "Download PDF"}
                   </button>
                   <button
                     className="btn"
-                    style={{
-                      backgroundColor: "var(--secondary-color)",
-                      marginLeft: "10px",
-                    }}
+                    style={{ backgroundColor: "var(--secondary-color)", marginLeft: "10px" }}
                     onClick={handleSave}
                     disabled={isSaving}
                   >
-                    <i className="fas fa-save"></i>{" "}
-                    {isSaving ? "Saving..." : "Save to Dashboard"}
+                    <i className="fas fa-save"></i> {isSaving ? "Saving..." : "Save to Dashboard"}
                   </button>
                 </div>
               )}

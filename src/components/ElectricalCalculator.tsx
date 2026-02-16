@@ -1,21 +1,18 @@
 // src/components/ElectricalCalculator.tsx
-
 import React, { useState, useRef, useEffect } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { useNavigate, useLocation } from "react-router-dom";
-// FIX 1: Import Firebase instead of Supabase
-import { db } from "../firebaseConfig";
-import { collection, addDoc } from "firebase/firestore";
+// FIX: Import Supabase
+import { supabase } from "../supabaseClient";
 import Chart from "./Chart";
 import { useUser } from "../context/UserContext";
 
-// Point Rates (Wiring + Switch + Labor) - NO FANCY FITTINGS INCLUDED
 const pointRates = {
-  light: 650, // Per point
-  fan: 750, // Per point
-  power: 1200, // Per point (AC/Geyser/Fridge - 15A/20A)
-  mcb: 25000, // Lump sum for Distribution Board + MCBs/ELCB
+  light: 650, 
+  fan: 750, 
+  power: 1200, 
+  mcb: 25000, 
 };
 
 const qualityMultipliers = {
@@ -27,27 +24,21 @@ const qualityMultipliers = {
 const chartColors = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
 
 const ElectricalCalculator: React.FC = () => {
-  const { hasPaid, user } = useUser(); // Use Context
+  const { hasPaid, user } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Inputs
   const [lightPoints, setLightPoints] = useState("20");
   const [fanPoints, setFanPoints] = useState("5");
   const [powerPoints, setPowerPoints] = useState("4");
-  const [quality, setQuality] =
-    useState<keyof typeof qualityMultipliers>("basic");
-
-  // Results
+  const [quality, setQuality] = useState<keyof typeof qualityMultipliers>("basic");
   const [totalCost, setTotalCost] = useState(0);
   const [breakdown, setBreakdown] = useState<any>(null);
 
-  // PDF & Save Logic
   const resultsRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // --- Load Data on Edit ---
   useEffect(() => {
     if (location.state && (location.state as any).projectData) {
       const data = (location.state as any).projectData;
@@ -59,7 +50,6 @@ const ElectricalCalculator: React.FC = () => {
       }
     }
   }, [location]);
-  // ------------------------
 
   const downloadPDF = () => {
     if (resultsRef.current) {
@@ -89,10 +79,10 @@ const ElectricalCalculator: React.FC = () => {
     if (!name) return;
 
     setIsSaving(true);
-    // FIX 2: Save to Firestore
     try {
-      await addDoc(collection(db, "projects"), {
-        user_id: user.uid, // Use Firebase UID
+      // FIX: Use Supabase
+      const { error } = await supabase.from('projects').insert({
+        user_id: user.id, // Supabase ID
         name,
         type: "electrical",
         data: {
@@ -104,8 +94,10 @@ const ElectricalCalculator: React.FC = () => {
           breakdown,
           date: new Date().toISOString(),
         },
-        date: new Date().toISOString(), // Helper Date
+        date: new Date().toISOString(),
       });
+      if (error) throw error;
+
       alert("Project saved successfully!");
       navigate("/dashboard");
     } catch (e) {
@@ -124,12 +116,9 @@ const ElectricalCalculator: React.FC = () => {
     const pCount = parseInt(powerPoints) || 0;
     const factor = qualityMultipliers[quality].factor;
 
-    // Material + Wiring + Labor cost per point
     const lightCost = lCount * pointRates.light * factor;
     const fanCost = fCount * pointRates.fan * factor;
     const powerCost = pCount * pointRates.power * factor;
-
-    // Main Board is mostly standard but varies slightly with premium brands
     const boardCost = pointRates.mcb * (factor > 1.5 ? 1.5 : factor);
 
     const total = lightCost + fanCost + powerCost + boardCost;
@@ -150,72 +139,36 @@ const ElectricalCalculator: React.FC = () => {
     <section id="electrical-calculator" className="container">
       <div className="card">
         <h2 className="section-title">Electrical Point Estimator</h2>
-
         {isLocked && (
           <div style={{ textAlign: "center", marginBottom: "2rem" }}>
             <p style={{ color: "var(--danger-color)", fontWeight: "600" }}>
-              <i className="fas fa-lock"></i> Upgrade to Pro for Points-based
-              calculation.
+              <i className="fas fa-lock"></i> Upgrade to Pro for Points-based calculation.
             </p>
           </div>
         )}
-
         <form onSubmit={calculateCost}>
           <div className="form-grid">
             <div className="form-group">
-              <label>
-                <i className="far fa-lightbulb"></i> Light/Plug Points (6A)
-              </label>
-              <input
-                type="number"
-                value={lightPoints}
-                onChange={(e) => setLightPoints(e.target.value)}
-                min="0"
-                disabled={isLocked}
-              />
+              <label><i className="far fa-lightbulb"></i> Light/Plug Points (6A)</label>
+              <input type="number" value={lightPoints} onChange={(e) => setLightPoints(e.target.value)} min="0" disabled={isLocked} />
             </div>
             <div className="form-group">
-              <label>
-                <i className="fas fa-fan"></i> Fan Points
-              </label>
-              <input
-                type="number"
-                value={fanPoints}
-                onChange={(e) => setFanPoints(e.target.value)}
-                min="0"
-                disabled={isLocked}
-              />
+              <label><i className="fas fa-fan"></i> Fan Points</label>
+              <input type="number" value={fanPoints} onChange={(e) => setFanPoints(e.target.value)} min="0" disabled={isLocked} />
             </div>
             <div className="form-group">
-              <label>
-                <i className="fas fa-plug"></i> Power Points (15A - AC/Geyser)
-              </label>
-              <input
-                type="number"
-                value={powerPoints}
-                onChange={(e) => setPowerPoints(e.target.value)}
-                min="0"
-                disabled={isLocked}
-              />
+              <label><i className="fas fa-plug"></i> Power Points (15A - AC/Geyser)</label>
+              <input type="number" value={powerPoints} onChange={(e) => setPowerPoints(e.target.value)} min="0" disabled={isLocked} />
             </div>
             <div className="form-group">
-              <label>
-                <i className="fas fa-toggle-on"></i> Switch/Wire Quality
-              </label>
-              <select
-                value={quality}
-                onChange={(e) => setQuality(e.target.value as any)}
-                disabled={isLocked}
-              >
+              <label><i className="fas fa-toggle-on"></i> Switch/Wire Quality</label>
+              <select value={quality} onChange={(e) => setQuality(e.target.value as any)} disabled={isLocked}>
                 {Object.entries(qualityMultipliers).map(([key, val]) => (
-                  <option key={key} value={key}>
-                    {val.name}
-                  </option>
+                  <option key={key} value={key}>{val.name}</option>
                 ))}
               </select>
             </div>
           </div>
-
           <button type="submit" className="btn full-width" disabled={isLocked}>
             <i className="fas fa-calculator"></i> Calculate Estimate
           </button>
@@ -234,59 +187,20 @@ const ElectricalCalculator: React.FC = () => {
                   })}
                 </span>
               </div>
-
               <div className="results-grid">
                 <div className="result-details">
                   <h3>Cost Breakdown</h3>
                   <table>
-                    <thead>
-                      <tr>
-                        <th>Component</th>
-                        <th>Count</th>
-                        <th className="text-right">Cost</th>
-                      </tr>
-                    </thead>
+                    <thead><tr><th>Component</th><th>Count</th><th className="text-right">Cost</th></tr></thead>
                     <tbody>
-                      <tr>
-                        <td>Lights & Plugs (6A)</td>
-                        <td>{breakdown.counts.lCount} pts</td>
-                        <td className="text-right">
-                          ₹{Math.round(breakdown.light).toLocaleString()}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>Fan Points</td>
-                        <td>{breakdown.counts.fCount} pts</td>
-                        <td className="text-right">
-                          ₹{Math.round(breakdown.fan).toLocaleString()}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>Power Sockets (AC/Geyser)</td>
-                        <td>{breakdown.counts.pCount} pts</td>
-                        <td className="text-right">
-                          ₹{Math.round(breakdown.power).toLocaleString()}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>Dist. Board & MCBs</td>
-                        <td>Lump sum</td>
-                        <td className="text-right">
-                          ₹{Math.round(breakdown.board).toLocaleString()}
-                        </td>
-                      </tr>
+                      <tr><td>Lights & Plugs (6A)</td><td>{breakdown.counts.lCount} pts</td><td className="text-right">₹{Math.round(breakdown.light).toLocaleString()}</td></tr>
+                      <tr><td>Fan Points</td><td>{breakdown.counts.fCount} pts</td><td className="text-right">₹{Math.round(breakdown.fan).toLocaleString()}</td></tr>
+                      <tr><td>Power Sockets (AC/Geyser)</td><td>{breakdown.counts.pCount} pts</td><td className="text-right">₹{Math.round(breakdown.power).toLocaleString()}</td></tr>
+                      <tr><td>Dist. Board & MCBs</td><td>Lump sum</td><td className="text-right">₹{Math.round(breakdown.board).toLocaleString()}</td></tr>
                     </tbody>
                   </table>
-                  <div
-                    className="disclaimer-box"
-                    style={{
-                      marginTop: "1rem",
-                      padding: "0.5rem",
-                      fontSize: "0.8rem",
-                    }}
-                  >
-                    *Includes Wiring, Switches, Plates, Metal Boxes, and Labor.
-                    Does not include fancy light fixtures or fans themselves.
+                  <div className="disclaimer-box" style={{ marginTop: "1rem", padding: "0.5rem", fontSize: "0.8rem" }}>
+                    *Includes Wiring, Switches, Plates, Metal Boxes, and Labor. Does not include fancy light fixtures or fans themselves.
                   </div>
                 </div>
                 <div className="chart-container">
@@ -301,28 +215,18 @@ const ElectricalCalculator: React.FC = () => {
                   />
                 </div>
               </div>
-
               {hasPaid && (
                 <div className="action-buttons">
-                  <button
-                    className="btn"
-                    onClick={downloadPDF}
-                    disabled={isDownloading}
-                  >
-                    <i className="fas fa-download"></i>{" "}
-                    {isDownloading ? "Downloading..." : "Download PDF"}
+                  <button className="btn" onClick={downloadPDF} disabled={isDownloading}>
+                    <i className="fas fa-download"></i> {isDownloading ? "Downloading..." : "Download PDF"}
                   </button>
                   <button
                     className="btn"
-                    style={{
-                      backgroundColor: "var(--secondary-color)",
-                      marginLeft: "10px",
-                    }}
+                    style={{ backgroundColor: "var(--secondary-color)", marginLeft: "10px" }}
                     onClick={handleSave}
                     disabled={isSaving}
                   >
-                    <i className="fas fa-save"></i>{" "}
-                    {isSaving ? "Saving..." : "Save to Dashboard"}
+                    <i className="fas fa-save"></i> {isSaving ? "Saving..." : "Save to Dashboard"}
                   </button>
                 </div>
               )}
