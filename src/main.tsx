@@ -2,6 +2,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { HelmetProvider } from "react-helmet-async";
+import { HashRouter } from "react-router-dom"; // Import HashRouter
 import App from "./App";
 import "./styles/global.css";
 
@@ -14,14 +15,15 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-// This is the critical part that mounts your app
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Failed to find the root element");
 
 createRoot(rootElement).render(
   <React.StrictMode>
     <HelmetProvider>
-      <App />
+      <HashRouter> 
+        <App />
+      </HashRouter>
     </HelmetProvider>
   </React.StrictMode>
 );
