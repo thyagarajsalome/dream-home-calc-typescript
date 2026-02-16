@@ -1,8 +1,7 @@
 // src/context/UserContext.tsx
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { auth, db } from "../firebaseConfig"; // Import db from firebaseConfig
-import { onAuthStateChanged, User } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore"; // Import Firestore functions
+import { supabase } from "../supabaseClient";
+import { User } from "@supabase/supabase-js";
 
 interface UserContextType {
   user: User | null;
@@ -36,32 +35,47 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
-
-      if (firebaseUser) {
-        // FETCH PROFILE FROM FIRESTORE
-        try {
-          const docRef = doc(db, "profiles", firebaseUser.uid);
-          const docSnap = await getDoc(docRef);
-
-          if (docSnap.exists()) {
-            setHasPaid(docSnap.data().has_paid || false);
-          } else {
-            setHasPaid(false);
-          }
-        } catch (err) {
-          console.error("Error fetching user profile from Firestore:", err);
-          setHasPaid(false);
-        }
-      } else {
-        setHasPaid(false);
-      }
-      setLoading(false);
+    // 1. Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) fetchProfile(session.user.id);
+      else setLoading(false);
     });
 
-    return () => unsubscribe();
+    // 2. Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          await fetchProfile(session.user.id);
+        } else {
+          setHasPaid(false);
+        }
+        setLoading(false);
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('has_paid')
+        .eq('id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "Row not found"
+        console.error("Error fetching profile:", error);
+      }
+      
+      setHasPaid(data?.has_paid || false);
+    } catch (err) {
+      console.error("Unexpected error fetching profile:", err);
+      setHasPaid(false);
+    }
+  };
 
   return (
     <UserContext.Provider
