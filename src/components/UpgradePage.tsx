@@ -1,12 +1,12 @@
 // src/components/UpgradePage.tsx
-
 import React, { useState, useEffect } from "react";
-// Change 1: Import User from firebase/auth instead of supabase
-import { User } from "firebase/auth";
-import { auth } from "../firebaseConfig"; // Import your firebase config
 import { useNavigate } from "react-router-dom";
+// FIX: Import Supabase types and client
+import { User } from "@supabase/supabase-js";
+import { supabase } from "../supabaseClient";
 
-const API_URL = import.meta.env.VITE_API_URL;
+// Use VITE_API_BASE_URL if you set that up earlier, or fallback to VITE_API_URL
+const API_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
 
 interface UpgradePageProps {
   user: User | null;
@@ -45,7 +45,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
 
   useEffect(() => {
     if (API_URL) {
-      fetch(API_URL).catch((err) =>
+      fetch(`${API_URL}/status`).catch((err) =>
         console.error("Server warm-up failed:", err)
       );
     }
@@ -55,7 +55,10 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
     document.body.appendChild(script);
 
     return () => {
-      document.body.removeChild(script);
+      // Cleanup script only if body contains it to avoid errors
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
     };
   }, []);
 
@@ -65,14 +68,17 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
     setError("");
 
     try {
-      // Change 2: Get Firebase ID Token before creating the order
-      const token = await auth.currentUser?.getIdToken();
+      // FIX 1: Get Supabase Token instead of Firebase ID Token
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) throw new Error("Please sign in to upgrade.");
 
       const response = await fetch(`${API_URL}/create-order`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}` // Add Bearer Token
+          "Authorization": `Bearer ${token}` // Send Supabase Token
         },
         body: JSON.stringify({ amount: selectedPlan.amount }),
       });
@@ -92,8 +98,9 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
         order_id: order.id,
         handler: async (response: any) => {
           try {
-            // Change 3: Get a fresh token for the verification call
-            const verifyToken = await auth.currentUser?.getIdToken();
+            // FIX 2: Get fresh token for verification (optional, but safe)
+            const { data: { session: verifySession } } = await supabase.auth.getSession();
+            const verifyToken = verifySession?.access_token;
 
             const verificationResponse = await fetch(
               `${API_URL}/verify-payment`,
@@ -101,13 +108,12 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
                 method: "POST",
                 headers: { 
                   "Content-Type": "application/json",
-                  "Authorization": `Bearer ${verifyToken}` // Add Bearer Token
+                  "Authorization": `Bearer ${verifyToken}` 
                 },
                 body: JSON.stringify({
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_signature: response.razorpay_signature,
-                  // userId: user?.id, // Change 4: Removed userId (backend gets it from the token)
                 }),
               }
             );
@@ -136,8 +142,9 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
 
       const paymentObject = new (window as any).Razorpay(options);
       paymentObject.open();
-    } catch (err) {
-      setError("Error creating payment order. Please try again.");
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Error creating payment order. Please try again.");
     } finally {
       setLoadingPlan(null);
     }
