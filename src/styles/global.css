@@ -1,3 +1,10 @@
+/* src/styles/global.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* --- Your Custom Styles Below --- */
+
 :root {
   --primary-color: #d9a443;
   --secondary-color: #59483b;
@@ -140,7 +147,7 @@ section {
   height: 70px;
 }
 .logo {
-  font-size: 1.5rem; /* This will style the "DreamHomeCalc" text */
+  font-size: 1.5rem;
   font-weight: 800;
   color: var(--primary-color);
   text-decoration: none;
@@ -148,11 +155,9 @@ section {
   align-items: center;
 }
 .logo img {
-  height: 45px; /* Controls the logo's height */
-  width: 45px; /* Controls the logo's width */
+  height: 45px;
+  width: 45px;
   object-fit: cover;
-  /* Optional: uncomment below if you want a circular logo */
-  /* border-radius: 50%; */
 }
 
 .logo i {
@@ -782,22 +787,7 @@ select:focus {
     grid-template-columns: 1fr;
   }
 }
-/* ... (all previous styles remain the same) */
 
-/* Add this new class at the end of the file or in a relevant section */
-.quality-description {
-  text-align: center;
-  margin-top: 1rem;
-  padding: 0.75rem;
-  background-color: var(--background-color);
-  border-radius: 8px;
-  font-size: 0.9rem;
-  color: var(--secondary-color);
-}
-
-/* ... (all previous styles remain the same) */
-
-/* Add this new class at the end of the file or in a relevant section */
 .quality-description {
   text-align: center;
   margin-top: 1rem;
@@ -822,7 +812,6 @@ select:focus {
 .disclaimer-box p {
   margin-bottom: 1rem;
 }
-/* ... (previous styles remain the same) */
 
 .disclaimer-box p:last-child {
   margin-bottom: 0;
@@ -860,10 +849,6 @@ select:focus {
     box-shadow: 0 0 0 0 rgba(46, 204, 113, 0);
   }
 }
-
-/* src/styles/global.css */
-
-/* ... (previous styles) ... */
 
 /* Highlighted Link Styles */
 .highlighted-link-box {
@@ -937,9 +922,7 @@ select:focus {
   color: var(--success-color);
 }
 
-/* ... (all your existing styles) ... */
-
-/* --- ADD THESE STYLES FOR THE UPGRADE PAGE --- */
+/* Pricing Page */
 .pricing-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1012,4 +995,3 @@ select:focus {
     order: -1; /* Make the popular plan appear first on mobile */
   }
 }
-/* --- END OF NEW STYLES --- */
