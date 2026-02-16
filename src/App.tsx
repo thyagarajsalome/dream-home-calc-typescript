@@ -1,6 +1,6 @@
 // src/App.tsx
-import React, { Suspense, lazy } from "react";
-// REMOVE Router import, only keep Routes, Route, Navigate, Outlet
+import React, { Suspense, lazy, startTransition } from "react";
+// FIX: Removed Router/BrowserRouter import. Only use Routes/Route.
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { UserProvider, useUser } from "./context/UserContext";
 import Header from "./components/Header";
@@ -30,13 +30,25 @@ const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const Contact = lazy(() => import("./pages/Contact"));
 const Disclaimer = lazy(() => import("./pages/Disclaimer"));
 
-const Loading = () => <div className="loading-container">Loading...</div>;
+// Better Loading Spinner with Tailwind
+const Loading = () => (
+  <div className="flex justify-center items-center h-screen bg-gray-50">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+);
 
 type CalculatorType = "construction" | "eligibility" | "loan" | "interior" | "doors-windows" | "flooring" | "painting" | "plumbing" | "electrical" | "materials";
 
 const MainLayout = () => {
   const { hasPaid } = useUser();
   const [activeCalculator, setActiveCalculator] = React.useState<CalculatorType>("construction");
+
+  // Wrap state update in startTransition to prevent suspension errors during tab switch
+  const handleTabChange = (tab: CalculatorType) => {
+    startTransition(() => {
+      setActiveCalculator(tab);
+    });
+  };
 
   const renderCalculator = () => {
     switch (activeCalculator) {
@@ -61,10 +73,12 @@ const MainLayout = () => {
         description="Calculate construction and interior costs for your dream home in India." 
       />
       <Header />
-      <main>
+      <main className="min-h-screen bg-gray-50">
         <Hero />
-        <CalculatorTabs activeCalculator={activeCalculator} setActiveCalculator={setActiveCalculator} hasPaid={hasPaid} />
-        <Suspense fallback={<Loading />}>{renderCalculator()}</Suspense>
+        <CalculatorTabs activeCalculator={activeCalculator} setActiveCalculator={handleTabChange} hasPaid={hasPaid} />
+        <div className="container mx-auto px-4 py-6">
+          <Suspense fallback={<Loading />}>{renderCalculator()}</Suspense>
+        </div>
         <FAQ />
       </main>
       <Footer />
@@ -79,7 +93,9 @@ const ProtectedRoute = () => {
   return (
     <>
       <Header />
-      <main><Suspense fallback={<Loading />}><Outlet /></Suspense></main>
+      <main className="min-h-screen bg-gray-50 pt-20">
+        <Suspense fallback={<Loading />}><Outlet /></Suspense>
+      </main>
       <Footer />
     </>
   );
@@ -88,7 +104,7 @@ const ProtectedRoute = () => {
 const InfoLayout = () => (
   <>
     <Header />
-    <main style={{ minHeight: "60vh", padding: "2rem 0" }}>
+    <main className="min-h-screen bg-gray-50 pt-24 pb-12 px-4">
       <Suspense fallback={<Loading />}><Outlet /></Suspense>
     </main>
     <Footer />
@@ -99,27 +115,29 @@ const AppRoutes = () => {
   const { user, loading } = useUser();
   if (loading) return <Loading />;
 
-  // FIX: Removed <Router> wrapper here. The app is already wrapped in HashRouter in main.tsx
   return (
-    <Routes>
-      <Route path="/signin" element={user ? <Navigate to="/" /> : <SignIn />} />
-      <Route path="/signup" element={user ? <Navigate to="/" /> : <SignUp />} />
-      
-      <Route element={<InfoLayout />}>
-        <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route path="/terms" element={<TermsOfService />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/disclaimer" element={<Disclaimer />} />
-      </Route>
+    // FIX: Wrapped everything in Suspense to handle lazy loading of routes
+    <Suspense fallback={<Loading />}>
+      <Routes>
+        <Route path="/signin" element={user ? <Navigate to="/" /> : <SignIn />} />
+        <Route path="/signup" element={user ? <Navigate to="/" /> : <SignUp />} />
+        
+        <Route element={<InfoLayout />}>
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/disclaimer" element={<Disclaimer />} />
+        </Route>
 
-      <Route element={<ProtectedRoute />}>
-        <Route path="/upgrade" element={<UpgradePage />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-      </Route>
+        <Route element={<ProtectedRoute />}>
+          <Route path="/upgrade" element={<UpgradePage />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+        </Route>
 
-      <Route path="/" element={<MainLayout />} />
-      <Route path="*" element={<Navigate to="/" />} />
-    </Routes>
+        <Route path="/" element={<MainLayout />} />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </Suspense>
   );
 };
 
