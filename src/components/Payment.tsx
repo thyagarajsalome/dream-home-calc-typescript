@@ -1,9 +1,7 @@
+// src/components/Payment.tsx
 import React, { useState } from "react";
-// Import User from firebase/auth for identity verification
-import { User } from "firebase/auth"; 
-import { auth } from "../firebaseConfig"; 
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { supabase } from "../supabaseClient"; // Import Supabase client
+import { User } from "@supabase/supabase-js"; // Import User type from Supabase
 
 interface PaymentProps {
   user: User | null;
@@ -14,9 +12,18 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Get the backend URL from environment variables
+  const API_URL = import.meta.env.VITE_API_BASE_URL;
+
   const handlePayment = async () => {
     setLoading(true);
     setError("");
+
+    if (!API_URL) {
+      setError("Backend URL is missing in configuration.");
+      setLoading(false);
+      return;
+    }
 
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
@@ -26,44 +33,44 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
     };
     script.onload = async () => {
       try {
-        // Retrieve the Firebase ID Token before creating the order
-        const token = await auth.currentUser?.getIdToken();
+        // 1. Get current session token from Supabase
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
 
+        if (!token) throw new Error("User not authenticated.");
+
+        // 2. Call Backend to Create Order
         const response = await fetch(`${API_URL}/create-order`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}` 
+            "Authorization": `Bearer ${token}` // Send Supabase Token
           },
-          body: JSON.stringify({ amount: 9900 }), // Amount in paise (99 INR)
+          body: JSON.stringify({ amount: 9900 }), // 99 INR in paise
         });
 
-        if (!response.ok) {
-          throw new Error("Failed to create payment order.");
-        }
-
+        if (!response.ok) throw new Error("Failed to create payment order.");
+        
         const order = await response.json();
 
+        // 3. Open Razorpay Options
         const options = {
-          key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+          key: import.meta.env.VITE_RAZORPAY_KEY_ID, // Frontend Key ID
           amount: order.amount,
           currency: order.currency,
-          // Updated brand name to match your custom domain
-          name: "Home Design English Pro", 
-          description: "Lifetime Access",
+          name: "Dream Home Calculator",
+          description: "Premium Access",
           order_id: order.id,
           handler: async (response: any) => {
             try {
-              // Retrieve a fresh token for secure backend verification
-              const verifyToken = await auth.currentUser?.getIdToken();
-
-              const verificationResponse = await fetch(
+              // 4. Verify Payment on Backend
+              const verifyResponse = await fetch(
                 `${API_URL}/verify-payment`,
                 {
                   method: "POST",
                   headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${verifyToken}` 
+                    "Authorization": `Bearer ${token}`
                   },
                   body: JSON.stringify({
                     razorpay_order_id: response.razorpay_order_id,
@@ -73,14 +80,15 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
                 }
               );
 
-              const result = await verificationResponse.json();
+              const result = await verifyResponse.json();
               if (result.status === "success") {
-                alert("Payment Successful! You now have Pro access.");
+                alert("Payment Successful! Access Unlocked.");
                 setHasPaid(true);
               } else {
                 throw new Error("Payment verification failed.");
               }
             } catch (err) {
+              console.error(err);
               setError("Payment verification failed. Please contact support.");
             }
           },
@@ -88,14 +96,15 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
             email: user?.email,
           },
           theme: {
-            color: "#d9a443", // Matches your existing branding
+            color: "#d9a443",
           },
         };
 
         const paymentObject = new (window as any).Razorpay(options);
         paymentObject.open();
-      } catch (err) {
-        setError("Error creating payment order. Please try again.");
+      } catch (err: any) {
+        console.error("Payment Error:", err);
+        setError(err.message || "Error creating payment order.");
       } finally {
         setLoading(false);
       }
@@ -104,13 +113,17 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
   };
 
   return (
-    <div className="card" style={{ textAlign: "center" }}>
+    <div className="card" style={{ textAlign: "center", padding: "2rem" }}>
       <h2>Unlock All Calculators</h2>
-      <p>
-        Get lifetime access to all premium features and calculators for just
-        ₹99.
+      <p style={{ margin: "1rem 0" }}>
+        Get lifetime access to all premium features and detailed reports for just ₹99.
       </p>
-      <button onClick={handlePayment} className="btn" disabled={loading}>
+      <button 
+        onClick={handlePayment} 
+        className="btn" 
+        disabled={loading}
+        style={{ fontSize: "1.1rem", padding: "10px 20px" }}
+      >
         {loading ? "Processing..." : "Pay ₹99 Now"}
       </button>
       {error && <p style={{ color: "red", marginTop: "1rem" }}>{error}</p>}
