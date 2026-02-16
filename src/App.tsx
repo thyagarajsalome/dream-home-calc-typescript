@@ -1,6 +1,7 @@
+// src/App.tsx
 import React, { Suspense, lazy } from "react";
-// Changed HashRouter to BrowserRouter for cleaner URLs on your custom domain
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
+// REMOVE Router import, only keep Routes, Route, Navigate, Outlet
+import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { UserProvider, useUser } from "./context/UserContext";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
@@ -55,7 +56,6 @@ const MainLayout = () => {
 
   return (
     <>
-      {/* Updated branding name for SEO */}
       <SEO 
         title="Home Design English" 
         description="Calculate construction and interior costs for your dream home in India." 
@@ -99,28 +99,27 @@ const AppRoutes = () => {
   const { user, loading } = useUser();
   if (loading) return <Loading />;
 
+  // FIX: Removed <Router> wrapper here. The app is already wrapped in HashRouter in main.tsx
   return (
-    <Router>
-      <Routes>
-        <Route path="/signin" element={user ? <Navigate to="/" /> : <SignIn />} />
-        <Route path="/signup" element={user ? <Navigate to="/" /> : <SignUp />} />
-        
-        <Route element={<InfoLayout />}>
-          <Route path="/privacy" element={<PrivacyPolicy />} />
-          <Route path="/terms" element={<TermsOfService />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/disclaimer" element={<Disclaimer />} />
-        </Route>
+    <Routes>
+      <Route path="/signin" element={user ? <Navigate to="/" /> : <SignIn />} />
+      <Route path="/signup" element={user ? <Navigate to="/" /> : <SignUp />} />
+      
+      <Route element={<InfoLayout />}>
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/disclaimer" element={<Disclaimer />} />
+      </Route>
 
-        <Route element={<ProtectedRoute />}>
-          <Route path="/upgrade" element={<UpgradePage />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-        </Route>
+      <Route element={<ProtectedRoute />}>
+        <Route path="/upgrade" element={<UpgradePage />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Route>
 
-        <Route path="/" element={<MainLayout />} />
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
-    </Router>
+      <Route path="/" element={<MainLayout />} />
+      <Route path="*" element={<Navigate to="/" />} />
+    </Routes>
   );
 };
 
