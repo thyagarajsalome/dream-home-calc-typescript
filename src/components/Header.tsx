@@ -1,148 +1,61 @@
 // src/components/Header.tsx
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { auth } from "../firebaseConfig"; // Import auth from firebaseConfig
-import { signOut } from "firebase/auth"; // Import signOut from firebase/auth
 import { useUser } from "../context/UserContext";
+import { supabase } from "../supabaseClient";
+import "../styles/global.css";
 
-const Header: React.FC = () => {
-  const { user, installPrompt } = useUser();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLLIElement>(null);
+const Header = () => {
+  const { user, hasPaid } = useUser();
+  const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
 
-  const handleSignOut = async () => {
+  const handleLogout = async () => {
     try {
-      await signOut(auth); // Use Firebase signOut
+      await supabase.auth.signOut();
       navigate("/signin");
+      setMenuOpen(false);
     } catch (error) {
       console.error("Error signing out:", error);
     }
   };
 
-  const handleInstallClick = async () => {
-    if (!installPrompt) return;
-    await installPrompt.prompt();
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  // ... (Rest of the JSX remains exactly the same as your original file)
   return (
     <header className="header">
-      <nav className="navbar container">
-        <Link to="/" className="logo">
-          <img src="/icons/bg-logo.png" alt="DreamHomeCalc Logo" />
-          <span>HDE</span>
-        </Link>
+      <div className="container header-content">
+        <div className="logo">
+          <Link to="/">
+            <h1>DreamHome Calc</h1>
+          </Link>
+        </div>
 
-        <ul className={isMenuOpen ? "nav-menu active" : "nav-menu"}>
-          {user && (
-            <li style={{ marginRight: "10px" }}>
-              <Link
-                to="/dashboard"
-                className="btn"
-                style={{
-                  padding: "0.6rem 1.2rem",
-                  backgroundColor: "var(--primary-color)",
-                  color: "white",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  fontWeight: "600",
-                }}
-              >
-                <i className="fas fa-columns"></i> Dashboard
-              </Link>
-            </li>
-          )}
+        <button 
+          className="mobile-menu-btn" 
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label="Toggle menu"
+        >
+          <i className={`fas ${menuOpen ? "fa-times" : "fa-bars"}`}></i>
+        </button>
 
-          {installPrompt && (
-            <li>
-              <button onClick={handleInstallClick} className="btn install-btn">
-                <i className="fas fa-download"></i> Install App
-              </button>
-            </li>
-          )}
-
+        <nav className={`nav-links ${menuOpen ? "open" : ""}`}>
+          <Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
+          <Link to="/calculator" onClick={() => setMenuOpen(false)}>Calculators</Link>
+          
           {user ? (
             <>
-              <li className="user-info">
-                <span>{user.email?.split("@")[0]}</span>
-              </li>
-              <li>
-                <button onClick={handleSignOut} className="sign-out-btn">
-                  Sign Out
-                </button>
-              </li>
+              <Link to="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
+              {hasPaid && <span className="badge-pro">PRO</span>}
+              <button onClick={handleLogout} className="btn-logout">
+                Sign Out
+              </button>
             </>
           ) : (
-            <li>
-              <Link
-                to="/signin"
-                className="btn"
-                style={{ padding: "0.5rem 1rem" }}
-              >
-                Sign In
-              </Link>
-            </li>
+            <Link to="/signin" className="btn btn-primary" onClick={() => setMenuOpen(false)}>
+              Sign In
+            </Link>
           )}
-
-          <li className="dropdown" ref={dropdownRef}>
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="nav-link"
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                fontSize: "1rem",
-              }}
-            >
-              Resources <i className="fas fa-chevron-down fa-xs"></i>
-            </button>
-            <ul className={`dropdown-menu ${isDropdownOpen ? "show" : ""}`}>
-              <li>
-                <Link to="/contact" onClick={() => setIsDropdownOpen(false)}>
-                  Contact
-                </Link>
-              </li>
-              <li>
-                <Link to="/disclaimer" onClick={() => setIsDropdownOpen(false)}>
-                  Disclaimer
-                </Link>
-              </li>
-              <li>
-                <Link to="/privacy" onClick={() => setIsDropdownOpen(false)}>
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link to="/terms" onClick={() => setIsDropdownOpen(false)}>
-                  Terms of Service
-                </Link>
-              </li>
-            </ul>
-          </li>
-        </ul>
-        <div className="hamburger" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-          <i className={isMenuOpen ? "fas fa-times" : "fas fa-bars"}></i>
-        </div>
-      </nav>
+        </nav>
+      </div>
     </header>
   );
 };
