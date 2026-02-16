@@ -6,15 +6,20 @@ const cors = require("cors");
 const crypto = require("crypto");
 const { createClient } = require('@supabase/supabase-js');
 
-// ... (Supabase config remains the same) ...
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+  process.exit(1);
+}
+
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// FIX: Update CORS to explicitly allow your domains
+// FIX: Explicitly allow your frontend domains
 const allowedOrigins = [
   "http://localhost:5173",                  // Local Development
   "https://homedesignenglish.com",          // Production Domain
@@ -39,8 +44,7 @@ app.use(cors({
 
 app.use(express.json());
 
-// ... (Rest of your routes: authenticateUser, /create-order, /verify-payment, etc.) ...
-// Ensure the rest of the file matches your previous upload
+// Auth Middleware
 const authenticateUser = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -58,6 +62,7 @@ const authenticateUser = async (req, res, next) => {
   }
 };
 
+// Routes
 app.get("/status", (req, res) => {
   res.json({ status: "online", timestamp: new Date().toISOString() });
 });
