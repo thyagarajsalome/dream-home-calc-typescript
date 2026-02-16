@@ -6,25 +6,26 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-firebase-debug.log*
 
 # Dependencies
 node_modules
-functions/node_modules
+.pnp
+.pnp.js
 
-# Build Outputs
+# Testing
+coverage
+
+# Production Build Output
 dist
 dist-ssr
 
-# Environment Variables (Keep Secrets Safe!)
+# Environment Variables (CRITICAL)
 .env
 .env.local
-.env.production
-functions/.env
+.env.development.local
+.env.test.local
+.env.production.local
 *.local
-
-# Firebase Cache
-.firebase/
 
 # Editor directories and files
 .vscode/*
@@ -32,10 +33,13 @@ functions/.env
 .idea
 .DS_Store
 *.suo
-*.ntvs*
+*.ntvs
 *.njsproj
 *.sln
 *.sw?
 
-# Deprecated/Old Keys (If they still exist locally)
-firebase-service-account.json
+# TypeScript
+*.tsbuildinfo
+
+# Optional: npm pack output
+*.tgz
