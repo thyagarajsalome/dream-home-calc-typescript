@@ -3,12 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { useNavigate } from "react-router-dom";
-// FIX 1: Remove Supabase import
-// import { supabase } from "../supabaseClient"; 
-// FIX 2: Import Firebase DB and functions
-import { db } from "../firebaseConfig"; 
-import { collection, addDoc } from "firebase/firestore"; 
-
+import { supabase } from "../supabaseClient"; // Import Supabase Client
 import Chart from "./Chart";
 import { useUser } from "../context/UserContext";
 
@@ -94,10 +89,10 @@ const Calculator: React.FC = () => {
     if (!projectName) return;
     setIsSaving(true);
     
-    // FIX 3: Updated Save Logic for Firestore
+    // Updated Save Logic for Supabase
     try {
-      await addDoc(collection(db, "projects"), {
-        user_id: user.uid, // Use .uid for Firebase User object
+      const { error } = await supabase.from('projects').insert({
+        user_id: user.id, // Supabase uses 'id', not 'uid'
         name: projectName,
         type: "construction",
         data: {
@@ -111,8 +106,10 @@ const Calculator: React.FC = () => {
           breakdown: costDetails,
           date: new Date().toISOString(),
         },
-        date: new Date().toISOString() // Helper top-level date
+        date: new Date().toISOString()
       });
+
+      if (error) throw error;
       
       alert("Saved!");
       navigate("/dashboard");

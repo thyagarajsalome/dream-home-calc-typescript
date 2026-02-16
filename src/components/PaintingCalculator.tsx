@@ -1,12 +1,10 @@
 // src/components/PaintingCalculator.tsx
-
 import React, { useState, useRef, useEffect } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { useNavigate, useLocation } from "react-router-dom";
-// FIX: Imported Firebase Firestore instead of Supabase
-import { db } from "../firebaseConfig";
-import { collection, addDoc } from "firebase/firestore";
+// FIX: Import Supabase instead of Firebase
+import { supabase } from "../supabaseClient";
 import Chart from "./Chart";
 import { useUser } from "../context/UserContext";
 
@@ -19,33 +17,27 @@ const paintTypes = {
 
 const processTypes = {
   repaint: { name: "Repainting (Touchup + 2 Coats)", factor: 1.0 },
-  fresh: { name: "Fresh Painting (Putty + Primer + 2 Coats)", factor: 1.6 }, // Costs 60% more
+  fresh: { name: "Fresh Painting (Putty + Primer + 2 Coats)", factor: 1.6 },
 };
 
 const chartColors = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
 
 const PaintingCalculator: React.FC = () => {
-  const { hasPaid, user } = useUser(); // Use Context
+  const { hasPaid, user } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Inputs
-  const [carpetArea, setCarpetArea] = useState(""); // Helper input
-  const [wallArea, setWallArea] = useState(""); // Actual calc input
+  const [carpetArea, setCarpetArea] = useState("");
+  const [wallArea, setWallArea] = useState("");
   const [includeCeiling, setIncludeCeiling] = useState(true);
-
-  const [paintType, setPaintType] =
-    useState<keyof typeof paintTypes>("emulsion");
+  const [paintType, setPaintType] = useState<keyof typeof paintTypes>("emulsion");
   const [process, setProcess] = useState<keyof typeof processTypes>("repaint");
-
   const [totalCost, setTotalCost] = useState(0);
 
-  // PDF Logic
   const resultsRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Helper: Auto-calculate wall area when carpet area changes
   useEffect(() => {
     const area = parseFloat(carpetArea);
     if (!isNaN(area)) {
@@ -55,7 +47,6 @@ const PaintingCalculator: React.FC = () => {
     }
   }, [carpetArea, includeCeiling]);
 
-  // --- Load Data on Edit ---
   useEffect(() => {
     if (location.state && (location.state as any).projectData) {
       const data = (location.state as any).projectData;
@@ -68,7 +59,6 @@ const PaintingCalculator: React.FC = () => {
       }
     }
   }, [location]);
-  // ------------------------
 
   const downloadPDF = () => {
     if (resultsRef.current) {
@@ -99,9 +89,9 @@ const PaintingCalculator: React.FC = () => {
 
     setIsSaving(true);
     try {
-      // FIX: Migrated from Supabase .insert() to Firebase Firestore addDoc()
-      await addDoc(collection(db, "projects"), {
-        user_id: user.uid, // Use Firebase UID format instead of user.id
+      // FIX: Use Supabase insert
+      const { error } = await supabase.from('projects').insert({
+        user_id: user.id, // Supabase uses .id, not .uid
         name,
         type: "painting",
         data: {
@@ -113,8 +103,10 @@ const PaintingCalculator: React.FC = () => {
           totalCost,
           date: new Date().toISOString(),
         },
-        date: new Date().toISOString(), // Top-level date for easier sorting in the dashboard
+        date: new Date().toISOString(),
       });
+
+      if (error) throw error;
       
       alert("Project saved successfully!");
       navigate("/dashboard");
@@ -142,23 +134,18 @@ const PaintingCalculator: React.FC = () => {
     <section id="painting-calculator" className="container">
       <div className="card">
         <h2 className="section-title">Painting Cost Estimator</h2>
-
         {isLocked && (
           <div style={{ textAlign: "center", marginBottom: "2rem" }}>
             <p style={{ color: "var(--danger-color)", fontWeight: "600" }}>
-              <i className="fas fa-lock"></i> Upgrade to Pro to use this
-              calculator.
+              <i className="fas fa-lock"></i> Upgrade to Pro to use this calculator.
             </p>
           </div>
         )}
-
         <form onSubmit={calculateCost}>
-          {/* Smart Area Input */}
           <div className="form-grid">
             <div className="form-group">
               <label htmlFor="carpetArea">
-                <i className="fas fa-ruler-combined"></i> Carpet/Floor Area
-                (sq.ft)
+                <i className="fas fa-ruler-combined"></i> Carpet/Floor Area (sq.ft)
               </label>
               <input
                 type="number"
@@ -172,7 +159,6 @@ const PaintingCalculator: React.FC = () => {
                 Auto-calculates wall area (~3x)
               </small>
             </div>
-
             <div className="form-group">
               <label htmlFor="wallArea">
                 <i className="fas fa-paint-roller"></i> Total Paintable Area
@@ -187,7 +173,6 @@ const PaintingCalculator: React.FC = () => {
               />
             </div>
           </div>
-
           <div className="form-group">
             <div className="checkbox-wrapper">
               <input
@@ -202,42 +187,32 @@ const PaintingCalculator: React.FC = () => {
               </label>
             </div>
           </div>
-
           <div className="form-grid">
             <div className="form-group">
-              <label>
-                <i className="fas fa-brush"></i> Paint Type
-              </label>
+              <label><i className="fas fa-brush"></i> Paint Type</label>
               <select
                 value={paintType}
                 onChange={(e) => setPaintType(e.target.value as any)}
                 disabled={isLocked}
               >
                 {Object.entries(paintTypes).map(([key, val]) => (
-                  <option key={key} value={key}>
-                    {val.name}
-                  </option>
+                  <option key={key} value={key}>{val.name}</option>
                 ))}
               </select>
             </div>
             <div className="form-group">
-              <label>
-                <i className="fas fa-layer-group"></i> Process Type
-              </label>
+              <label><i className="fas fa-layer-group"></i> Process Type</label>
               <select
                 value={process}
                 onChange={(e) => setProcess(e.target.value as any)}
                 disabled={isLocked}
               >
                 {Object.entries(processTypes).map(([key, val]) => (
-                  <option key={key} value={key}>
-                    {val.name}
-                  </option>
+                  <option key={key} value={key}>{val.name}</option>
                 ))}
               </select>
             </div>
           </div>
-
           <button type="submit" className="btn full-width" disabled={isLocked}>
             <i className="fas fa-calculator"></i> Calculate Estimate
           </button>
@@ -256,7 +231,6 @@ const PaintingCalculator: React.FC = () => {
                   })}
                 </span>
               </div>
-
               <div className="results-grid">
                 <div className="result-details">
                   <h3>Cost Breakdown</h3>
@@ -271,13 +245,7 @@ const PaintingCalculator: React.FC = () => {
                       <strong>Process:</strong> {processTypes[process].name}
                     </li>
                   </ul>
-                  <div
-                    style={{
-                      marginTop: "1rem",
-                      fontSize: "0.9rem",
-                      color: "#666",
-                    }}
-                  >
+                  <div style={{ marginTop: "1rem", fontSize: "0.9rem", color: "#666" }}>
                     *Includes Material (Paint, Putty, Primer) + Labor charges.
                   </div>
                 </div>
@@ -292,28 +260,18 @@ const PaintingCalculator: React.FC = () => {
                   />
                 </div>
               </div>
-
               {hasPaid && (
                 <div className="action-buttons">
-                  <button
-                    className="btn"
-                    onClick={downloadPDF}
-                    disabled={isDownloading}
-                  >
-                    <i className="fas fa-download"></i>{" "}
-                    {isDownloading ? "Downloading..." : "Download PDF"}
+                  <button className="btn" onClick={downloadPDF} disabled={isDownloading}>
+                    <i className="fas fa-download"></i> {isDownloading ? "Downloading..." : "Download PDF"}
                   </button>
                   <button
                     className="btn"
-                    style={{
-                      backgroundColor: "var(--secondary-color)",
-                      marginLeft: "10px",
-                    }}
+                    style={{ backgroundColor: "var(--secondary-color)", marginLeft: "10px" }}
                     onClick={handleSave}
                     disabled={isSaving}
                   >
-                    <i className="fas fa-save"></i>{" "}
-                    {isSaving ? "Saving..." : "Save to Dashboard"}
+                    <i className="fas fa-save"></i> {isSaving ? "Saving..." : "Save to Dashboard"}
                   </button>
                 </div>
               )}
