@@ -1,12 +1,10 @@
 // src/components/InteriorCalculator.tsx
-
 import React, { useState, useRef, useEffect } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { useNavigate, useLocation } from "react-router-dom";
-// FIX 1: Import Firebase instead of Supabase
-import { db } from "../firebaseConfig";
-import { collection, addDoc } from "firebase/firestore";
+// FIX: Import Supabase instead of Firebase
+import { supabase } from "../supabaseClient";
 import Chart from "./Chart";
 import { useUser } from "../context/UserContext";
 
@@ -45,7 +43,7 @@ const interiorBreakdown = {
 const chartColors = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594", "#A99A86"];
 
 const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
-  const { user } = useUser(); // Get user context
+  const { user } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -57,18 +55,15 @@ const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // --- Load Data on Edit ---
   useEffect(() => {
     if (location.state && (location.state as any).projectData) {
       const data = (location.state as any).projectData;
       if (data.area && data.quality && !data.doorCount) {
-        // Distinguish from doors
         setArea(data.area);
         setQuality(data.quality);
       }
     }
   }, [location]);
-  // ------------------------
 
   const downloadPDF = () => {
     if (resultsRef.current) {
@@ -98,10 +93,10 @@ const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
     if (!name) return;
 
     setIsSaving(true);
-    // FIX 2: Save to Firestore
     try {
-      await addDoc(collection(db, "projects"), {
-        user_id: user.uid, // Use Firebase UID
+      // FIX: Use Supabase insert
+      const { error } = await supabase.from('projects').insert({
+        user_id: user.id, // Supabase ID
         name,
         type: "interior",
         data: {
@@ -110,8 +105,11 @@ const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
           totalCost,
           date: new Date().toISOString(),
         },
-        date: new Date().toISOString(), // Helper Date
+        date: new Date().toISOString(),
       });
+      
+      if (error) throw error;
+
       alert("Project saved successfully!");
       navigate("/dashboard");
     } catch (e) {
@@ -136,8 +134,7 @@ const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
         <form onSubmit={calculateCost}>
           <div className="form-group">
             <label htmlFor="area">
-              <i className="fas fa-ruler-combined"></i> Total Built-up Area (sq.
-              ft.)
+              <i className="fas fa-ruler-combined"></i> Total Built-up Area (sq. ft.)
             </label>
             <input
               type="number"
@@ -148,9 +145,7 @@ const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
             />
           </div>
           <div className="form-group full-width">
-            <label>
-              <i className="fas fa-gem"></i> Quality of Finish
-            </label>
+            <label><i className="fas fa-gem"></i> Quality of Finish</label>
             <div className="quality-selector">
               {Object.entries(qualityRates).map(([key, { name }]) => (
                 <React.Fragment key={key}>
@@ -160,19 +155,14 @@ const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
                     name="quality"
                     value={key}
                     checked={quality === key}
-                    onChange={() =>
-                      setQuality(key as keyof typeof qualityRates)
-                    }
+                    onChange={() => setQuality(key as keyof typeof qualityRates)}
                   />
                   <label htmlFor={`interior-${key}`}>{name}</label>
                 </React.Fragment>
               ))}
             </div>
             <div className="quality-description">
-              <p>
-                <strong>{qualityRates[quality].name}:</strong>{" "}
-                {qualityRates[quality].description}
-              </p>
+              <p><strong>{qualityRates[quality].name}:</strong> {qualityRates[quality].description}</p>
             </div>
           </div>
           <button type="submit" className="btn full-width">
@@ -184,44 +174,26 @@ const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
           <div id="resultsSection" className="visible" ref={resultsRef}>
             <div className="total-summary">
               <p>Total Estimated Interior Budget</p>
-              <span>
-                {totalCost.toLocaleString("en-IN", {
-                  style: "currency",
-                  currency: "INR",
-                  maximumFractionDigits: 0,
-                })}
-              </span>
+              <span>{totalCost.toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 })}</span>
             </div>
             <div className="results-grid">
               <div className="result-details">
                 <h3>Budget Breakdown</h3>
                 <table>
                   <thead>
-                    <tr>
-                      <th>Component</th>
-                      <th>Allocation</th>
-                      <th className="text-right">Cost (INR)</th>
-                    </tr>
+                    <tr><th>Component</th><th>Allocation</th><th className="text-right">Cost (INR)</th></tr>
                   </thead>
                   <tbody>
-                    {Object.entries(interiorBreakdown).map(
-                      ([component, percentage]) => {
-                        const cost = (totalCost * percentage) / 100;
-                        return (
-                          <tr key={component}>
-                            <td>{component}</td>
-                            <td>{percentage}%</td>
-                            <td className="text-right">
-                              {cost.toLocaleString("en-IN", {
-                                style: "currency",
-                                currency: "INR",
-                                maximumFractionDigits: 0,
-                              })}
-                            </td>
-                          </tr>
-                        );
-                      }
-                    )}
+                    {Object.entries(interiorBreakdown).map(([component, percentage]) => {
+                      const cost = (totalCost * percentage) / 100;
+                      return (
+                        <tr key={component}>
+                          <td>{component}</td>
+                          <td>{percentage}%</td>
+                          <td className="text-right">{cost.toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 })}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -229,28 +201,18 @@ const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
                 <Chart data={interiorBreakdown} colors={chartColors} />
               </div>
             </div>
-
             {hasPaid && (
               <div className="action-buttons">
-                <button
-                  className="btn"
-                  onClick={downloadPDF}
-                  disabled={isDownloading}
-                >
-                  <i className="fas fa-download"></i>{" "}
-                  {isDownloading ? "Downloading..." : "Download PDF"}
+                <button className="btn" onClick={downloadPDF} disabled={isDownloading}>
+                  <i className="fas fa-download"></i> {isDownloading ? "Downloading..." : "Download PDF"}
                 </button>
                 <button
                   className="btn"
-                  style={{
-                    backgroundColor: "var(--secondary-color)",
-                    marginLeft: "10px",
-                  }}
+                  style={{ backgroundColor: "var(--secondary-color)", marginLeft: "10px" }}
                   onClick={handleSave}
                   disabled={isSaving}
                 >
-                  <i className="fas fa-save"></i>{" "}
-                  {isSaving ? "Saving..." : "Save to Dashboard"}
+                  <i className="fas fa-save"></i> {isSaving ? "Saving..." : "Save to Dashboard"}
                 </button>
               </div>
             )}
