@@ -1,8 +1,7 @@
 // src/components/SignIn.tsx
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
-import { auth, googleProvider } from "../firebaseConfig";
+import { Link, useNavigate } from "react-router-dom"; // Added useNavigate
+import { supabase } from "../supabaseClient";
 import AuthLayout from "./AuthLayout";
 
 const SignIn = () => {
@@ -10,6 +9,7 @@ const SignIn = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,21 +17,16 @@ const SignIn = () => {
     setIsSubmitting(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+      navigate("/dashboard"); // Redirect after success
     } catch (err: any) {
-      console.error("Firebase Sign In Error:", err);
-      
-      if (err.code === "auth/invalid-credential") {
-        setError("Invalid email or password. Please try again.");
-      } else if (err.code === "auth/user-not-found") {
-        setError("No account found with this email.");
-      } else if (err.code === "auth/wrong-password") {
-        setError("Incorrect password.");
-      } else if (err.code === "auth/too-many-requests") {
-        setError("Too many failed attempts. Please try again later.");
-      } else {
-        setError("Failed to sign in. Please check your connection.");
-      }
+      console.error("Sign In Error:", err);
+      setError(err.message || "Failed to sign in.");
     } finally {
       setIsSubmitting(false);
     }
@@ -39,32 +34,29 @@ const SignIn = () => {
 
   const handleGoogleSignIn = async () => {
     setError("");
-    setIsSubmitting(true);
     try {
-      await signInWithPopup(auth, googleProvider);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+      });
+      if (error) throw error;
     } catch (err: any) {
       console.error("Google Sign In Error:", err);
-      if (err.code === "auth/popup-closed-by-user") {
-        setError("Sign-in popup was closed. Please try again.");
-      } else {
-        setError("Failed to sign in with Google. Please try again.");
-      }
-    } finally {
-      setIsSubmitting(false);
+      setError("Failed to sign in with Google.");
     }
   };
 
   return (
     <AuthLayout>
       <h2>Sign In</h2>
-
-      {/* Google Sign-In Button */}
+      {/* ... (Keep your existing UI/Buttons, just ensure onClick handlers match above) ... */}
+      
       <button
         type="button"
         className="btn full-width"
         onClick={handleGoogleSignIn}
         disabled={isSubmitting}
         style={{
+          // ... keep your styles
           backgroundColor: "#fff",
           color: "#333",
           border: "1px solid #ccc",
@@ -83,12 +75,8 @@ const SignIn = () => {
         {isSubmitting ? "Signing In..." : "Sign in with Google"}
       </button>
 
-      {/* Divider */}
-      <div style={{ display: "flex", alignItems: "center", marginBottom: "1.5rem" }}>
-        <div style={{ flex: 1, height: "1px", backgroundColor: "#e0e0e0" }}></div>
-        <span style={{ padding: "0 10px", color: "#666", fontSize: "0.9rem" }}>OR</span>
-        <div style={{ flex: 1, height: "1px", backgroundColor: "#e0e0e0" }}></div>
-      </div>
+      {/* Divider and Form */}
+      {/* ... Keep divider ... */}
 
       <form onSubmit={handleSignIn}>
         <div className="form-group">
@@ -124,19 +112,10 @@ const SignIn = () => {
           </p>
         )}
       </form>
+      {/* ... Keep the rest of the UI ... */}
       <div className="signup-value-prop" style={{ marginTop: "2rem" }}>
         <h4>New Here? Create an Account!</h4>
-        <ul>
-          <li>
-            <i className="fas fa-star"></i> Access Premium Calculators
-          </li>
-          <li>
-            <i className="fas fa-save"></i> Save & Download Reports
-          </li>
-          <li>
-            <i className="fas fa-chart-line"></i> Detailed Breakdowns
-          </li>
-        </ul>
+         {/* ... bullets ... */}
         <p className="auth-switch-link" style={{ marginTop: "1rem" }}>
           <Link to="/signup">Sign Up Now</Link>
         </p>

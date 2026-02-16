@@ -10,8 +10,8 @@
     "lint": "eslint . --ext .ts,.tsx"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.95.3",
     "chart.js": "^4.4.0",
-    "firebase": "^12.9.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.3",
     "react": "^18.2.0",
