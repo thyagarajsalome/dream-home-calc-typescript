@@ -2,9 +2,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  // For custom domains (homedesignenglish.com), this must be '/'
   base: "/", 
+  server: {
+    port: 3000, // Change this to any available port
+    strictPort: true, // If true, Vite will exit if the port is already in use
+  }
 })
