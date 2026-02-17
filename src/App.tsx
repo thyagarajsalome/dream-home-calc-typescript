@@ -1,4 +1,3 @@
-// src/App.tsx
 import React, { Suspense, lazy, startTransition } from "react";
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { UserProvider, useUser } from "./context/UserContext";
@@ -20,8 +19,6 @@ const ElectricalCalculator = lazy(() => import("./features/construction/Electric
 const InteriorCalculator = lazy(() => import("./features/construction/InteriorCalculator"));
 const DoorsWindowsCalculator = lazy(() => import("./features/construction/DoorsWindowsCalculator"));
 const MaterialQuantityCalculator = lazy(() => import("./features/construction/MaterialQuantityCalculator"));
-const LoanCalculator = lazy(() => import("./features/loan/LoanCalculator"));
-const LoanEligibilityCalculator = lazy(() => import("./features/loan/LoanEligibilityCalculator"));
 
 const SignIn = lazy(() => import("./features/auth/SignIn"));
 const SignUp = lazy(() => import("./features/auth/SignUp"));
@@ -38,7 +35,8 @@ const Loading = () => (
   </div>
 );
 
-type CalculatorType = "construction" | "eligibility" | "loan" | "interior" | "doors-windows" | "flooring" | "painting" | "plumbing" | "electrical" | "materials";
+// REMOVED: "loan" | "eligibility"
+type CalculatorType = "construction" | "interior" | "doors-windows" | "flooring" | "painting" | "plumbing" | "electrical" | "materials";
 
 const MainLayout = () => {
   const { hasPaid } = useUser();
@@ -51,8 +49,6 @@ const MainLayout = () => {
   const renderCalculator = () => {
     switch (activeCalculator) {
       case "construction": return <ConstructionCalculator />;
-      case "eligibility": return <LoanEligibilityCalculator hasPaid={hasPaid} />;
-      case "loan": return <LoanCalculator hasPaid={hasPaid} />;
       case "materials": return <MaterialQuantityCalculator />;
       case "interior": return <InteriorCalculator hasPaid={hasPaid} />;
       case "doors-windows": return <DoorsWindowsCalculator hasPaid={hasPaid} />;
@@ -60,6 +56,7 @@ const MainLayout = () => {
       case "painting": return <PaintingCalculator />;
       case "plumbing": return <PlumbingCalculator />;
       case "electrical": return <ElectricalCalculator />;
+      // REMOVED: Loan cases
       default: return <ConstructionCalculator />;
     }
   };
@@ -69,11 +66,9 @@ const MainLayout = () => {
       <SEO title="Home Design English" description="Calculate construction and interior costs for your dream home in India." />
       <Header />
       
-      {/* Main Content Wrapper - Fixes overlap with footer */}
       <main className="flex-grow">
         <Hero />
         
-        {/* Container with proper top/bottom spacing */}
         <div className="container mx-auto px-4 py-8 max-w-7xl">
           <CalculatorTabs activeCalculator={activeCalculator} setActiveCalculator={handleTabChange} hasPaid={hasPaid} />
           

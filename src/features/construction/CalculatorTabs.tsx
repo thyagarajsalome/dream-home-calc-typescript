@@ -1,8 +1,8 @@
-// src/features/construction/CalculatorTabs.tsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-type CalculatorType = "construction" | "eligibility" | "loan" | "interior" | "doors-windows" | "flooring" | "painting" | "plumbing" | "electrical" | "materials";
+// REMOVED: "loan" | "eligibility"
+type CalculatorType = "construction" | "interior" | "doors-windows" | "flooring" | "painting" | "plumbing" | "electrical" | "materials";
 
 interface CalculatorTabsProps {
   activeCalculator: CalculatorType;
@@ -12,8 +12,7 @@ interface CalculatorTabsProps {
 
 const CALCULATORS: { id: CalculatorType; name: string; icon: string; isPremium: boolean }[] = [
   { id: "construction", name: "Construction", icon: "fas fa-home", isPremium: false },
-  { id: "eligibility", name: "Eligibility", icon: "fas fa-check-circle", isPremium: false },
-  { id: "loan", name: "Loan EMI", icon: "fas fa-hand-holding-usd", isPremium: false },
+  // REMOVED: Loan & Eligibility entries
   { id: "materials", name: "Materials BOQ", icon: "fas fa-cubes", isPremium: true },
   { id: "interior", name: "Interiors", icon: "fas fa-couch", isPremium: true },
   { id: "doors-windows", name: "Doors/Windows", icon: "fas fa-door-open", isPremium: true },
@@ -35,9 +34,8 @@ const CalculatorTabs: React.FC<CalculatorTabsProps> = ({ activeCalculator, setAc
   };
 
   return (
-    // FIX: overflow-x-auto allows scrolling without layout shift. pb-1 prevents scrollbar clipping
-    <div className="w-full overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
-      <div className="flex space-x-3 min-w-max">
+    <div className="w-full overflow-x-auto pt-2 pb-4 -mx-4 px-4 md:mx-0 md:px-1 scrollbar-hide">
+      <div className="flex gap-3 min-w-max">
         {CALCULATORS.map(({ id, name, icon, isPremium }) => {
           const isActive = activeCalculator === id;
           const isLocked = isPremium && !hasPaid;
@@ -47,7 +45,7 @@ const CalculatorTabs: React.FC<CalculatorTabsProps> = ({ activeCalculator, setAc
               key={id}
               onClick={() => handleTabClick(id, isPremium)}
               className={`
-                flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 border
+                flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 border flex-shrink-0 select-none
                 ${isActive 
                   ? "bg-secondary text-white border-secondary shadow-md transform scale-[1.02]" 
                   : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300 hover:text-secondary"}

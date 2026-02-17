@@ -1,4 +1,3 @@
-// src/features/construction/ConstructionCalculator.tsx
 import React, { useState, useEffect, useRef } from "react";
 import { useProjectActions } from "../../hooks/useProjectActions";
 import { useUser } from "../../context/UserContext";
@@ -73,7 +72,6 @@ export const ConstructionCalculator = () => {
   };
 
   return (
-    // FIX: Using items-start prevents columns from forcing equal height which causes gaps
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start animate-fade-in">
       
       {/* --- Left Column: Inputs (Span 7/12) --- */}
@@ -84,24 +82,20 @@ export const ConstructionCalculator = () => {
               <Input
                 label="Living Area (sq. ft.)"
                 type="number"
-                icon="fas fa-home"
                 value={area}
                 onChange={(e) => setArea(e.target.value)}
                 autoFocus
-                className="text-lg"
               />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
                   label="Parking Area (sq. ft.)"
                   type="number"
-                  icon="fas fa-car"
                   value={parkingArea}
                   onChange={(e) => setParkingArea(e.target.value)}
                 />
                 <Input
                   label="Compound Wall (ft)"
                   type="number"
-                  icon="fas fa-border-all"
                   value={compoundWallLength}
                   onChange={(e) => setCompoundWallLength(e.target.value)}
                 />
@@ -119,17 +113,18 @@ export const ConstructionCalculator = () => {
                         setQuality(q);
                         setIsEditingRate(false);
                     }}
-                    disabled={q === "premium" && !hasPaid}
+                    // UNLOCKED: Removed the disabled check (disabled={q === "premium" && !hasPaid})
+                    disabled={false} 
                     className={`
-                      py-3 rounded-xl border-2 font-medium capitalize transition-all flex flex-col items-center justify-center gap-1
+                      py-3 px-2 rounded-xl border-2 font-medium capitalize transition-all flex items-center justify-center gap-2
                       ${quality === q
                         ? "border-primary bg-primary/10 text-primary shadow-sm ring-1 ring-primary"
                         : "border-gray-200 text-gray-500 hover:border-gray-300 bg-white"}
-                      ${q === "premium" && !hasPaid ? "opacity-60 cursor-not-allowed bg-gray-50" : ""}
+                      /* UNLOCKED: Removed opacity styling for locked state */
                     `}
                   >
                     <span>{q}</span>
-                    {q === "premium" && !hasPaid && <i className="fas fa-lock text-xs opacity-70" />}
+                    {/* UNLOCKED: Removed the lock icon conditional rendering */}
                   </button>
                 ))}
               </div>
@@ -180,7 +175,6 @@ export const ConstructionCalculator = () => {
       </section>
 
       {/* --- Right Column: Results (Span 5/12) --- */}
-      {/* FIX: Sticky positioning ensures it stays visible while scrolling but doesn't overlap */}
       <section ref={resultsRef} className="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
         {totalCost > 0 ? (
           <>
