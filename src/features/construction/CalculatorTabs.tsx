@@ -1,3 +1,4 @@
+// src/features/construction/CalculatorTabs.tsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -34,8 +35,9 @@ const CalculatorTabs: React.FC<CalculatorTabsProps> = ({ activeCalculator, setAc
   };
 
   return (
-    <div className="w-full overflow-x-auto pb-4 mb-6 scrollbar-hide">
-      <div className="flex space-x-3 px-1 min-w-max">
+    // FIX: overflow-x-auto allows scrolling without layout shift. pb-1 prevents scrollbar clipping
+    <div className="w-full overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
+      <div className="flex space-x-3 min-w-max">
         {CALCULATORS.map(({ id, name, icon, isPremium }) => {
           const isActive = activeCalculator === id;
           const isLocked = isPremium && !hasPaid;
@@ -45,15 +47,15 @@ const CalculatorTabs: React.FC<CalculatorTabsProps> = ({ activeCalculator, setAc
               key={id}
               onClick={() => handleTabClick(id, isPremium)}
               className={`
-                flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200
+                flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 border
                 ${isActive 
-                  ? "bg-primary text-white shadow-md transform scale-105" 
-                  : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:border-gray-300"}
+                  ? "bg-secondary text-white border-secondary shadow-md transform scale-[1.02]" 
+                  : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300 hover:text-secondary"}
                 ${isLocked ? "opacity-75" : ""}
               `}
             >
-              <i className={`${icon} ${isActive ? "text-white" : "text-primary"}`}></i>
-              {name}
+              <i className={`${icon} ${isActive ? "text-primary" : "text-gray-400"}`}></i>
+              <span className="whitespace-nowrap">{name}</span>
               {isLocked && <i className="fas fa-lock text-xs ml-1 text-gray-400"></i>}
             </button>
           );

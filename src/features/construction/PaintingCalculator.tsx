@@ -7,6 +7,7 @@ import { Input } from "../../components/ui/Input";
 import Chart from "../../components/ui/Chart";
 import { formatCurrency } from "../../utils/currency";
 
+
 const PAINT_TYPES = {
   distemper: { name: "Distemper (Economy)", rate: 22 },
   emulsion: { name: "Tractor Emulsion (Std)", rate: 38 },
