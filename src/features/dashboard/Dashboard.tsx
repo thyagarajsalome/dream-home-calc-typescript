@@ -1,6 +1,6 @@
-// src/components/Dashboard.tsx
 import React from "react";
-import { useUser } from "../context/UserContext";
+// FIX: Go up two levels
+import { useUser } from "../../context/UserContext";
 import { Link } from "react-router-dom";
 
 const Dashboard = () => {
@@ -30,14 +30,12 @@ const Dashboard = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
-      {/* Header Section */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800">My Dashboard</h1>
         <p className="text-gray-600 mt-1">Welcome back, <span className="font-semibold text-primary">{user.email}</span></p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Profile Card */}
         <div className="md:col-span-1">
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="bg-secondary p-4 text-center">
@@ -50,13 +48,9 @@ const Dashboard = () => {
               <div className="flex justify-between items-center border-b border-gray-100 pb-4 mb-4">
                 <span className="text-gray-500">Plan</span>
                 {hasPaid ? (
-                  <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full uppercase">
-                    Premium
-                  </span>
+                  <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full uppercase">Premium</span>
                 ) : (
-                  <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full uppercase">
-                    Free Tier
-                  </span>
+                  <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full uppercase">Free Tier</span>
                 )}
               </div>
               
@@ -78,9 +72,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Stats / Projects Area */}
         <div className="md:col-span-2 space-y-6">
-          {/* Quick Stats Grid */}
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
               <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-500">
@@ -102,7 +94,6 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Recent Projects Table */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-[200px]">
             <h3 className="text-lg font-bold text-gray-800 mb-4">Recent Estimates</h3>
             <div className="flex flex-col items-center justify-center h-48 text-gray-400 border-2 border-dashed border-gray-100 rounded-lg">

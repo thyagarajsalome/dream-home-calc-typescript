@@ -1,6 +1,6 @@
-// src/context/UserContext.tsx
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { supabase } from "../supabaseClient";
+// FIX: Point to new config location
+import { supabase } from "../config/supabaseClient";
 import { User } from "@supabase/supabase-js";
 
 interface UserContextType {
@@ -13,9 +13,7 @@ interface UserContextType {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [hasPaid, setHasPaid] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -27,64 +25,47 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
       setInstallPrompt(e);
     };
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    return () =>
-      window.removeEventListener(
-        "beforeinstallprompt",
-        handleBeforeInstallPrompt
-      );
+    return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
   }, []);
 
   useEffect(() => {
-    // 1. Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) fetchProfile(session.user.id);
       else setLoading(false);
     });
 
-    // 2. Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await fetchProfile(session.user.id);
-        } else {
-          setHasPaid(false);
-        }
-        setLoading(false);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        await fetchProfile(session.user.id);
+      } else {
+        setHasPaid(false);
       }
-    );
+      setLoading(false);
+    });
 
     return () => subscription.unsubscribe();
   }, []);
 
- // ... inside fetchProfile function ...
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('has_paid')
+        .eq('id', userId)
+        .maybeSingle(); 
 
-const fetchProfile = async (userId: string) => {
-  try {
-    // CHANGE THIS LINE: use .maybeSingle() instead of .single()
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('has_paid')
-      .eq('id', userId)
-      .maybeSingle(); 
-
-    if (error) {
-      console.error("Error fetching profile:", error);
+      if (error) console.error("Error fetching profile:", error);
+      setHasPaid(data?.has_paid || false);
+    } catch (err) {
+      console.error("Unexpected error fetching profile:", err);
+      setHasPaid(false);
     }
-    
-    // If data is null (no profile found), has_paid defaults to false
-    setHasPaid(data?.has_paid || false);
-  } catch (err) {
-    console.error("Unexpected error fetching profile:", err);
-    setHasPaid(false);
-  }
-};
+  };
 
   return (
-    <UserContext.Provider
-      value={{ user, hasPaid, setHasPaid, loading, installPrompt }}
-    >
+    <UserContext.Provider value={{ user, hasPaid, setHasPaid, loading, installPrompt }}>
       {children}
     </UserContext.Provider>
   );
