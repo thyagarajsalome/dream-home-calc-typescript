@@ -1,7 +1,8 @@
-// src/components/SignUp.tsx
+// src/features/auth/SignUp.tsx
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "../supabaseClient";
+// FIX: Correct path to config
+import { supabase } from "../../config/supabaseClient";
 import AuthLayout from "./AuthLayout";
 
 const SignUp = () => {
