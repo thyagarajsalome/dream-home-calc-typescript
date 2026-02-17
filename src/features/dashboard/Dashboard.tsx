@@ -1,7 +1,7 @@
 import React from "react";
-// FIX: Go up two levels
-import { useUser } from "../../context/UserContext";
 import { Link } from "react-router-dom";
+// FIX: Correct import path
+import { useUser } from "../../context/UserContext";
 
 const Dashboard = () => {
   const { user, hasPaid, loading } = useUser();
