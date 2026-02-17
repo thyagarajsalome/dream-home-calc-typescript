@@ -1,244 +1,108 @@
-// src/components/LoanEligibilityCalculator.tsx
-
 import React, { useState, useRef } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { useUser } from "../context/UserContext";
+import { Card } from "../../components/ui/Card";
+import { Input } from "../../components/ui/Input";
 
-const LoanEligibilityCalculator: React.FC = () => {
-  const { hasPaid } = useUser(); // Use Context
+interface LoanCalculatorProps {
+  hasPaid: boolean;
+}
 
-  // Income & Profile
-  const [age, setAge] = useState("30");
-  const [monthlyIncome, setMonthlyIncome] = useState("75000");
-  const [coApplicantIncome, setCoApplicantIncome] = useState("0");
+const LoanCalculator: React.FC<LoanCalculatorProps> = ({ hasPaid }) => {
+  const [principal, setPrincipal] = useState("2500000");
+  const [rate, setRate] = useState("8.5");
+  const [years, setYears] = useState("20");
 
-  // Expenses
-  const [existingEMIs, setExistingEMIs] = useState("5000");
-  const [otherExpenses, setOtherExpenses] = useState("25000"); // Rent + Food + etc
+  const [emi, setEmi] = useState("");
+  const [totalInterest, setTotalInterest] = useState("");
+  const [totalAmount, setTotalAmount] = useState("");
 
-  // Loan Details
-  const [interestRate, setInterestRate] = useState("8.5");
-  const [desiredTenure, setDesiredTenure] = useState("20");
-
-  // Results
-  const [eligibility, setEligibility] = useState<any>(null);
-
-  // PDF Logic
   const resultsRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const downloadPDF = () => {
+  const downloadPDF = async () => {
     if (resultsRef.current) {
       setIsDownloading(true);
-      html2canvas(resultsRef.current, { scale: 2, useCORS: true }).then(
-        (canvas) => {
-          const imgData = canvas.toDataURL("image/png");
-          const pdf = new jsPDF("p", "mm", "a4");
-          const pdfWidth = pdf.internal.pageSize.getWidth();
-          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-          pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-          pdf.save("loan-eligibility-report.pdf");
-          setIsDownloading(false);
-        }
-      );
+      try {
+        const canvas = await html2canvas(resultsRef.current, { scale: 2, useCORS: true });
+        const imgData = canvas.toDataURL("image/png");
+        const pdf = new jsPDF("p", "mm", "a4");
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+        pdf.save("loan-emi-estimate.pdf");
+      } finally {
+        setIsDownloading(false);
+      }
     }
   };
 
-  const calculateEligibility = (e: React.FormEvent<HTMLFormElement>) => {
+  const calculateEMI = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const p = parseFloat(principal);
+    const r = parseFloat(rate) / 12 / 100;
+    const n = parseFloat(years) * 12;
 
-    // 1. Calculate Total Income
-    const totalIncome =
-      parseFloat(monthlyIncome) + parseFloat(coApplicantIncome);
+    if (p > 0 && r > 0 && n > 0) {
+      const emiValue = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+      const totalAmountValue = emiValue * n;
+      const totalInterestValue = totalAmountValue - p;
 
-    // 2. Calculate Net Available Income (FOIR - Fixed Obligation to Income Ratio)
-    // Banks typically allow 50% to 60% of net income to go towards EMIs
-    const foirLimit = totalIncome > 100000 ? 0.6 : 0.5; // Higher income gets higher ratio
-    const maxAllowedEMI = totalIncome * foirLimit - parseFloat(existingEMIs);
-
-    // 3. Calculate Tenure Constraint based on Age
-    // Max retirement age usually 60 or 65. Let's assume 60.
-    const currentAge = parseInt(age);
-    const maxTenureByAge = 60 - currentAge;
-    const actualTenure = Math.min(parseInt(desiredTenure), maxTenureByAge);
-
-    // 4. Reverse Calculate Max Loan Amount from Max EMI
-    // Formula: Loan = (EMI * ( (1+r)^n - 1 )) / ( r * (1+r)^n )
-    const r = parseFloat(interestRate) / 12 / 100;
-    const n = actualTenure * 12;
-
-    let maxLoanAmount = 0;
-    if (maxAllowedEMI > 0 && n > 0) {
-      maxLoanAmount =
-        (maxAllowedEMI * (Math.pow(1 + r, n) - 1)) / (r * Math.pow(1 + r, n));
+      setEmi(emiValue.toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }));
+      setTotalAmount(totalAmountValue.toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }));
+      setTotalInterest(totalInterestValue.toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }));
     }
-
-    // 5. Risk Assessment
-    const totalObligations =
-      parseFloat(existingEMIs) + parseFloat(otherExpenses);
-    const obligationRatio = (totalObligations / totalIncome) * 100;
-
-    let risk = "Low";
-    let riskColor = "var(--success-color)";
-
-    if (obligationRatio > 50) {
-      risk = "Medium";
-      riskColor = "var(--warning-color)";
-    }
-    if (obligationRatio > 70) {
-      risk = "High";
-      riskColor = "var(--danger-color)";
-    }
-
-    setEligibility({
-      maxLoan: Math.round(maxLoanAmount),
-      maxEMI: Math.round(maxAllowedEMI),
-      actualTenure,
-      risk,
-      riskColor,
-      totalIncome,
-    });
   };
 
   return (
-    <section id="eligibility-calculator" className="container">
-      <div className="card">
-        <h2 className="section-title">Max Home Loan Eligibility</h2>
-        <form onSubmit={calculateEligibility}>
-          <fieldset className="form-fieldset">
-            <legend>Applicant Profile</legend>
-            <div className="form-grid">
-              <div className="form-group">
-                <label>Age (Years)</label>
-                <input
-                  type="number"
-                  value={age}
-                  onChange={(e) => setAge(e.target.value)}
-                  required
-                />
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-fade-in">
+      <section>
+        <Card title="Loan Details">
+          <form onSubmit={calculateEMI} className="space-y-6">
+            <Input label="Loan Amount (INR)" type="number" value={principal} onChange={(e) => setPrincipal(e.target.value)} icon="fas fa-rupee-sign" />
+            <Input label="Annual Interest Rate (%)" type="number" step="0.1" value={rate} onChange={(e) => setRate(e.target.value)} icon="fas fa-percentage" />
+            <Input label="Loan Tenure (Years)" type="number" value={years} onChange={(e) => setYears(e.target.value)} icon="fas fa-calendar-alt" />
+            <button type="submit" className="w-full py-3 bg-primary text-white font-bold rounded-xl hover:bg-yellow-600 transition-all shadow-md">
+              Calculate EMI
+            </button>
+          </form>
+        </Card>
+      </section>
+
+      {emi && (
+        <section ref={resultsRef}>
+          <Card title="Repayment Schedule" className="border-primary/20">
+            <div className="grid grid-cols-1 gap-4 mb-6">
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-center">
+                <p className="text-gray-500 text-xs font-bold uppercase mb-1">Monthly EMI</p>
+                <p className="text-3xl font-extrabold text-primary">{emi}</p>
               </div>
-              <div className="form-group">
-                <label>Net Monthly Income</label>
-                <input
-                  type="number"
-                  value={monthlyIncome}
-                  onChange={(e) => setMonthlyIncome(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Co-Applicant Income</label>
-                <input
-                  type="number"
-                  value={coApplicantIncome}
-                  onChange={(e) => setCoApplicantIncome(e.target.value)}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-center">
+                  <p className="text-gray-500 text-xs font-bold uppercase mb-1">Total Interest</p>
+                  <p className="text-lg font-bold text-secondary">{totalInterest}</p>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-center">
+                  <p className="text-gray-500 text-xs font-bold uppercase mb-1">Total Amount</p>
+                  <p className="text-lg font-bold text-secondary">{totalAmount}</p>
+                </div>
               </div>
             </div>
-          </fieldset>
 
-          <fieldset className="form-fieldset">
-            <legend>Financial Status</legend>
-            <div className="form-grid">
-              <div className="form-group">
-                <label>Existing EMIs</label>
-                <input
-                  type="number"
-                  value={existingEMIs}
-                  onChange={(e) => setExistingEMIs(e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label>Other Monthly Expenses</label>
-                <input
-                  type="number"
-                  value={otherExpenses}
-                  onChange={(e) => setOtherExpenses(e.target.value)}
-                />
-              </div>
+            <div className="text-xs text-gray-500 bg-yellow-50 p-4 rounded-lg border border-yellow-100 mb-6">
+              Figures are estimates based on standard amortization. Actual rates vary by bank.
             </div>
-          </fieldset>
 
-          <div className="form-group">
-            <label>Desired Tenure (Years)</label>
-            <input
-              type="number"
-              value={desiredTenure}
-              onChange={(e) => setDesiredTenure(e.target.value)}
-            />
-          </div>
-
-          <button type="submit" className="btn full-width">
-            Check Eligibility
-          </button>
-        </form>
-
-        {eligibility && (
-          <div id="resultsSection" className="visible">
-            <div
-              className="card"
-              ref={resultsRef}
-              style={{ background: "#fdfdfd" }}
-            >
-              <div
-                className="total-summary"
-                style={{ background: eligibility.riskColor }}
-              >
-                <p style={{ color: "#fff" }}>Maximum Loan Eligibility</p>
-                <span style={{ color: "#fff" }}>
-                  {eligibility.maxLoan > 0
-                    ? `₹${eligibility.maxLoan.toLocaleString("en-IN")}`
-                    : "Not Eligible"}
-                </span>
-              </div>
-
-              <div className="loan-results-summary">
-                <div className="loan-result-item">
-                  <p>Max Affordable EMI</p>
-                  <span>₹{eligibility.maxEMI.toLocaleString()}</span>
-                </div>
-                <div className="loan-result-item">
-                  <p>Max Tenure (Age Limit)</p>
-                  <span>{eligibility.actualTenure} Years</span>
-                </div>
-                <div className="loan-result-item">
-                  <p>Financial Health</p>
-                  <span style={{ color: eligibility.riskColor }}>
-                    {eligibility.risk} Risk
-                  </span>
-                </div>
-              </div>
-
-              <div className="disclaimer-box" style={{ marginTop: "2rem" }}>
-                <strong>Insight:</strong>
-                {eligibility.actualTenure < parseInt(desiredTenure)
-                  ? ` Your tenure was reduced to ${eligibility.actualTenure} years because loans usually must be repaid before retirement age (60).`
-                  : ` You have a healthy tenure of ${eligibility.actualTenure} years.`}
-                {parseFloat(coApplicantIncome) > 0 &&
-                  ` Adding a co-applicant increased your eligibility by approx ₹${Math.round(
-                    parseFloat(coApplicantIncome) * 50
-                  ).toLocaleString()}.`}
-              </div>
-
-              {hasPaid && (
-                <div className="action-buttons">
-                  <button
-                    className="btn"
-                    onClick={downloadPDF}
-                    disabled={isDownloading}
-                  >
-                    <i className="fas fa-download"></i>{" "}
-                    {isDownloading ? "Downloading..." : "Download PDF"}
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    </section>
+            {hasPaid && (
+              <button onClick={downloadPDF} disabled={isDownloading} className="w-full py-3 bg-secondary text-white rounded-xl font-bold hover:bg-gray-800 flex items-center justify-center gap-2">
+                <i className="fas fa-download"></i> {isDownloading ? "Downloading..." : "Download PDF"}
+              </button>
+            )}
+          </Card>
+        </section>
+      )}
+    </div>
   );
 };
 
-export default LoanEligibilityCalculator;
+export default LoanCalculator;
