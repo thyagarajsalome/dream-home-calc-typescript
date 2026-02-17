@@ -3,8 +3,9 @@ import { useProjectActions } from "../../hooks/useProjectActions";
 import { useUser } from "../../context/UserContext";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
-import Chart from "../../components/ui/Chart"; // Ensure Chart is moved to components/ui
-import { formatCurrency } from "src/utils/currency.ts";
+import Chart from "../../components/ui/Chart"; 
+// FIX: Relative path for currency utility
+import { formatCurrency } from "../../utils/currency";
 
 // Constants (Business Logic)
 const PARKING_RATE_FACTOR = 0.7;
@@ -279,3 +280,5 @@ export const ConstructionCalculator = () => {
     </div>
   );
 };
+
+export default ConstructionCalculator;

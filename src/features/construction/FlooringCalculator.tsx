@@ -1,14 +1,14 @@
-// src/components/FlooringCalculator.tsx
 import React, { useState, useRef, useEffect } from "react";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
-import { useNavigate, useLocation } from "react-router-dom";
-// FIX: Import Supabase
-import { supabase } from "../supabaseClient";
-import Chart from "./Chart";
-import { useUser } from "../context/UserContext";
+import { useLocation } from "react-router-dom";
+import { useUser } from "../../context/UserContext";
+import { useProjectActions } from "../../hooks/useProjectActions";
+import { Card } from "../../components/ui/Card";
+import { Input } from "../../components/ui/Input"; // Assuming Input can handle numbers
+import Chart from "../../components/ui/Chart";
+import { formatCurrency } from "../../utils/currency";
 
-const flooringTypes = {
+// --- Constants & Business Logic ---
+const FLOORING_TYPES = {
   vitrified: { name: "Vitrified Tiles (Standard)", rate: 120, wastage: 0.1 },
   gvt: { name: "GVT / PGVT (High Gloss)", rate: 180, wastage: 0.1 },
   marble: { name: "Indian Marble", rate: 250, wastage: 0.15 },
@@ -16,96 +16,27 @@ const flooringTypes = {
   wood: { name: "Wooden Laminate", rate: 150, wastage: 0.05 },
 };
 
-const chartColors = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
+const CHART_COLORS = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
 
 const FlooringCalculator: React.FC = () => {
-  const { hasPaid, user } = useUser();
-  const navigate = useNavigate();
+  const { hasPaid } = useUser();
+  const { saveProject, downloadPDF, isSaving, isDownloading } = useProjectActions("flooring");
   const location = useLocation();
-
-  const [area, setArea] = useState("");
-  const [flooringType, setFlooringType] = useState<keyof typeof flooringTypes>("vitrified");
-  const [includeSkirting, setIncludeSkirting] = useState(true);
-  const [totalCost, setTotalCost] = useState(0);
-  const [breakdown, setBreakdown] = useState<any>(null);
-
   const resultsRef = useRef<HTMLDivElement>(null);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
 
-  useEffect(() => {
-    if (location.state && (location.state as any).projectData) {
-      const data = (location.state as any).projectData;
-      if (data.flooringType) {
-        setArea(data.area);
-        setFlooringType(data.flooringType);
-        setIncludeSkirting(data.includeSkirting);
-      }
-    }
-  }, [location]);
+  // --- State ---
+  const [area, setArea] = useState("");
+  const [flooringType, setFlooringType] = useState<keyof typeof FLOORING_TYPES>("vitrified");
+  const [includeSkirting, setIncludeSkirting] = useState(true);
+  
+  // --- Derived State (Reactive Calculation) ---
+  const parsedArea = parseFloat(area) || 0;
+  
+  // Calculate breakdown only if area exists
+  const breakdown = React.useMemo(() => {
+    if (parsedArea === 0) return null;
 
-  const downloadPDF = () => {
-    if (resultsRef.current) {
-      setIsDownloading(true);
-      html2canvas(resultsRef.current, { scale: 2, useCORS: true }).then(
-        (canvas) => {
-          const imgData = canvas.toDataURL("image/png");
-          const pdf = new jsPDF("p", "mm", "a4");
-          const pdfWidth = pdf.internal.pageSize.getWidth();
-          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-          pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-          pdf.save("flooring-cost-estimate.pdf");
-          setIsDownloading(false);
-        }
-      );
-    }
-  };
-
-  const handleSave = async () => {
-    if (!user) {
-      alert("Please Sign In to save.");
-      navigate("/signin");
-      return;
-    }
-    if (!breakdown) return;
-    const name = prompt("Project Name (e.g., Living Room Flooring):");
-    if (!name) return;
-
-    setIsSaving(true);
-    try {
-      // FIX: Use Supabase insert
-      const { error } = await supabase.from('projects').insert({
-        user_id: user.id, // Supabase ID
-        name,
-        type: "flooring",
-        data: {
-          area,
-          flooringType,
-          includeSkirting,
-          totalCost,
-          breakdown,
-          date: new Date().toISOString(),
-        },
-        date: new Date().toISOString(),
-      });
-      if(error) throw error;
-      
-      alert("Project saved successfully!");
-      navigate("/dashboard");
-    } catch (e) {
-      console.error(e);
-      alert("Failed to save project.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const calculateCost = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const parsedArea = parseFloat(area) || 0;
-    if (parsedArea === 0) return;
-
-    const selectedType = flooringTypes[flooringType];
+    const selectedType = FLOORING_TYPES[flooringType];
     const materialArea = parsedArea * (1 + selectedType.wastage);
     const materialCost = materialArea * selectedType.rate;
     const laborRate = flooringType === "marble" || flooringType === "granite" ? 60 : 35;
@@ -122,134 +53,191 @@ const FlooringCalculator: React.FC = () => {
     const suppliesCost = parsedArea * 25;
     const total = materialCost + laborCost + skirtingCost + suppliesCost;
 
-    setBreakdown({
+    return {
       material: materialCost,
       labor: laborCost,
       skirting: skirtingCost,
       supplies: suppliesCost,
       skirtingLen: Math.round(skirtingLen),
       wastageArea: Math.round(materialArea - parsedArea),
-    });
-    setTotalCost(total);
+      totalCost: total
+    };
+  }, [parsedArea, flooringType, includeSkirting]);
+
+  // Load data from navigation state if available
+  useEffect(() => {
+    if (location.state && (location.state as any).projectData) {
+      const data = (location.state as any).projectData;
+      if (data.flooringType) {
+        setArea(data.area);
+        setFlooringType(data.flooringType);
+        setIncludeSkirting(data.includeSkirting);
+      }
+    }
+  }, [location]);
+
+  const handleSave = () => {
+    if (breakdown) {
+      saveProject({
+        area,
+        flooringType,
+        includeSkirting,
+        breakdown
+      }, breakdown.totalCost);
+    }
   };
 
   const isLocked = !hasPaid;
 
   return (
-    <section id="flooring-calculator" className="container">
-      <div className="card">
-        <h2 className="section-title">Flooring Cost Calculator</h2>
-        {isLocked && (
-          <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-            <p style={{ color: "var(--danger-color)", fontWeight: "600" }}>
-              <i className="fas fa-lock"></i> Upgrade to Pro for detailed Flooring estimates.
-            </p>
-          </div>
-        )}
-        <form onSubmit={calculateCost}>
-          <div className="form-group">
-            <label htmlFor="area"><i className="fas fa-ruler-combined"></i> Carpet Area (sq. ft.)</label>
-            <input
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-fade-in">
+      {/* --- Left Column: Inputs --- */}
+      <section>
+        <Card title="Flooring Details">
+          {isLocked && (
+            <div className="mb-6 p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-sm font-semibold text-center">
+              <i className="fas fa-lock mr-2"></i> Upgrade to Pro for detailed Flooring estimates.
+            </div>
+          )}
+          <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+            <Input
+              label="Carpet Area (sq. ft.)"
+              icon="fas fa-ruler-combined"
               type="number"
-              id="area"
               placeholder="e.g., 800"
               value={area}
               onChange={(e) => setArea(e.target.value)}
-              required
               disabled={isLocked}
             />
-          </div>
-          <div className="form-group full-width">
-            <label><i className="fas fa-layer-group"></i> Material Type</label>
-            <select
-              value={flooringType}
-              onChange={(e) => setFlooringType(e.target.value as any)}
-              disabled={isLocked}
-            >
-              {Object.entries(flooringTypes).map(([key, { name }]) => (
-                <option key={key} value={key}>{name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="form-group">
-            <div className="checkbox-wrapper">
-              <input
-                type="checkbox"
-                checked={includeSkirting}
-                onChange={(e) => setIncludeSkirting(e.target.checked)}
-                disabled={isLocked}
-                style={{ width: "auto", marginRight: "10px" }}
-              />
-              <label style={{ display: "inline" }}>Include Skirting (4" Wall Borders)</label>
-            </div>
-          </div>
-          <button type="submit" className="btn full-width" disabled={isLocked}>
-            <i className="fas fa-calculator"></i> Calculate Cost
-          </button>
-        </form>
 
-        {totalCost > 0 && breakdown && (
-          <div id="resultsSection" className="visible">
-            <div className="card" ref={resultsRef}>
-              <div className="total-summary" style={{ marginTop: "2rem" }}>
-                <p>Total Flooring Estimate</p>
-                <span>
-                  {totalCost.toLocaleString("en-IN", {
-                    style: "currency",
-                    currency: "INR",
-                    maximumFractionDigits: 0,
-                  })}
-                </span>
+            {/* Custom Select for Material Type */}
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Material Type</label>
+              <div className="relative">
+                <i className="fas fa-layer-group absolute left-3 top-3.5 text-gray-400"></i>
+                <select
+                  value={flooringType}
+                  onChange={(e) => setFlooringType(e.target.value as any)}
+                  disabled={isLocked}
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-primary bg-gray-50 focus:bg-white transition-colors appearance-none"
+                >
+                  {Object.entries(FLOORING_TYPES).map(([key, { name }]) => (
+                    <option key={key} value={key}>{name}</option>
+                  ))}
+                </select>
+                <i className="fas fa-chevron-down absolute right-3 top-4 text-gray-400 pointer-events-none"></i>
               </div>
-              <div className="results-grid">
-                <div className="result-details">
-                  <h3>Cost Breakdown</h3>
-                  <table>
-                    <thead>
-                      <tr><th>Component</th><th>Details</th><th className="text-right">Cost</th></tr>
-                    </thead>
-                    <tbody>
-                      <tr><td>Material</td><td>Incl. {breakdown.wastageArea} sq.ft wastage</td><td className="text-right">₹{Math.round(breakdown.material).toLocaleString()}</td></tr>
-                      <tr><td>Labor</td><td>Installation</td><td className="text-right">₹{Math.round(breakdown.labor).toLocaleString()}</td></tr>
-                      <tr><td>Supplies</td><td>Cement, Sand, Grout</td><td className="text-right">₹{Math.round(breakdown.supplies).toLocaleString()}</td></tr>
-                      {breakdown.skirting > 0 && (
-                        <tr><td>Skirting</td><td>Approx {breakdown.skirtingLen} R.ft</td><td className="text-right">₹{Math.round(breakdown.skirting).toLocaleString()}</td></tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-                <div className="chart-container">
-                  <Chart
-                    data={{
-                      Material: breakdown.material,
-                      Labor: breakdown.labor,
-                      Supplies: breakdown.supplies,
-                      Skirting: breakdown.skirting,
-                    }}
-                    colors={chartColors}
-                  />
-                </div>
+            </div>
+
+            {/* Skirting Checkbox */}
+            <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+              <label className="flex items-center cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={includeSkirting}
+                  onChange={(e) => setIncludeSkirting(e.target.checked)}
+                  disabled={isLocked}
+                  className="w-5 h-5 text-primary rounded border-gray-300 focus:ring-primary"
+                />
+                <span className="ml-3 text-gray-700 font-medium">Include Skirting (4" Wall Borders)</span>
+              </label>
+            </div>
+          </form>
+        </Card>
+      </section>
+
+      {/* --- Right Column: Results --- */}
+      <section ref={resultsRef}>
+        {breakdown && breakdown.totalCost > 0 ? (
+          <Card title="Flooring Cost Estimate" className="border-primary/20 shadow-glow relative">
+             <div className="text-center py-6">
+                <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-1">Total Estimate</p>
+                <h2 className="text-4xl font-extrabold text-secondary tracking-tight">{formatCurrency(breakdown.totalCost)}</h2>
+            </div>
+
+            <div className="space-y-6">
+              {/* Breakdown Table */}
+              <div className="overflow-hidden rounded-xl border border-gray-100">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-gray-50 text-gray-600 font-semibold uppercase text-xs">
+                    <tr>
+                      <th className="px-4 py-3">Component</th>
+                      <th className="px-4 py-3 hidden sm:table-cell">Details</th>
+                      <th className="px-4 py-3 text-right">Cost</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    <tr>
+                      <td className="px-4 py-3 font-medium">Material</td>
+                      <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">Incl. {breakdown.wastageArea} sq.ft wastage</td>
+                      <td className="px-4 py-3 text-right">{formatCurrency(breakdown.material)}</td>
+                    </tr>
+                    <tr>
+                      <td className="px-4 py-3 font-medium">Labor</td>
+                      <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">Installation charges</td>
+                      <td className="px-4 py-3 text-right">{formatCurrency(breakdown.labor)}</td>
+                    </tr>
+                    <tr>
+                      <td className="px-4 py-3 font-medium">Supplies</td>
+                      <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">Cement, Sand, Grout</td>
+                      <td className="px-4 py-3 text-right">{formatCurrency(breakdown.supplies)}</td>
+                    </tr>
+                    {breakdown.skirting > 0 && (
+                      <tr>
+                        <td className="px-4 py-3 font-medium">Skirting</td>
+                        <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">Approx {breakdown.skirtingLen} R.ft</td>
+                        <td className="px-4 py-3 text-right">{formatCurrency(breakdown.skirting)}</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
+
+              {/* Chart */}
+              <div className="h-64">
+                <Chart
+                  data={{
+                    Material: breakdown.material,
+                    Labor: breakdown.labor,
+                    Supplies: breakdown.supplies,
+                    Skirting: breakdown.skirting,
+                  }}
+                  colors={CHART_COLORS}
+                />
+              </div>
+
+              {/* Actions */}
               {hasPaid && (
-                <div className="action-buttons">
-                  <button className="btn" onClick={downloadPDF} disabled={isDownloading}>
-                    <i className="fas fa-download"></i> {isDownloading ? "Downloading..." : "Download PDF"}
+                <div className="grid grid-cols-2 gap-4 mt-6">
+                  <button
+                    onClick={() => downloadPDF(resultsRef, `flooring-estimate-${area}sqft`)}
+                    disabled={isDownloading}
+                    className="flex items-center justify-center gap-2 py-3 px-4 bg-white border-2 border-secondary text-secondary font-bold rounded-xl hover:bg-secondary hover:text-white transition-all duration-300"
+                  >
+                    <i className={`fas ${isDownloading ? "fa-spinner fa-spin" : "fa-file-pdf"}`}></i>
+                    <span>{isDownloading ? "Processing..." : "Download PDF"}</span>
                   </button>
                   <button
-                    className="btn"
-                    style={{ backgroundColor: "var(--secondary-color)", marginLeft: "10px" }}
                     onClick={handleSave}
                     disabled={isSaving}
+                    className="flex items-center justify-center gap-2 py-3 px-4 bg-primary text-white font-bold rounded-xl hover:bg-yellow-600 transition-all duration-300 shadow-float transform active:scale-95"
                   >
-                    <i className="fas fa-save"></i> {isSaving ? "Saving..." : "Save to Dashboard"}
+                    <i className={`fas ${isSaving ? "fa-spinner fa-spin" : "fa-save"}`}></i>
+                    <span>{isSaving ? "Save" : "Save Project"}</span>
                   </button>
                 </div>
               )}
             </div>
+          </Card>
+        ) : (
+          /* Empty State */
+          <div className="h-full flex flex-col items-center justify-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 p-12 text-center text-gray-400">
+            <i className="fas fa-layer-group text-4xl mb-4 text-gray-300"></i>
+            <p>Enter carpet area to view estimate</p>
           </div>
         )}
-      </div>
-    </section>
+      </section>
+    </div>
   );
 };
 
