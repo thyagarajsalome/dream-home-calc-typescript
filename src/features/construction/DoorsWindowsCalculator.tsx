@@ -1,11 +1,11 @@
-// src/components/DoorsWindowsCalculator.tsx
+// src/features/construction/DoorsWindowsCalculator.tsx
 import React, { useState, useRef, useEffect } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { useNavigate, useLocation } from "react-router-dom";
-// FIX: Import Supabase
-import { supabase } from "../supabaseClient";
-import { useUser } from "../context/UserContext";
+// FIX: Import from correct config location
+import { supabase } from "../../config/supabaseClient";
+import { useUser } from "../../context/UserContext";
 
 interface DoorsWindowsCalculatorProps {
   hasPaid: boolean;
@@ -85,9 +85,8 @@ const DoorsWindowsCalculator: React.FC<DoorsWindowsCalculatorProps> = ({ hasPaid
 
     setIsSaving(true);
     try {
-      // FIX: Use Supabase insert
       const { error } = await supabase.from('projects').insert({
-        user_id: user.id, // Supabase ID
+        user_id: user.id,
         name,
         type: "doors-windows",
         data: {

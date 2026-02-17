@@ -1,12 +1,12 @@
-// src/components/PlumbingCalculator.tsx
+// src/features/construction/PlumbingCalculator.tsx
 import React, { useState, useRef, useEffect } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { useNavigate, useLocation } from "react-router-dom";
-// FIX: Import Supabase instead of Firebase
-import { supabase } from "../supabaseClient";
+// FIX: Import from correct config location
+import { supabase } from "../../config/supabaseClient";
 import Chart from "../../components/ui/Chart";
-import { useUser } from "../context/UserContext";
+import { useUser } from "../../context/UserContext";
 
 const unitRates = {
   kitchen: { name: "Kitchen (Sink + Taps)", rate: 12000 },
@@ -82,9 +82,8 @@ const PlumbingCalculator: React.FC = () => {
 
     setIsSaving(true);
     try {
-      // FIX: Use Supabase insert
       const { error } = await supabase.from('projects').insert({
-        user_id: user.id, // Supabase ID
+        user_id: user.id,
         name,
         type: "plumbing",
         data: {
