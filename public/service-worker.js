@@ -19,6 +19,7 @@ self.addEventListener("fetch", (event) => {
       return caches.match(event.request).then((response) => {
         // If a response is found in the cache, return it.
         // Otherwise, return a basic offline response to prevent crashing.
+        
         return (
           response ||
           new Response("You are offline and this resource is not cached.", {
