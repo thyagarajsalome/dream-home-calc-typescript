@@ -19,24 +19,14 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 const app = express();
 const port = process.env.PORT || 3000;
 
-// FIX: Explicitly allow your frontend domains
-const allowedOrigins = [
-  "http://localhost:5173",                  // Local Development
-  "https://homedesignenglish.com",          // Production Domain
-  "https://www.homedesignenglish.com",      // www version
-  "https://thyagarajsalome.github.io"       // GitHub Pages fallback
-];
-
+// FIX: Simplified CORS configuration to prevent errors on Render
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  },
+  origin: [
+    "http://localhost:5173",                  // Local Development
+    "https://homedesignenglish.com",          // Production Domain
+    "https://www.homedesignenglish.com",      // www version
+    "https://thyagarajsalome.github.io"       // GitHub Pages fallback
+  ],
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true

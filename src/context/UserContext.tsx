@@ -58,24 +58,28 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('has_paid')
-        .eq('id', userId)
-        .single();
+ // ... inside fetchProfile function ...
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "Row not found"
-        console.error("Error fetching profile:", error);
-      }
-      
-      setHasPaid(data?.has_paid || false);
-    } catch (err) {
-      console.error("Unexpected error fetching profile:", err);
-      setHasPaid(false);
+const fetchProfile = async (userId: string) => {
+  try {
+    // CHANGE THIS LINE: use .maybeSingle() instead of .single()
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('has_paid')
+      .eq('id', userId)
+      .maybeSingle(); 
+
+    if (error) {
+      console.error("Error fetching profile:", error);
     }
-  };
+    
+    // If data is null (no profile found), has_paid defaults to false
+    setHasPaid(data?.has_paid || false);
+  } catch (err) {
+    console.error("Unexpected error fetching profile:", err);
+    setHasPaid(false);
+  }
+};
 
   return (
     <UserContext.Provider
