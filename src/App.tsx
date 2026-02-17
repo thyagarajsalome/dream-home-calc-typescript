@@ -1,30 +1,39 @@
 // src/App.tsx
 import React, { Suspense, lazy, startTransition } from "react";
-// FIX: Removed Router/BrowserRouter import. Only use Routes/Route.
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { UserProvider, useUser } from "./context/UserContext";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
-import Hero from "./components/Hero";
-import CalculatorTabs from "./components/CalculatorTabs";
-import FAQ from "./components/FAQ";
-import SEO from "./components/SEO";
 
-// Lazy Components
-const Calculator = lazy(() => import("./components/Calculator"));
-const FlooringCalculator = lazy(() => import("./components/FlooringCalculator"));
-const PaintingCalculator = lazy(() => import("./components/PaintingCalculator"));
-const PlumbingCalculator = lazy(() => import("./components/PlumbingCalculator"));
-const ElectricalCalculator = lazy(() => import("./components/ElectricalCalculator"));
-const LoanCalculator = lazy(() => import("./components/LoanCalculator"));
-const LoanEligibilityCalculator = lazy(() => import("./components/LoanEligibilityCalculator"));
-const DoorsWindowsCalculator = lazy(() => import("./components/DoorsWindowsCalculator"));
-const InteriorCalculator = lazy(() => import("./components/InteriorCalculator"));
-const MaterialQuantityCalculator = lazy(() => import("./components/MaterialQuantityCalculator"));
-const SignIn = lazy(() => import("./components/SignIn"));
-const SignUp = lazy(() => import("./components/SignUp"));
-const UpgradePage = lazy(() => import("./components/UpgradePage"));
-const Dashboard = lazy(() => import("./components/Dashboard"));
+// --- FIXED IMPORTS START ---
+import Header from "./components/layout/Header";
+import Footer from "./components/layout/Footer";
+import Hero from "./components/layout/Hero";
+import FAQ from "./components/layout/FAQ";
+import SEO from "./components/layout/SEO";
+import CalculatorTabs from "./features/construction/CalculatorTabs"; // Moved to features
+// --- FIXED IMPORTS END ---
+
+// Lazy Components - Updated Paths
+const Calculator = lazy(() => import("./features/construction/ConstructionCalculator")); // Updated based on your previous refactor
+// OR if you kept the old name: const Calculator = lazy(() => import("./features/construction/Calculator"));
+
+const FlooringCalculator = lazy(() => import("./features/construction/FlooringCalculator"));
+const PaintingCalculator = lazy(() => import("./features/construction/PaintingCalculator"));
+const PlumbingCalculator = lazy(() => import("./features/construction/PlumbingCalculator"));
+const ElectricalCalculator = lazy(() => import("./features/construction/ElectricalCalculator"));
+const InteriorCalculator = lazy(() => import("./features/construction/InteriorCalculator"));
+const DoorsWindowsCalculator = lazy(() => import("./features/construction/DoorsWindowsCalculator"));
+const MaterialQuantityCalculator = lazy(() => import("./features/construction/MaterialQuantityCalculator"));
+
+const LoanCalculator = lazy(() => import("./features/loan/LoanCalculator"));
+const LoanEligibilityCalculator = lazy(() => import("./features/loan/LoanEligibilityCalculator"));
+
+const SignIn = lazy(() => import("./features/auth/SignIn"));
+const SignUp = lazy(() => import("./features/auth/SignUp"));
+
+const UpgradePage = lazy(() => import("./features/dashboard/UpgradePage"));
+const Dashboard = lazy(() => import("./features/dashboard/Dashboard"));
+
+// Pages usually stay in /pages, so these might be fine if you didn't move them
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const Contact = lazy(() => import("./pages/Contact"));
@@ -43,7 +52,6 @@ const MainLayout = () => {
   const { hasPaid } = useUser();
   const [activeCalculator, setActiveCalculator] = React.useState<CalculatorType>("construction");
 
-  // Wrap state update in startTransition to prevent suspension errors during tab switch
   const handleTabChange = (tab: CalculatorType) => {
     startTransition(() => {
       setActiveCalculator(tab);
@@ -116,7 +124,6 @@ const AppRoutes = () => {
   if (loading) return <Loading />;
 
   return (
-    // FIX: Wrapped everything in Suspense to handle lazy loading of routes
     <Suspense fallback={<Loading />}>
       <Routes>
         <Route path="/signin" element={user ? <Navigate to="/" /> : <SignIn />} />

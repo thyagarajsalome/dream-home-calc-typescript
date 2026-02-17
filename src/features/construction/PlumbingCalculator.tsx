@@ -5,7 +5,7 @@ import html2canvas from "html2canvas";
 import { useNavigate, useLocation } from "react-router-dom";
 // FIX: Import Supabase instead of Firebase
 import { supabase } from "../supabaseClient";
-import Chart from "./Chart";
+import Chart from "../../components/ui/Chart";
 import { useUser } from "../context/UserContext";
 
 const unitRates = {

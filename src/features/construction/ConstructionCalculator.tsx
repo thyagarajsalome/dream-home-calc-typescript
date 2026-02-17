@@ -4,7 +4,7 @@ import { useUser } from "../../context/UserContext";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import Chart from "../../components/ui/Chart"; // Ensure Chart is moved to components/ui
-import { formatCurrency } from "../../utils/currency";
+import { formatCurrency } from "src/utils/currency.ts";
 
 // Constants (Business Logic)
 const PARKING_RATE_FACTOR = 0.7;
