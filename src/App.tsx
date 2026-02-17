@@ -3,19 +3,16 @@ import React, { Suspense, lazy, startTransition } from "react";
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { UserProvider, useUser } from "./context/UserContext";
 
-// --- FIXED IMPORTS START ---
+// Components
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
 import Hero from "./components/layout/Hero";
 import FAQ from "./components/layout/FAQ";
 import SEO from "./components/layout/SEO";
-import CalculatorTabs from "./features/construction/CalculatorTabs"; // Moved to features
-// --- FIXED IMPORTS END ---
+import CalculatorTabs from "./features/construction/CalculatorTabs";
 
-// Lazy Components - Updated Paths
-const Calculator = lazy(() => import("./features/construction/ConstructionCalculator")); // Updated based on your previous refactor
-// OR if you kept the old name: const Calculator = lazy(() => import("./features/construction/Calculator"));
-
+// Lazy Load Calculators
+const ConstructionCalculator = lazy(() => import("./features/construction/ConstructionCalculator"));
 const FlooringCalculator = lazy(() => import("./features/construction/FlooringCalculator"));
 const PaintingCalculator = lazy(() => import("./features/construction/PaintingCalculator"));
 const PlumbingCalculator = lazy(() => import("./features/construction/PlumbingCalculator"));
@@ -23,25 +20,20 @@ const ElectricalCalculator = lazy(() => import("./features/construction/Electric
 const InteriorCalculator = lazy(() => import("./features/construction/InteriorCalculator"));
 const DoorsWindowsCalculator = lazy(() => import("./features/construction/DoorsWindowsCalculator"));
 const MaterialQuantityCalculator = lazy(() => import("./features/construction/MaterialQuantityCalculator"));
-
 const LoanCalculator = lazy(() => import("./features/loan/LoanCalculator"));
 const LoanEligibilityCalculator = lazy(() => import("./features/loan/LoanEligibilityCalculator"));
 
 const SignIn = lazy(() => import("./features/auth/SignIn"));
 const SignUp = lazy(() => import("./features/auth/SignUp"));
-
 const UpgradePage = lazy(() => import("./features/dashboard/UpgradePage"));
 const Dashboard = lazy(() => import("./features/dashboard/Dashboard"));
-
-// Pages usually stay in /pages, so these might be fine if you didn't move them
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const Contact = lazy(() => import("./pages/Contact"));
 const Disclaimer = lazy(() => import("./pages/Disclaimer"));
 
-// Better Loading Spinner with Tailwind
 const Loading = () => (
-  <div className="flex justify-center items-center h-screen bg-gray-50">
+  <div className="flex justify-center items-center min-h-[50vh] bg-gray-50">
     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
   </div>
 );
@@ -53,15 +45,13 @@ const MainLayout = () => {
   const [activeCalculator, setActiveCalculator] = React.useState<CalculatorType>("construction");
 
   const handleTabChange = (tab: CalculatorType) => {
-    startTransition(() => {
-      setActiveCalculator(tab);
-    });
+    startTransition(() => setActiveCalculator(tab));
   };
 
   const renderCalculator = () => {
     switch (activeCalculator) {
-      case "construction": return <Calculator />;
-      case "eligibility": return <LoanEligibilityCalculator />;
+      case "construction": return <ConstructionCalculator />;
+      case "eligibility": return <LoanEligibilityCalculator hasPaid={hasPaid} />;
       case "loan": return <LoanCalculator hasPaid={hasPaid} />;
       case "materials": return <MaterialQuantityCalculator />;
       case "interior": return <InteriorCalculator hasPaid={hasPaid} />;
@@ -70,27 +60,35 @@ const MainLayout = () => {
       case "painting": return <PaintingCalculator />;
       case "plumbing": return <PlumbingCalculator />;
       case "electrical": return <ElectricalCalculator />;
-      default: return <Calculator />;
+      default: return <ConstructionCalculator />;
     }
   };
 
   return (
-    <>
-      <SEO 
-        title="Home Design English" 
-        description="Calculate construction and interior costs for your dream home in India." 
-      />
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      <SEO title="Home Design English" description="Calculate construction and interior costs for your dream home in India." />
       <Header />
-      <main className="min-h-screen bg-gray-50">
+      
+      {/* Main Content Wrapper - Fixes overlap with footer */}
+      <main className="flex-grow">
         <Hero />
-        <CalculatorTabs activeCalculator={activeCalculator} setActiveCalculator={handleTabChange} hasPaid={hasPaid} />
-        <div className="container mx-auto px-4 py-6">
-          <Suspense fallback={<Loading />}>{renderCalculator()}</Suspense>
+        
+        {/* Container with proper top/bottom spacing */}
+        <div className="container mx-auto px-4 py-8 max-w-7xl">
+          <CalculatorTabs activeCalculator={activeCalculator} setActiveCalculator={handleTabChange} hasPaid={hasPaid} />
+          
+          <div className="mt-8 min-h-[600px]">
+            <Suspense fallback={<Loading />}>
+              {renderCalculator()}
+            </Suspense>
+          </div>
         </div>
+        
         <FAQ />
       </main>
+      
       <Footer />
-    </>
+    </div>
   );
 };
 
@@ -98,25 +96,26 @@ const ProtectedRoute = () => {
   const { user, loading } = useUser();
   if (loading) return <Loading />;
   if (!user) return <Navigate to="/signin" />;
+  
   return (
-    <>
+    <div className="flex flex-col min-h-screen bg-gray-50">
       <Header />
-      <main className="min-h-screen bg-gray-50 pt-20">
+      <main className="flex-grow container mx-auto px-4 py-8 pt-24">
         <Suspense fallback={<Loading />}><Outlet /></Suspense>
       </main>
       <Footer />
-    </>
+    </div>
   );
 };
 
 const InfoLayout = () => (
-  <>
+  <div className="flex flex-col min-h-screen bg-gray-50">
     <Header />
-    <main className="min-h-screen bg-gray-50 pt-24 pb-12 px-4">
+    <main className="flex-grow container mx-auto px-4 py-8 pt-24">
       <Suspense fallback={<Loading />}><Outlet /></Suspense>
     </main>
     <Footer />
-  </>
+  </div>
 );
 
 const AppRoutes = () => {
