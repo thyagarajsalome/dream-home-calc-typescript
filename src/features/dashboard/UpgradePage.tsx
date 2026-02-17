@@ -1,16 +1,15 @@
-// src/components/UpgradePage.tsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-// FIX: Import Supabase types and client
 import { User } from "@supabase/supabase-js";
-import { supabase } from "../supabaseClient";
+// FIX: Import from config folder
+import { supabase } from "../../config/supabaseClient";
 
 // Use VITE_API_BASE_URL if you set that up earlier, or fallback to VITE_API_URL
 const API_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
 
 interface UpgradePageProps {
-  user: User | null;
-  setHasPaid: (status: boolean) => void;
+  user?: User | null;
+  setHasPaid?: (status: boolean) => void;
 }
 
 // Define plan details
@@ -37,7 +36,7 @@ const plans = {
 
 type PlanID = "monthly" | "annual";
 
-const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
+const UpgradePage: React.FC<UpgradePageProps> = ({ user }) => {
   const [loadingPlan, setLoadingPlan] = useState<PlanID | null>(null);
   const [error, setError] = useState("");
   const [paymentSuccess, setPaymentSuccess] = useState(false);
@@ -55,7 +54,6 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
     document.body.appendChild(script);
 
     return () => {
-      // Cleanup script only if body contains it to avoid errors
       if (document.body.contains(script)) {
         document.body.removeChild(script);
       }
@@ -68,7 +66,6 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
     setError("");
 
     try {
-      // FIX 1: Get Supabase Token instead of Firebase ID Token
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
 
@@ -78,7 +75,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}` // Send Supabase Token
+          "Authorization": `Bearer ${token}` 
         },
         body: JSON.stringify({ amount: selectedPlan.amount }),
       });
@@ -98,7 +95,6 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
         order_id: order.id,
         handler: async (response: any) => {
           try {
-            // FIX 2: Get fresh token for verification (optional, but safe)
             const { data: { session: verifySession } } = await supabase.auth.getSession();
             const verifyToken = verifySession?.access_token;
 
@@ -121,9 +117,9 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
             const result = await verificationResponse.json();
             if (result.status === "success") {
               setPaymentSuccess(true);
-              setHasPaid(true);
+              // Force reload or redirect to update user state
               setTimeout(() => {
-                navigate("/");
+                window.location.href = "/"; 
               }, 2000);
             } else {
               throw new Error("Payment verification failed.");
@@ -177,9 +173,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
                   className="btn btn-secondary"
                   disabled={loadingPlan !== null}
                 >
-                  {loadingPlan === "monthly"
-                    ? "Processing..."
-                    : "Choose Monthly"}
+                  {loadingPlan === "monthly" ? "Processing..." : "Choose Monthly"}
                 </button>
               </div>
 
@@ -203,38 +197,14 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user, setHasPaid }) => {
             </div>
 
             <ul className="features-list" style={{ marginTop: "2.5rem" }}>
-              <li>
-                <i className="fas fa-check-circle"></i> Access all specialized
-                calculators: Flooring, Painting, Plumbing, and Electrical.
-              </li>
-              <li>
-                <i className="fas fa-check-circle"></i> Use Standard & Premium
-                quality estimates in the Construction calculator.
-              </li>
-              <li>
-                <i className="fas fa-check-circle"></i> Get detailed cost
-                breakdowns for every aspect of your project.
-              </li>
-              <li>
-                <i className="fas fa-check-circle"></i> Save, download, and
-                share PDF reports.
-              </li>
-              <li>
-                <i className="fas fa-check-circle"></i> Full access with all
-                future updates included during your subscription.
-              </li>
+              <li><i className="fas fa-check-circle"></i> Access all specialized calculators</li>
+              <li><i className="fas fa-check-circle"></i> Standard & Premium quality estimates</li>
+              <li><i className="fas fa-check-circle"></i> Detailed PDF Reports</li>
+              <li><i className="fas fa-check-circle"></i> Save unlimited projects</li>
             </ul>
 
-            {error && (
-              <p
-                style={{ color: "red", marginTop: "1rem", textAlign: "center" }}
-              >
-                {error}
-              </p>
-            )}
-            <button onClick={() => navigate("/")} className="back-link">
-              Maybe Later
-            </button>
+            {error && <p style={{ color: "red", marginTop: "1rem", textAlign: "center" }}>{error}</p>}
+            <button onClick={() => navigate("/")} className="back-link">Maybe Later</button>
           </>
         )}
       </div>

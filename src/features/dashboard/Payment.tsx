@@ -1,7 +1,7 @@
-// src/components/Payment.tsx
 import React, { useState } from "react";
-import { supabase } from "../supabaseClient"; // Import Supabase client
-import { User } from "@supabase/supabase-js"; // Import User type from Supabase
+import { User } from "@supabase/supabase-js";
+// FIX: Correct import
+import { supabase } from "../../config/supabaseClient";
 
 interface PaymentProps {
   user: User | null;
@@ -12,7 +12,6 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Get the backend URL from environment variables
   const API_URL = import.meta.env.VITE_API_BASE_URL;
 
   const handlePayment = async () => {
@@ -33,29 +32,26 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
     };
     script.onload = async () => {
       try {
-        // 1. Get current session token from Supabase
         const { data: { session } } = await supabase.auth.getSession();
         const token = session?.access_token;
 
         if (!token) throw new Error("User not authenticated.");
 
-        // 2. Call Backend to Create Order
         const response = await fetch(`${API_URL}/create-order`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}` // Send Supabase Token
+            "Authorization": `Bearer ${token}`
           },
-          body: JSON.stringify({ amount: 9900 }), // 99 INR in paise
+          body: JSON.stringify({ amount: 9900 }),
         });
 
         if (!response.ok) throw new Error("Failed to create payment order.");
         
         const order = await response.json();
 
-        // 3. Open Razorpay Options
         const options = {
-          key: import.meta.env.VITE_RAZORPAY_KEY_ID, // Frontend Key ID
+          key: import.meta.env.VITE_RAZORPAY_KEY_ID,
           amount: order.amount,
           currency: order.currency,
           name: "Dream Home Calculator",
@@ -63,7 +59,6 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
           order_id: order.id,
           handler: async (response: any) => {
             try {
-              // 4. Verify Payment on Backend
               const verifyResponse = await fetch(
                 `${API_URL}/verify-payment`,
                 {
