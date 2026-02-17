@@ -20,12 +20,14 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // FIX: Simplified CORS configuration to prevent errors on Render
+// backend/index.js
 app.use(cors({
   origin: [
-    "http://localhost:5173",                  // Local Development
-    "https://homedesignenglish.com",          // Production Domain
-    "https://www.homedesignenglish.com",      // www version
-    "https://thyagarajsalome.github.io"       // GitHub Pages fallback
+    "http://localhost:5173",                  // Vite default
+    "http://localhost:3001",                  // ADD THIS: Your current local port
+    "https://homedesignenglish.com",          
+    "https://www.homedesignenglish.com",      
+    "https://thyagarajsalome.github.io"       
   ],
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
