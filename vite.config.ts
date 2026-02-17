@@ -4,9 +4,10 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: "/", 
+  // CHANGED: Set base to your repository name for GitHub Pages default URL
+  base: "/dream-home-calc-typescript/", 
   server: {
-    port: 3000, // Change this to any available port
-    strictPort: true, // If true, Vite will exit if the port is already in use
+    port: 3000, 
+    strictPort: true, 
   }
 })
