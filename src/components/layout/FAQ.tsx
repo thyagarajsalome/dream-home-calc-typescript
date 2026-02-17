@@ -20,7 +20,7 @@ export default function FAQ() {
           <p>
             {/* --- UPDATED TEXT --- */}
             Upgrading to a Pro plan (available as a monthly or annual
-            subscription) unlocks all specialized calculators (
+            subscription) unlocks all specialized calculators  (
             <strong style={{ color: "var(--primary-color)" }}>
               Materials BOQ
             </strong>
