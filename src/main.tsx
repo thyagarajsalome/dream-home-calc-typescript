@@ -6,11 +6,11 @@ import { HashRouter } from "react-router-dom";
 import App from "./App";
 import "./styles/global.css";
 
-// Service Worker registration
+// src/main.tsx
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("/service-worker.js")
+      .register("/sw.js") // <--- CHANGED FROM service-worker.js
       .catch((err) => console.log("SW registration failed", err));
   });
 }
