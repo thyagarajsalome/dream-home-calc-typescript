@@ -1,13 +1,16 @@
 // A simple, offline-first service worker.
+const VERSION = 'v1.1'; // <--- THIS FORCES THE BROWSER TO SEE A NEW VERSION
 
 self.addEventListener("install", (event) => {
-  console.log("Service Worker installing.");
+  console.log("Service Worker installing version " + VERSION);
   // Skip waiting to activate the new service worker immediately.
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
-  console.log("Service Worker activating.");
+  console.log("Service Worker activating version " + VERSION);
+  // Optional: Claim clients immediately to control uncontrolled pages
+  event.waitUntil(self.clients.claim());
 });
 
 self.addEventListener("fetch", (event) => {
@@ -19,7 +22,6 @@ self.addEventListener("fetch", (event) => {
       return caches.match(event.request).then((response) => {
         // If a response is found in the cache, return it.
         // Otherwise, return a basic offline response to prevent crashing.
-        
         return (
           response ||
           new Response("You are offline and this resource is not cached.", {
