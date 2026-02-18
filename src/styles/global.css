@@ -995,3 +995,51 @@ select:focus {
     order: -1; /* Make the popular plan appear first on mobile */
   }
 }
+
+
+/* --- Global Responsiveness Fixes --- */
+
+/* 1. Make cards friendlier on small mobile screens */
+.card {
+  padding: 1.5rem; /* Reduced padding for mobile */
+}
+@media (min-width: 768px) {
+  .card {
+    padding: 2.5rem; /* Original padding for desktop */
+  }
+}
+
+/* 2. Prevent data tables from breaking layouts on mobile */
+.overflow-hidden.rounded-xl.border {
+  /* This targets your table containers to allow horizontal scrolling */
+  overflow-x: auto !important; 
+  -webkit-overflow-scrolling: touch;
+}
+table {
+  /* Forces tables to maintain a readable width, triggering the scrollbar instead of squishing */
+  min-width: 450px; 
+}
+
+/* 3. Smooth animation for the new Toast notifications */
+@keyframes fadeInUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 4. Fix input text sizes on iOS (prevents auto-zoom) */
+input[type="number"],
+input[type="email"],
+input[type="password"],
+input[type="text"],
+select {
+  font-size: 16px !important; /* iOS zooms in if font-size is < 16px */
+}

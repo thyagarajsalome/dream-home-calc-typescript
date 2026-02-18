@@ -1,6 +1,7 @@
 import React, { Suspense, lazy, startTransition } from "react";
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { UserProvider, useUser } from "./context/UserContext";
+import { ToastProvider } from "./context/ToastContext"; // <-- Toast Context imported
 
 // Components
 import Header from "./components/layout/Header";
@@ -142,10 +143,13 @@ const AppRoutes = () => {
   );
 };
 
+// FIX: Wrapped the App with ToastProvider here!
 const App = () => (
-  <UserProvider>
-    <AppRoutes />
-  </UserProvider>
+  <ToastProvider>
+    <UserProvider>
+      <AppRoutes />
+    </UserProvider>
+  </ToastProvider>
 );
 
 export default App;
