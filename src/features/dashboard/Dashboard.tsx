@@ -27,6 +27,21 @@ const Dashboard = () => {
     }
   };
 
+  // NEW: Function to handle deleting a project
+  const handleDelete = async (projectId: string) => {
+    const isConfirmed = window.confirm("Are you sure you want to delete this project? This cannot be undone.");
+    if (!isConfirmed) return;
+
+    try {
+      await ProjectService.deleteProject(projectId);
+      // Remove the deleted project from the screen immediately
+      setProjects(projects.filter(project => project.id !== projectId));
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      alert("Failed to delete project.");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-[50vh]">
@@ -146,10 +161,18 @@ const Dashboard = () => {
                         </span>
                       </div>
                     </div>
-                    <div className="text-right">
+                    {/* NEW: Added a layout for the cost and the delete button */}
+                    <div className="text-right flex flex-col items-end gap-2">
                       <p className="text-xl font-extrabold text-secondary">
                         {project.data?.totalCost ? `₹${project.data.totalCost.toLocaleString('en-IN')}` : '-'}
                       </p>
+                      <button 
+                        onClick={() => handleDelete(project.id)}
+                        className="text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors flex items-center gap-1"
+                        title="Delete Project"
+                      >
+                        <i className="fas fa-trash-alt"></i> Delete
+                      </button>
                     </div>
                   </div>
                 ))}
