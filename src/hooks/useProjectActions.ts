@@ -4,15 +4,18 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { useUser } from '../context/UserContext';
 import { ProjectService } from '../services/projectService';
+import { useToast } from '../context/ToastContext'; // <-- Imported ToastContext
 
 export const useProjectActions = (projectType: string) => {
   const { user } = useUser();
   const navigate = useNavigate();
+  const { showToast } = useToast(); // <-- Initialized useToast
   const [isSaving, setIsSaving] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
   const saveProject = async (data: any, totalCost: number) => {
     if (!user) {
+      showToast("Please sign in to save projects", "info"); // <-- Toast instead of silent redirect
       navigate('/signin');
       return;
     }
@@ -28,10 +31,10 @@ export const useProjectActions = (projectType: string) => {
         data: { ...data, totalCost },
         date: new Date().toISOString(),
       });
-      alert("Project saved successfully!"); // Replace with Toast later
+      showToast("Project saved successfully!", "success"); // <-- Toast instead of alert
     } catch (error) {
       console.error(error);
-      alert("Failed to save project.");
+      showToast("Failed to save project.", "error"); // <-- Toast instead of alert
     } finally {
       setIsSaving(false);
     }
@@ -40,6 +43,7 @@ export const useProjectActions = (projectType: string) => {
   const downloadPDF = async (elementRef: React.RefObject<HTMLElement>, fileName: string) => {
     if (!elementRef.current) return;
     setIsDownloading(true);
+    showToast("Generating PDF...", "info"); // <-- Added helpful Toast
     
     try {
       const canvas = await html2canvas(elementRef.current, { scale: 2, useCORS: true });
@@ -50,8 +54,10 @@ export const useProjectActions = (projectType: string) => {
       
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`${fileName}.pdf`);
+      showToast("PDF downloaded successfully!", "success"); // <-- Added success Toast
     } catch (error) {
       console.error("PDF Error", error);
+      showToast("Failed to generate PDF.", "error"); // <-- Added error Toast
     } finally {
       setIsDownloading(false);
     }
