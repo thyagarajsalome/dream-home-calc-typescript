@@ -31,14 +31,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      if (session?.user) fetchProfile(session.user.id);
+      // Pass the email to fetchProfile
+      if (session?.user) fetchProfile(session.user.id, session.user.email);
       else setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        await fetchProfile(session.user.id);
+        // Pass the email to fetchProfile
+        await fetchProfile(session.user.id, session.user.email);
       } else {
         setHasPaid(false);
       }
@@ -48,7 +50,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchProfile = async (userId: string) => {
+  // Updated to accept email for the admin check
+  const fetchProfile = async (userId: string, email?: string) => {
+    // ADMIN OVERRIDE FOR TESTING: Bypasses database and grants Pro access
+    if (email === 'thyagaraja1983@gmail.com') {
+      setHasPaid(true);
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('profiles')
