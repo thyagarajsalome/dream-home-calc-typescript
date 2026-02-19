@@ -26,8 +26,8 @@ const Header = () => {
           <div className="flex-shrink-0 flex items-center">
             <Link to="/" className="flex items-center gap-2 text-2xl font-bold text-secondary hover:text-primary transition-colors">
               {/* Replaced FontAwesome icon with the custom logo */}
-              <img src="/bg-logo.png" alt="DreamHomeCalc Logo" className="w-8 h-8 object-contain" />
-              <span>DreamHome<span className="text-primary">Calc</span></span>
+              <img src="/bg-logo.png" alt="DreamHomeCalc Logo" className="w-12 h-12 object-contain" />
+        <span className="text-primary">HDE<span className="text-primary"></span></span>
             </Link>
           </div>
 
