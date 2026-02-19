@@ -76,7 +76,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user }) => {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}` 
         },
-        body: JSON.stringify({ amount: selectedPlan.amount }),
+       body: JSON.stringify({ planId: planId }),
       });
 
       if (!response.ok) {

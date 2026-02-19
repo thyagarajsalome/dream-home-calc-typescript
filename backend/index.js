@@ -19,12 +19,11 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 const app = express();
 const port = process.env.PORT || 3000;
 
-// FIX: Simplified CORS configuration to prevent errors on Render
-// backend/index.js
+// Simplified CORS configuration to prevent errors on Render
 app.use(cors({
   origin: [
     "http://localhost:5173",                  // Vite default
-    "http://localhost:3001",                  // ADD THIS: Your current local port
+    "http://localhost:3001",                  // Your current local port
     "https://homedesignenglish.com",          
     "https://www.homedesignenglish.com",      
     "https://thyagarajsalome.github.io"       
@@ -54,24 +53,40 @@ const authenticateUser = async (req, res, next) => {
   }
 };
 
+// --- SECURITY FIX: Define prices securely on the backend ---
+// Prices are in paise (₹99 = 9900, ₹499 = 49900)
+const PLANS = {
+  monthly: 9900,
+  annual: 49900
+};
+
 // Routes
 app.get("/status", (req, res) => {
   res.json({ status: "online", timestamp: new Date().toISOString() });
 });
 
 app.post("/create-order", authenticateUser, async (req, res) => {
-  const amount = parseInt(req.body.amount, 10);
-  if (isNaN(amount) || amount <= 0) return res.status(400).send("Invalid amount.");
+  // SECURITY FIX: Extract planId instead of trusting the amount from the client
+  const { planId } = req.body;
+  const amount = PLANS[planId]; // Retrieve the secure price from backend
+
+  // Validate that the requested plan actually exists
+  if (!amount) {
+    return res.status(400).send("Invalid plan selected.");
+  }
+
   try {
     const razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID,
       key_secret: process.env.RAZORPAY_KEY_SECRET,
     });
+    
     const options = {
-      amount,
+      amount, // Uses the secure backend amount
       currency: "INR",
       receipt: `rcpt_${req.user.id.slice(0, 10)}_${Date.now()}`,
     };
+    
     const order = await razorpay.orders.create(options);
     res.json(order);
   } catch (error) {
@@ -85,6 +100,7 @@ app.post("/verify-payment", authenticateUser, async (req, res) => {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
     const userId = req.user.id;
     const body = razorpay_order_id + "|" + razorpay_payment_id;
+    
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(body.toString())
@@ -94,6 +110,7 @@ app.post("/verify-payment", authenticateUser, async (req, res) => {
       const { error } = await supabase
         .from('profiles')
         .upsert({ id: userId, has_paid: true, updated_at: new Date().toISOString() });
+        
       if (error) {
         console.error("Database Update Error:", error);
         return res.status(500).json({ status: "failure", message: "Payment verified but DB update failed." });
