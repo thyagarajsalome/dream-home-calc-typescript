@@ -1,11 +1,7 @@
 // src/features/construction/DoorsWindowsCalculator.tsx
 import React, { useState, useRef, useEffect } from "react";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
-import { useNavigate, useLocation } from "react-router-dom";
-// FIX: Import from correct config location
-import { supabase } from "../../config/supabaseClient";
-import { useUser } from "../../context/UserContext";
+import { useLocation } from "react-router-dom";
+import { useProjectActions } from "../../hooks/useProjectActions";
 
 interface DoorsWindowsCalculatorProps {
   hasPaid: boolean;
@@ -24,9 +20,8 @@ const windowTypes = {
 };
 
 const DoorsWindowsCalculator: React.FC<DoorsWindowsCalculatorProps> = ({ hasPaid }) => {
-  const { user } = useUser();
-  const navigate = useNavigate();
   const location = useLocation();
+  const { saveProject, downloadPDF, isSaving, isDownloading } = useProjectActions("doors-windows");
 
   const [doorCount, setDoorCount] = useState("5");
   const [doorType, setDoorType] = useState<keyof typeof doorTypes>("flush");
@@ -39,8 +34,6 @@ const DoorsWindowsCalculator: React.FC<DoorsWindowsCalculatorProps> = ({ hasPaid
   const [windowCost, setWindowCost] = useState(0);
 
   const resultsRef = useRef<HTMLDivElement>(null);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (location.state && (location.state as any).projectData) {
@@ -56,61 +49,17 @@ const DoorsWindowsCalculator: React.FC<DoorsWindowsCalculatorProps> = ({ hasPaid
     }
   }, [location]);
 
-  const downloadPDF = () => {
-    if (resultsRef.current) {
-      setIsDownloading(true);
-      html2canvas(resultsRef.current, { scale: 2, useCORS: true }).then(
-        (canvas) => {
-          const imgData = canvas.toDataURL("image/png");
-          const pdf = new jsPDF("p", "mm", "a4");
-          const pdfWidth = pdf.internal.pageSize.getWidth();
-          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-          pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-          pdf.save("doors-windows-cost-estimate.pdf");
-          setIsDownloading(false);
-        }
-      );
-    }
-  };
-
-  const handleSave = async () => {
-    if (!user) {
-      alert("Please Sign In to save.");
-      navigate("/signin");
-      return;
-    }
-    if (totalCost === 0) return;
-    const name = prompt("Project Name:");
-    if (!name) return;
-
-    setIsSaving(true);
-    try {
-      const { error } = await supabase.from('projects').insert({
-        user_id: user.id,
-        name,
-        type: "doors-windows",
-        data: {
-          doorCount,
-          doorType,
-          windowCount,
-          windowType,
-          totalCost,
-          doorCost,
-          windowCost,
-          date: new Date().toISOString(),
-        },
-        date: new Date().toISOString(),
-      });
-      if (error) throw error;
-      
-      alert("Project saved successfully!");
-      navigate("/dashboard");
-    } catch (e) {
-      console.error(e);
-      alert("Error saving project.");
-    } finally {
-      setIsSaving(false);
-    }
+  const handleSave = () => {
+    saveProject({ 
+      doorCount, 
+      doorType, 
+      windowCount, 
+      windowType, 
+      windowWidth, 
+      windowHeight, 
+      doorCost, 
+      windowCost 
+    }, totalCost);
   };
 
   const calculateCost = (e: React.FormEvent<HTMLFormElement>) => {
@@ -191,8 +140,21 @@ const DoorsWindowsCalculator: React.FC<DoorsWindowsCalculatorProps> = ({ hasPaid
             </div>
             {hasPaid && (
               <div className="action-buttons">
-                <button className="btn" onClick={downloadPDF} disabled={isDownloading}><i className="fas fa-download"></i> {isDownloading ? "Downloading..." : "Download PDF"}</button>
-                <button className="btn" style={{ backgroundColor: "var(--secondary-color)", marginLeft: "10px" }} onClick={handleSave} disabled={isSaving}><i className="fas fa-save"></i> {isSaving ? "Saving..." : "Save to Dashboard"}</button>
+                <button 
+                  className="btn" 
+                  onClick={() => downloadPDF(resultsRef, "doors-windows-estimate")} 
+                  disabled={isDownloading}
+                >
+                  <i className="fas fa-download"></i> {isDownloading ? "Downloading..." : "Download PDF"}
+                </button>
+                <button 
+                  className="btn" 
+                  style={{ backgroundColor: "var(--secondary-color)", marginLeft: "10px" }} 
+                  onClick={handleSave} 
+                  disabled={isSaving}
+                >
+                  <i className="fas fa-save"></i> {isSaving ? "Saving..." : "Save to Dashboard"}
+                </button>
               </div>
             )}
           </div>

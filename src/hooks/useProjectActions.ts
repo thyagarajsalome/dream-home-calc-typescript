@@ -4,18 +4,18 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { useUser } from '../context/UserContext';
 import { ProjectService } from '../services/projectService';
-import { useToast } from '../context/ToastContext'; // <-- Imported ToastContext
+import { useToast } from '../context/ToastContext';
 
 export const useProjectActions = (projectType: string) => {
   const { user } = useUser();
   const navigate = useNavigate();
-  const { showToast } = useToast(); // <-- Initialized useToast
+  const { showToast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
   const saveProject = async (data: any, totalCost: number) => {
     if (!user) {
-      showToast("Please sign in to save projects", "info"); // <-- Toast instead of silent redirect
+      showToast("Please sign in to save projects", "info");
       navigate('/signin');
       return;
     }
@@ -31,10 +31,10 @@ export const useProjectActions = (projectType: string) => {
         data: { ...data, totalCost },
         date: new Date().toISOString(),
       });
-      showToast("Project saved successfully!", "success"); // <-- Toast instead of alert
+      showToast("Project saved successfully!", "success");
     } catch (error) {
       console.error(error);
-      showToast("Failed to save project.", "error"); // <-- Toast instead of alert
+      showToast("Failed to save project.", "error");
     } finally {
       setIsSaving(false);
     }
@@ -43,21 +43,37 @@ export const useProjectActions = (projectType: string) => {
   const downloadPDF = async (elementRef: React.RefObject<HTMLElement>, fileName: string) => {
     if (!elementRef.current) return;
     setIsDownloading(true);
-    showToast("Generating PDF...", "info"); // <-- Added helpful Toast
+    showToast("Generating PDF...", "info");
     
     try {
-      const canvas = await html2canvas(elementRef.current, { scale: 2, useCORS: true });
+      const canvas = await html2canvas(elementRef.current, { 
+        scale: 2, 
+        useCORS: true,
+        // Force a standard desktop width on the clone so mobile devices don't generate massive fonts
+        onclone: (_, clonedElement) => {
+          clonedElement.style.width = '800px';
+          clonedElement.style.maxWidth = '800px';
+          clonedElement.style.padding = '20px';
+          clonedElement.style.margin = '0 auto';
+          clonedElement.style.backgroundColor = '#ffffff';
+        }
+      });
+      
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
       
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      // Calculate dimensions with uniform 10mm margins
+      const margin = 10;
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const printWidth = pdfWidth - (margin * 2);
+      const printHeight = (canvas.height * printWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', margin, margin, printWidth, printHeight);
       pdf.save(`${fileName}.pdf`);
-      showToast("PDF downloaded successfully!", "success"); // <-- Added success Toast
+      showToast("PDF downloaded successfully!", "success");
     } catch (error) {
       console.error("PDF Error", error);
-      showToast("Failed to generate PDF.", "error"); // <-- Added error Toast
+      showToast("Failed to generate PDF.", "error");
     } finally {
       setIsDownloading(false);
     }

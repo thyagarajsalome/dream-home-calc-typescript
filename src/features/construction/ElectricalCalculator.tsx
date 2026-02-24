@@ -1,10 +1,7 @@
 // src/features/construction/ElectricalCalculator.tsx
 import React, { useState, useRef, useEffect } from "react";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
-import { useNavigate, useLocation } from "react-router-dom";
-// FIX: Import from correct config location
-import { supabase } from "../../config/supabaseClient";
+import { useLocation } from "react-router-dom";
+import { useProjectActions } from "../../hooks/useProjectActions";
 import Chart from "../../components/ui/Chart";
 import { useUser } from "../../context/UserContext";
 
@@ -24,9 +21,9 @@ const qualityMultipliers = {
 const chartColors = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
 
 const ElectricalCalculator: React.FC = () => {
-  const { hasPaid, user } = useUser();
-  const navigate = useNavigate();
+  const { hasPaid } = useUser();
   const location = useLocation();
+  const { saveProject, downloadPDF, isSaving, isDownloading } = useProjectActions("electrical");
 
   const [lightPoints, setLightPoints] = useState("20");
   const [fanPoints, setFanPoints] = useState("5");
@@ -36,8 +33,6 @@ const ElectricalCalculator: React.FC = () => {
   const [breakdown, setBreakdown] = useState<any>(null);
 
   const resultsRef = useRef<HTMLDivElement>(null);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (location.state && (location.state as any).projectData) {
@@ -51,60 +46,8 @@ const ElectricalCalculator: React.FC = () => {
     }
   }, [location]);
 
-  const downloadPDF = () => {
-    if (resultsRef.current) {
-      setIsDownloading(true);
-      html2canvas(resultsRef.current, { scale: 2, useCORS: true }).then(
-        (canvas) => {
-          const imgData = canvas.toDataURL("image/png");
-          const pdf = new jsPDF("p", "mm", "a4");
-          const pdfWidth = pdf.internal.pageSize.getWidth();
-          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-          pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-          pdf.save("electrical-cost-estimate.pdf");
-          setIsDownloading(false);
-        }
-      );
-    }
-  };
-
-  const handleSave = async () => {
-    if (!user) {
-      alert("Please Sign In to save.");
-      navigate("/signin");
-      return;
-    }
-    if (totalCost === 0) return;
-    const name = prompt("Project Name:");
-    if (!name) return;
-
-    setIsSaving(true);
-    try {
-      const { error } = await supabase.from('projects').insert({
-        user_id: user.id,
-        name,
-        type: "electrical",
-        data: {
-          lightPoints,
-          fanPoints,
-          powerPoints,
-          quality,
-          totalCost,
-          breakdown,
-          date: new Date().toISOString(),
-        },
-        date: new Date().toISOString(),
-      });
-      if (error) throw error;
-
-      alert("Project saved successfully!");
-      navigate("/dashboard");
-    } catch (e) {
-      console.error(e);
-      alert("Error saving project.");
-    } finally {
-      setIsSaving(false);
-    }
+  const handleSave = () => {
+    saveProject({ lightPoints, fanPoints, powerPoints, quality, breakdown }, totalCost);
   };
 
   const calculateCost = (e: React.FormEvent<HTMLFormElement>) => {
@@ -216,7 +159,11 @@ const ElectricalCalculator: React.FC = () => {
               </div>
               {hasPaid && (
                 <div className="action-buttons">
-                  <button className="btn" onClick={downloadPDF} disabled={isDownloading}>
+                  <button 
+                    className="btn" 
+                    onClick={() => downloadPDF(resultsRef, "electrical-estimate")} 
+                    disabled={isDownloading}
+                  >
                     <i className="fas fa-download"></i> {isDownloading ? "Downloading..." : "Download PDF"}
                   </button>
                   <button
