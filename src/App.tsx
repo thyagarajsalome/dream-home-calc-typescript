@@ -1,7 +1,7 @@
 import React, { Suspense, lazy, startTransition } from "react";
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { UserProvider, useUser } from "./context/UserContext";
-import { ToastProvider } from "./context/ToastContext"; // <-- Toast Context imported
+import { ToastProvider } from "./context/ToastContext";
 
 // Components
 import Header from "./components/layout/Header";
@@ -36,7 +36,6 @@ const Loading = () => (
   </div>
 );
 
-// REMOVED: "loan" | "eligibility"
 type CalculatorType = "construction" | "interior" | "doors-windows" | "flooring" | "painting" | "plumbing" | "electrical" | "materials";
 
 const MainLayout = () => {
@@ -57,7 +56,6 @@ const MainLayout = () => {
       case "painting": return <PaintingCalculator />;
       case "plumbing": return <PlumbingCalculator />;
       case "electrical": return <ElectricalCalculator />;
-      // REMOVED: Loan cases
       default: return <ConstructionCalculator />;
     }
   };
@@ -116,13 +114,15 @@ const InfoLayout = () => (
 
 const AppRoutes = () => {
   const { user, loading } = useUser();
+  
   if (loading) return <Loading />;
 
   return (
     <Suspense fallback={<Loading />}>
       <Routes>
-        <Route path="/signin" element={user ? <Navigate to="/" /> : <SignIn />} />
-        <Route path="/signup" element={user ? <Navigate to="/" /> : <SignUp />} />
+        {/* CORRECTED: Now properly redirects to /dashboard if the user is already logged in */}
+        <Route path="/signin" element={user ? <Navigate to="/dashboard" replace /> : <SignIn />} />
+        <Route path="/signup" element={user ? <Navigate to="/dashboard" replace /> : <SignUp />} />
         
         <Route element={<InfoLayout />}>
           <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -143,7 +143,6 @@ const AppRoutes = () => {
   );
 };
 
-// FIX: Wrapped the App with ToastProvider here!
 const App = () => (
   <ToastProvider>
     <UserProvider>

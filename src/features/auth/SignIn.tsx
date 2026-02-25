@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom"; 
 // FIX: Point to config
 import { supabase } from "../../config/supabaseClient";
 // FIX: AuthLayout is in the same folder now
@@ -10,7 +10,6 @@ const SignIn = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const navigate = useNavigate();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,7 +19,9 @@ const SignIn = () => {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      navigate("/dashboard");
+      // FIX: Removed navigate("/dashboard") here. 
+      // The redirect is now handled automatically by the <Navigate> component in AppRoutes 
+      // once the UserContext state detects the successful login.
     } catch (err: any) {
       console.error("Sign In Error:", err);
       setError(err.message || "Failed to sign in.");
@@ -35,7 +36,8 @@ const SignIn = () => {
       const { error } = await supabase.auth.signInWithOAuth({ 
         provider: 'google',
         options: {
-          redirectTo: window.location.origin
+          // FIX: explicitly point Google Auth redirect to the dashboard route
+          redirectTo: `${window.location.origin}/dashboard`
         }
       });
       if (error) throw error;
