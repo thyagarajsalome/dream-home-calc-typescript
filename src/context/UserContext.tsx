@@ -29,12 +29,19 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // FIX: Wrapped in an async function to guarantee loading state is cleared properly
+    const initSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
-      // Pass the email to fetchProfile
-      if (session?.user) fetchProfile(session.user.id, session.user.email);
-      else setLoading(false);
-    });
+      
+      if (session?.user) {
+        await fetchProfile(session.user.id, session.user.email);
+      }
+      
+      setLoading(false); 
+    };
+    
+    initSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
