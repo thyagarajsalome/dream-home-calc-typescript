@@ -32,7 +32,12 @@ const SignIn = () => {
   const handleGoogleSignIn = async () => {
     setError("");
     try {
-      const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+      const { error } = await supabase.auth.signInWithOAuth({ 
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
       if (error) throw error;
     } catch (err: any) {
       console.error("Google Sign In Error:", err);
