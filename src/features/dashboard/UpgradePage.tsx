@@ -1,4 +1,54 @@
-const handlePayment = async (planId: PlanID) => {
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { User } from "@supabase/supabase-js";
+import { supabase } from "../../config/supabaseClient";
+
+interface UpgradePageProps {
+  user?: User | null;
+  setHasPaid?: (status: boolean) => void;
+}
+
+type PlanID = "monthly" | "annual";
+
+const plans = {
+  monthly: {
+    id: "monthly" as PlanID,
+    name: "Pro Monthly",
+    priceString: "₹99",
+    term: "/ month",
+    description: "Pro Monthly Plan",
+  },
+  annual: {
+    id: "annual" as PlanID,
+    name: "Pro Annual",
+    priceString: "₹499",
+    term: "/ year",
+    description: "Pro Annual Plan",
+    badge: "Best Value",
+    savings: "Save 58% vs. Monthly",
+  },
+};
+
+const UpgradePage: React.FC<UpgradePageProps> = ({ user }) => {
+  const [loadingPlan, setLoadingPlan] = useState<PlanID | null>(null);
+  const [error, setError] = useState<string>("");
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
+  }, []);
+
+  const handlePayment = async (planId: PlanID) => {
     const selectedPlan = plans[planId];
     setLoadingPlan(planId);
     setError("");
@@ -7,21 +57,19 @@ const handlePayment = async (planId: PlanID) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Please sign in to upgrade.");
 
-      // Use invoke to call the function
+      // Use invoke to call the Edge Function
       const { data, error: invokeError } = await supabase.functions.invoke('create-order', {
         body: { planId: planId }
       });
 
-      // If Supabase returns an error, show the message from the function body
       if (invokeError) {
-        const errorMsg = invokeError.context?.error || invokeError.message || "Failed to create order";
-        throw new Error(errorMsg);
+        throw new Error(invokeError.message || "Failed to create order");
       }
 
       if (!data || !data.id) throw new Error("Invalid order data received.");
 
       const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
-      if (!razorpayKey) throw new Error("Razorpay Client Key is missing in environment variables.");
+      if (!razorpayKey) throw new Error("Razorpay Client Key is missing.");
 
       const options = {
         key: String(razorpayKey),
@@ -41,26 +89,100 @@ const handlePayment = async (planId: PlanID) => {
             });
 
             if (verifyError || result?.status !== "success") {
-              throw new Error("Payment verification failed on server.");
+              throw new Error("Payment verification failed.");
             }
             
             setPaymentSuccess(true);
-            setTimeout(() => { window.location.href = "/"; }, 2000);
+            setTimeout(() => {
+              window.location.href = "/"; 
+            }, 2000);
             
           } catch (err: any) {
-            setError(err.message || "Payment verification failed.");
+            setError(String(err.message || "Payment verification failed. Please contact support."));
           }
         },
-        prefill: { email: user?.email },
+        prefill: { email: user?.email || "" },
         theme: { color: "#D9A443" },
       };
 
       const paymentObject = new (window as any).Razorpay(options);
       paymentObject.open();
     } catch (err: any) {
-      console.error("Payment Process Error:", err);
-      setError(err.message || "Error creating payment order.");
+      console.error(err);
+      setError(String(err.message || "Error creating payment order. Please try again."));
     } finally {
       setLoadingPlan(null);
     }
   };
+
+  return (
+    <div className="container mx-auto px-4 py-12 md:py-20 max-w-6xl animate-fade-in">
+      {paymentSuccess ? (
+        <div className="max-w-md mx-auto bg-green-50 border border-green-200 rounded-2xl p-8 text-center shadow-lg">
+          <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+            <i className="fas fa-check"></i>
+          </div>
+          <h3 className="text-2xl font-bold text-gray-800 mb-2">Payment Successful!</h3>
+          <p className="text-gray-600">You now have Pro access. Redirecting you to the dashboard...</p>
+        </div>
+      ) : (
+        <>
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className="bg-blue-100 text-blue-600 font-bold px-4 py-1.5 rounded-full text-sm uppercase tracking-wider mb-4 inline-block">Premium Access</span>
+            <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6 leading-tight">
+              Upgrade to <span className="text-blue-600">DreamHomeCalc Pro</span>
+            </h2>
+            <p className="text-xl text-gray-600">Unlock detailed construction reports and material breakdowns.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto items-center">
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 flex flex-col hover:shadow-2xl transition-all duration-300">
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">{plans.monthly.name}</h3>
+              <div className="flex items-baseline mb-6">
+                <span className="text-4xl font-extrabold text-gray-900">{plans.monthly.priceString}</span>
+                <span className="text-gray-500 ml-2">{plans.monthly.term}</span>
+              </div>
+              <button 
+                onClick={() => handlePayment("monthly")} 
+                disabled={loadingPlan !== null} 
+                className="w-full py-4 rounded-xl font-bold border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors disabled:opacity-50"
+              >
+                {loadingPlan === "monthly" ? "Processing..." : "Choose Monthly"}
+              </button>
+            </div>
+
+            <div className="bg-gray-900 rounded-2xl shadow-2xl p-8 flex flex-col transform md:scale-105 relative z-10 border-4 border-blue-600/20">
+              {plans.annual.badge && <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded-bl-xl rounded-tr-lg shadow-sm">{plans.annual.badge}</div>}
+              <h3 className="text-2xl font-bold text-white mb-2">{plans.annual.name}</h3>
+              <div className="flex items-baseline mb-2">
+                <span className="text-5xl font-extrabold text-blue-500">{plans.annual.priceString}</span>
+                <span className="text-gray-300 ml-2">{plans.annual.term}</span>
+              </div>
+              <p className="text-green-400 font-semibold text-sm mb-6 flex items-center gap-2">
+                <i className="fas fa-tag"></i> {plans.annual.savings}
+              </p>
+              <button 
+                onClick={() => handlePayment("annual")} 
+                disabled={loadingPlan !== null} 
+                className="w-full py-4 rounded-xl font-bold bg-blue-600 text-white hover:bg-blue-700 transition-all disabled:opacity-50"
+              >
+                {loadingPlan === "annual" ? "Processing..." : "Choose Annual Plan"}
+              </button>
+            </div>
+          </div>
+
+          <div className="text-center mt-12 space-y-4">
+            {error && <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg inline-block border border-red-100">{error}</div>}
+            <div>
+               <button onClick={() => navigate("/")} className="text-gray-500 hover:text-gray-800 font-medium transition-colors">
+                  No thanks, I'll stick to the free version
+               </button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+export default UpgradePage;
