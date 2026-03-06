@@ -26,11 +26,9 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    // Verify user identity
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
     if (authError || !user) throw new Error('Session expired. Please log out and log back in.');
 
-    // Parse request body safely
     const body = await req.json().catch(() => ({}));
     const planId = body.planId || "monthly";
     const amount = PLANS[planId as string] || 9900;
@@ -39,10 +37,9 @@ Deno.serve(async (req) => {
     const key_secret = Deno.env.get('RAZORPAY_KEY_SECRET');
 
     if (!key_id || !key_secret) {
-      throw new Error("Razorpay keys are missing in Supabase Secrets.");
+      throw new Error("Razorpay keys are missing in Supabase Secrets! You must set them.");
     }
 
-    // Call Razorpay API directly
     const razorpayResponse = await fetch("https://api.razorpay.com/v1/orders", {
       method: "POST",
       headers: {
@@ -60,7 +57,7 @@ Deno.serve(async (req) => {
 
     if (!razorpayResponse.ok) {
       console.error("Razorpay API failure:", responseData);
-      throw new Error(responseData.error?.description || "Razorpay rejected the order request.");
+      throw new Error(`Razorpay API Error: ${responseData.error?.description || JSON.stringify(responseData)}`);
     }
 
     return new Response(JSON.stringify(responseData), {
@@ -70,9 +67,11 @@ Deno.serve(async (req) => {
 
   } catch (error: any) {
     console.error("Create Order Error:", error.message);
+    
+    // DEBUGGING FIX: We return 200 here so the frontend doesn't crash and can read the error message!
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
+      status: 200, 
     });
   }
 });

@@ -56,9 +56,11 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user }) => {
         body: { planId: planId }
       });
 
-      // Crucial: Handle Edge Function 400 errors properly
-      if (invokeError) {
-        throw new Error(invokeError.message || "Failed to initiate payment.");
+      if (invokeError) throw new Error(invokeError.message);
+      
+      // DEBUGGING FIX: Catch the exact error sent from our Edge Function
+      if (data && data.error) {
+        throw new Error(data.error); 
       }
 
       const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
@@ -81,12 +83,14 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user }) => {
               }
             });
 
-            if (vError || result?.status !== "success") throw new Error("Verification failed.");
+            if (vError) throw new Error(vError.message);
+            if (result?.error) throw new Error(result.error);
+            if (result?.status !== "success") throw new Error("Verification failed.");
             
             setPaymentSuccess(true);
             setTimeout(() => { window.location.href = "/"; }, 2000);
           } catch (err: any) {
-            setError("Payment verification failed. Please contact support.");
+            setError(err.message || "Payment verification failed. Please contact support.");
           }
         },
         prefill: { email: user?.email || "" },
@@ -97,7 +101,8 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user }) => {
       rzp.open();
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Error creating payment order. Please try again.");
+      // This will now print the EXACT true error to your screen!
+      setError(String(err.message || "Error creating payment order. Please try again."));
     } finally {
       setLoadingPlan(null);
     }
