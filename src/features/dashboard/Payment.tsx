@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { User } from "@supabase/supabase-js";
-// FIX: Correct import
 import { supabase } from "../../config/supabaseClient";
 
 interface PaymentProps {
@@ -12,107 +11,72 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const API_URL = import.meta.env.VITE_API_BASE_URL;
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
 
   const handlePayment = async () => {
     setLoading(true);
     setError("");
 
-    if (!API_URL) {
-      setError("Backend URL is missing in configuration.");
-      setLoading(false);
-      return;
-    }
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("User not authenticated.");
 
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.onerror = () => {
-      setError("Razorpay SDK failed to load. Are you online?");
-      setLoading(false);
-    };
-    script.onload = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token;
+      const { data: order, error: orderError } = await supabase.functions.invoke('create-order', {
+        body: { planId: "monthly" } 
+      });
 
-        if (!token) throw new Error("User not authenticated.");
+      if (orderError || !order) throw new Error("Failed to create payment order.");
 
-        const response = await fetch(`${API_URL}/create-order`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify({ amount: 9900 }),
-        });
-
-        if (!response.ok) throw new Error("Failed to create payment order.");
-        
-        const order = await response.json();
-
-        const options = {
-          key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-          amount: order.amount,
-          currency: order.currency,
-          name: "Dream Home Calculator",
-          description: "Premium Access",
-          order_id: order.id,
-          handler: async (response: any) => {
-            try {
-              const verifyResponse = await fetch(
-                `${API_URL}/verify-payment`,
-                {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                  },
-                  body: JSON.stringify({
-                    razorpay_order_id: response.razorpay_order_id,
-                    razorpay_payment_id: response.razorpay_payment_id,
-                    razorpay_signature: response.razorpay_signature,
-                  }),
-                }
-              );
-
-              const result = await verifyResponse.json();
-              if (result.status === "success") {
-                alert("Payment Successful! Access Unlocked.");
-                setHasPaid(true);
-              } else {
-                throw new Error("Payment verification failed.");
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        name: "Dream Home Calculator",
+        description: "Premium Access",
+        order_id: order.id,
+        handler: async (response: any) => {
+          try {
+            const { data: result, error: verifyError } = await supabase.functions.invoke('verify-payment', {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
               }
-            } catch (err) {
-              console.error(err);
-              setError("Payment verification failed. Please contact support.");
-            }
-          },
-          prefill: {
-            email: user?.email,
-          },
-          theme: {
-            color: "#d9a443",
-          },
-        };
+            });
 
-        const paymentObject = new (window as any).Razorpay(options);
-        paymentObject.open();
-      } catch (err: any) {
-        console.error("Payment Error:", err);
-        setError(err.message || "Error creating payment order.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    document.body.appendChild(script);
+            if (verifyError || result?.status !== "success") {
+              throw new Error("Payment verification failed.");
+            }
+            
+            alert("Payment Successful! Access Unlocked.");
+            setHasPaid(true);
+          } catch (err) {
+            setError("Payment verification failed. Please contact support.");
+          }
+        },
+        prefill: { email: user?.email },
+        theme: { color: "#d9a443" },
+      };
+
+      const paymentObject = new (window as any).Razorpay(options);
+      paymentObject.open();
+    } catch (err: any) {
+      console.error("Payment Error:", err);
+      setError(err.message || "Error creating payment order.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="card" style={{ textAlign: "center", padding: "2rem" }}>
       <h2>Unlock All Calculators</h2>
-      <p style={{ margin: "1rem 0" }}>
-        Get lifetime access to all premium features and detailed reports for just ₹99.
-      </p>
+      <p style={{ margin: "1rem 0" }}>Get lifetime access to all premium features and detailed reports for just ₹99.</p>
       <button 
         onClick={handlePayment} 
         className="btn" 
