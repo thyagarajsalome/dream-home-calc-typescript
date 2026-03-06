@@ -20,13 +20,17 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) throw new Error('No authorization header found');
 
+    // Extract the JWT token
+    const token = authHeader.replace('Bearer ', '');
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    // Pass the token explicitly here!
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
     if (authError || !user) throw new Error('Session expired. Please log out and log back in.');
 
     const body = await req.json().catch(() => ({}));
@@ -68,7 +72,6 @@ Deno.serve(async (req) => {
   } catch (error: any) {
     console.error("Create Order Error:", error.message);
     
-    // DEBUGGING FIX: We return 200 here so the frontend doesn't crash and can read the error message!
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200, 

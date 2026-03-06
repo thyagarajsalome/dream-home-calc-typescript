@@ -3,10 +3,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS', // <-- This explicitly allows the POST request
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-// Helper to generate HMAC SHA256 using the native Web Crypto API
 async function generateHmacSha256(secret: string, data: string): Promise<string> {
   const encoder = new TextEncoder();
   const keyData = encoder.encode(secret);
@@ -22,7 +21,6 @@ async function generateHmacSha256(secret: string, data: string): Promise<string>
   
   const signature = await crypto.subtle.sign('HMAC', cryptoKey, msgData);
   
-  // Convert ArrayBuffer to Hex String
   return Array.from(new Uint8Array(signature))
     .map(b => b.toString(16).padStart(2, '0'))
     .join('');
@@ -37,13 +35,17 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) throw new Error('Missing Authorization header');
 
+    // Extract the JWT token
+    const token = authHeader.replace('Bearer ', '');
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    // Pass the token explicitly here!
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
     if (authError || !user) throw new Error('Unauthorized');
 
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = await req.json();
@@ -51,7 +53,6 @@ Deno.serve(async (req) => {
     const secret = Deno.env.get('RAZORPAY_KEY_SECRET') || '';
     const body = razorpay_order_id + "|" + razorpay_payment_id;
 
-    // Use native Web Crypto API instead of node:crypto
     const expectedSignature = await generateHmacSha256(secret, body);
 
     if (expectedSignature === razorpay_signature) {
