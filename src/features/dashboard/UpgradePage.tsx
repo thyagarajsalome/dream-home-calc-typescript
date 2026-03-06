@@ -40,12 +40,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user }) => {
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
     script.async = true;
     document.body.appendChild(script);
-
-    return () => {
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
-    };
+    return () => { if (document.body.contains(script)) document.body.removeChild(script); };
   }, []);
 
   const handlePayment = async (planId: PlanID) => {
@@ -57,22 +52,20 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user }) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Please sign in to upgrade.");
 
-      // Use invoke to call the Edge Function
       const { data, error: invokeError } = await supabase.functions.invoke('create-order', {
         body: { planId: planId }
       });
 
+      // Crucial: Handle Edge Function 400 errors properly
       if (invokeError) {
-        throw new Error(invokeError.message || "Failed to create order");
+        throw new Error(invokeError.message || "Failed to initiate payment.");
       }
 
-      if (!data || !data.id) throw new Error("Invalid order data received.");
-
       const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
-      if (!razorpayKey) throw new Error("Razorpay Client Key is missing.");
+      if (!razorpayKey) throw new Error("Razorpay configuration missing on frontend.");
 
       const options = {
-        key: String(razorpayKey),
+        key: razorpayKey as string,
         amount: data.amount,
         currency: data.currency,
         name: "DreamHomeCalc Pro",
@@ -80,7 +73,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user }) => {
         order_id: data.id,
         handler: async (response: any) => {
           try {
-            const { data: result, error: verifyError } = await supabase.functions.invoke('verify-payment', {
+            const { data: result, error: vError } = await supabase.functions.invoke('verify-payment', {
               body: {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
@@ -88,28 +81,23 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user }) => {
               }
             });
 
-            if (verifyError || result?.status !== "success") {
-              throw new Error("Payment verification failed.");
-            }
+            if (vError || result?.status !== "success") throw new Error("Verification failed.");
             
             setPaymentSuccess(true);
-            setTimeout(() => {
-              window.location.href = "/"; 
-            }, 2000);
-            
+            setTimeout(() => { window.location.href = "/"; }, 2000);
           } catch (err: any) {
-            setError(String(err.message || "Payment verification failed. Please contact support."));
+            setError("Payment verification failed. Please contact support.");
           }
         },
         prefill: { email: user?.email || "" },
         theme: { color: "#D9A443" },
       };
 
-      const paymentObject = new (window as any).Razorpay(options);
-      paymentObject.open();
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
     } catch (err: any) {
       console.error(err);
-      setError(String(err.message || "Error creating payment order. Please try again."));
+      setError(err.message || "Error creating payment order. Please try again.");
     } finally {
       setLoadingPlan(null);
     }
@@ -123,20 +111,21 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user }) => {
             <i className="fas fa-check"></i>
           </div>
           <h3 className="text-2xl font-bold text-gray-800 mb-2">Payment Successful!</h3>
-          <p className="text-gray-600">You now have Pro access. Redirecting you to the dashboard...</p>
+          <p className="text-gray-600">Pro access unlocked. Redirecting...</p>
         </div>
       ) : (
         <>
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <span className="bg-blue-100 text-blue-600 font-bold px-4 py-1.5 rounded-full text-sm uppercase tracking-wider mb-4 inline-block">Premium Access</span>
+            <span className="bg-primary/10 text-primary font-bold px-4 py-1.5 rounded-full text-sm uppercase tracking-wider mb-4 inline-block">Premium Access</span>
             <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6 leading-tight">
-              Upgrade to <span className="text-blue-600">DreamHomeCalc Pro</span>
+              Upgrade to <span className="text-primary">DreamHomeCalc Pro</span>
             </h2>
-            <p className="text-xl text-gray-600">Unlock detailed construction reports and material breakdowns.</p>
+            <p className="text-xl text-gray-600">Unlock reports, material breakdowns, and save unlimited projects.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto items-center">
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 flex flex-col hover:shadow-2xl transition-all duration-300">
+            {/* Monthly - Original White/Gold Theme */}
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 flex flex-col hover:shadow-2xl transition-all duration-300 relative z-0">
               <h3 className="text-2xl font-bold text-gray-800 mb-2">{plans.monthly.name}</h3>
               <div className="flex items-baseline mb-6">
                 <span className="text-4xl font-extrabold text-gray-900">{plans.monthly.priceString}</span>
@@ -145,17 +134,18 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user }) => {
               <button 
                 onClick={() => handlePayment("monthly")} 
                 disabled={loadingPlan !== null} 
-                className="w-full py-4 rounded-xl font-bold border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors disabled:opacity-50"
+                className="w-full py-4 rounded-xl font-bold border-2 border-secondary text-secondary hover:bg-secondary hover:text-white transition-colors disabled:opacity-50"
               >
                 {loadingPlan === "monthly" ? "Processing..." : "Choose Monthly"}
               </button>
             </div>
 
-            <div className="bg-gray-900 rounded-2xl shadow-2xl p-8 flex flex-col transform md:scale-105 relative z-10 border-4 border-blue-600/20">
-              {plans.annual.badge && <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded-bl-xl rounded-tr-lg shadow-sm">{plans.annual.badge}</div>}
+            {/* Annual - Original Dark Theme */}
+            <div className="bg-secondary rounded-2xl shadow-2xl p-8 flex flex-col transform md:scale-105 relative z-10 border-4 border-primary/20">
+              <div className="absolute top-0 right-0 bg-primary text-white text-xs font-bold px-3 py-1.5 rounded-bl-xl rounded-tr-lg shadow-sm">{plans.annual.badge}</div>
               <h3 className="text-2xl font-bold text-white mb-2">{plans.annual.name}</h3>
               <div className="flex items-baseline mb-2">
-                <span className="text-5xl font-extrabold text-blue-500">{plans.annual.priceString}</span>
+                <span className="text-5xl font-extrabold text-primary">{plans.annual.priceString}</span>
                 <span className="text-gray-300 ml-2">{plans.annual.term}</span>
               </div>
               <p className="text-green-400 font-semibold text-sm mb-6 flex items-center gap-2">
@@ -164,7 +154,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user }) => {
               <button 
                 onClick={() => handlePayment("annual")} 
                 disabled={loadingPlan !== null} 
-                className="w-full py-4 rounded-xl font-bold bg-blue-600 text-white hover:bg-blue-700 transition-all disabled:opacity-50"
+                className="w-full py-4 rounded-xl font-bold bg-primary text-white hover:bg-yellow-500 shadow-float transition-all disabled:opacity-50"
               >
                 {loadingPlan === "annual" ? "Processing..." : "Choose Annual Plan"}
               </button>
@@ -174,7 +164,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user }) => {
           <div className="text-center mt-12 space-y-4">
             {error && <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg inline-block border border-red-100">{error}</div>}
             <div>
-               <button onClick={() => navigate("/")} className="text-gray-500 hover:text-gray-800 font-medium transition-colors">
+               <button onClick={() => navigate("/")} className="text-gray-500 hover:text-gray-800 font-medium transition-colors border-b border-transparent hover:border-gray-800">
                   No thanks, I'll stick to the free version
                </button>
             </div>
