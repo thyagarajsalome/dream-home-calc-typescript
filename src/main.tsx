@@ -5,15 +5,13 @@ import { HashRouter } from "react-router-dom";
 import App from "./App";
 import "./styles/global.css";
 
-// Service Worker Registration
+// Force unregister any stuck service workers
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("/sw.js") // Points to the new killer worker
-      .then((registration) => {
-        console.log("SW registered:", registration.scope);
-      })
-      .catch((err) => console.log("SW registration failed", err));
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    for (let registration of registrations) {
+      registration.unregister();
+      console.log("Service Worker forcefully unregistered.");
+    }
   });
 }
 
