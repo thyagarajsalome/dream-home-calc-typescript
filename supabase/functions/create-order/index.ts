@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS', // Explicitly allow POST
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 const PLANS: Record<string, number> = {
@@ -12,15 +12,13 @@ const PLANS: Record<string, number> = {
 };
 
 Deno.serve(async (req) => {
-  // 1. Handle CORS preflight immediately
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    // 2. Validate Authorization
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) throw new Error('Missing Authorization header');
+    if (!authHeader) throw new Error('No authorization header found');
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -28,24 +26,23 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    // Get user from the JWT token
+    // Verify user identity
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-    if (authError || !user) throw new Error('Unauthorized or Session Expired');
+    if (authError || !user) throw new Error('Session expired. Please log out and log back in.');
 
-    // 3. Parse and validate Plan ID
+    // Parse request body safely
     const body = await req.json().catch(() => ({}));
     const planId = body.planId || "monthly";
     const amount = PLANS[planId as string] || 9900;
 
-    // 4. Validate Razorpay Keys
     const key_id = Deno.env.get('RAZORPAY_KEY_ID');
     const key_secret = Deno.env.get('RAZORPAY_KEY_SECRET');
 
     if (!key_id || !key_secret) {
-      throw new Error("Razorpay credentials are not set in Supabase Secrets.");
+      throw new Error("Razorpay keys are missing in Supabase Secrets.");
     }
 
-    // 5. Call Razorpay API
+    // Call Razorpay API directly
     const razorpayResponse = await fetch("https://api.razorpay.com/v1/orders", {
       method: "POST",
       headers: {
@@ -55,15 +52,15 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         amount,
         currency: "INR",
-        receipt: `rcpt_${user.id.slice(0, 10)}_${Date.now()}`
+        receipt: `rcpt_${user.id.slice(0, 10)}`
       })
     });
 
     const responseData = await razorpayResponse.json();
 
     if (!razorpayResponse.ok) {
-      console.error("Razorpay Error Body:", responseData);
-      throw new Error(`Razorpay Error: ${responseData.error?.description || 'Failed to create order'}`);
+      console.error("Razorpay API failure:", responseData);
+      throw new Error(responseData.error?.description || "Razorpay rejected the order request.");
     }
 
     return new Response(JSON.stringify(responseData), {
@@ -72,11 +69,8 @@ Deno.serve(async (req) => {
     });
 
   } catch (error: any) {
-    console.error("Function Error:", error.message);
-    return new Response(JSON.stringify({ 
-      error: error.message,
-      details: "Check Supabase Function Logs for more info" 
-    }), {
+    console.error("Create Order Error:", error.message);
+    return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
     });
