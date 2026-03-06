@@ -1,10 +1,31 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
-import * as crypto from "node:crypto";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Helper to generate HMAC SHA256 using the native Web Crypto API
+async function generateHmacSha256(secret: string, data: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
+  const msgData = encoder.encode(data);
+  
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  
+  const signature = await crypto.subtle.sign('HMAC', cryptoKey, msgData);
+  
+  // Convert ArrayBuffer to Hex String
+  return Array.from(new Uint8Array(signature))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -12,7 +33,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get('Authorization')!;
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) throw new Error('Missing Authorization header');
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -27,10 +50,8 @@ Deno.serve(async (req) => {
     const secret = Deno.env.get('RAZORPAY_KEY_SECRET') || '';
     const body = razorpay_order_id + "|" + razorpay_payment_id;
 
-    const expectedSignature = crypto
-      .createHmac("sha256", secret)
-      .update(body)
-      .digest("hex");
+    // Use native Web Crypto API instead of node:crypto
+    const expectedSignature = await generateHmacSha256(secret, body);
 
     if (expectedSignature === razorpay_signature) {
       const supabaseAdmin = createClient(
@@ -55,6 +76,7 @@ Deno.serve(async (req) => {
       });
     }
   } catch (error: any) {
+    console.error("Error in verify-payment:", error);
     return new Response(JSON.stringify({ error: String(error.message) }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,

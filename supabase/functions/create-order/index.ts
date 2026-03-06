@@ -1,5 +1,4 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
-import Razorpay from "npm:razorpay@2.9.6";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,12 +11,15 @@ const PLANS: Record<string, number> = {
 };
 
 Deno.serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const authHeader = req.headers.get('Authorization')!;
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) throw new Error('Missing Authorization header');
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -37,21 +39,33 @@ Deno.serve(async (req) => {
       throw new Error("Razorpay credentials are not set in the environment.");
     }
 
-    const razorpay = new Razorpay({ key_id, key_secret });
+    // Use native fetch to call Razorpay API directly (bypassing npm package compatibility issues)
+    const razorpayResponse = await fetch("https://api.razorpay.com/v1/orders", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Basic " + btoa(`${key_id}:${key_secret}`)
+      },
+      body: JSON.stringify({
+        amount,
+        currency: "INR",
+        receipt: `rcpt_${user.id.slice(0, 10)}_${Date.now()}`
+      })
+    });
 
-    const options = {
-      amount,
-      currency: "INR",
-      receipt: `rcpt_${user.id.slice(0, 10)}_${Date.now()}`,
-    };
+    if (!razorpayResponse.ok) {
+      const errorText = await razorpayResponse.text();
+      throw new Error(`Razorpay API Error: ${errorText}`);
+    }
 
-    const order = await razorpay.orders.create(options);
+    const order = await razorpayResponse.json();
 
     return new Response(JSON.stringify(order), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
   } catch (error: any) {
+    console.error("Error in create-order:", error);
     return new Response(JSON.stringify({ error: String(error.message) }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
