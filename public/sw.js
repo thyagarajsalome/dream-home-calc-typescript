@@ -1,18 +1,14 @@
-// public/sw.js
 const CACHE_NAME = "dream-home-v2";
 
-// Install event - skip waiting to force update
 self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-// Activate event - claim clients immediately
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-           // Delete ALL old caches to remove Firebase files
           return caches.delete(cacheName);
         })
       );
@@ -21,9 +17,16 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
+  // IGNORE cross-origin requests (like Supabase API) and non-GET requests (like POST)
+  if (event.request.method !== "GET" || !event.request.url.startsWith(self.location.origin)) {
+    return; 
+  }
+
   event.respondWith(
     fetch(event.request).catch(() => {
-      return caches.match(event.request);
+      return caches.match(event.request).then((response) => {
+        return response || new Response("Offline", { status: 503 });
+      });
     })
   );
 });
