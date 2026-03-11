@@ -1,12 +1,9 @@
-// src/features/construction/ElectricalCalculator.tsx
 import React, { useState, useRef, useEffect } from "react";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
-import { useNavigate, useLocation } from "react-router-dom";
-// FIX: Import from correct config location
-import { supabase } from "../../config/supabaseClient";
-import Chart from "../../components/ui/Chart";
+import { useLocation } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
+import Chart from "../../components/ui/Chart";
+import { useProjectActions } from "../../hooks/useProjectActions";
+import { formatCurrency } from "../../utils/currency";
 
 const pointRates = {
   light: 650, 
@@ -24,9 +21,9 @@ const qualityMultipliers = {
 const chartColors = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
 
 const ElectricalCalculator: React.FC = () => {
-  const { hasPaid, user } = useUser();
-  const navigate = useNavigate();
+  const { hasPaid } = useUser();
   const location = useLocation();
+  const { saveProject, downloadSpreadsheetPDF, isSaving, isDownloading } = useProjectActions("electrical");
 
   const [lightPoints, setLightPoints] = useState("20");
   const [fanPoints, setFanPoints] = useState("5");
@@ -36,8 +33,6 @@ const ElectricalCalculator: React.FC = () => {
   const [breakdown, setBreakdown] = useState<any>(null);
 
   const resultsRef = useRef<HTMLDivElement>(null);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (location.state && (location.state as any).projectData) {
@@ -51,59 +46,27 @@ const ElectricalCalculator: React.FC = () => {
     }
   }, [location]);
 
-  const downloadPDF = () => {
-    if (resultsRef.current) {
-      setIsDownloading(true);
-      html2canvas(resultsRef.current, { scale: 2, useCORS: true }).then(
-        (canvas) => {
-          const imgData = canvas.toDataURL("image/png");
-          const pdf = new jsPDF("p", "mm", "a4");
-          const pdfWidth = pdf.internal.pageSize.getWidth();
-          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-          pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-          pdf.save("electrical-cost-estimate.pdf");
-          setIsDownloading(false);
-        }
-      );
-    }
+  const handleDownloadPDF = () => {
+    if (!breakdown) return;
+    const rows = [
+      ["Lights & Plugs (6A)", `${breakdown.counts.lCount} pts`, formatCurrency(breakdown.light)],
+      ["Fan Points", `${breakdown.counts.fCount} pts`, formatCurrency(breakdown.fan)],
+      ["Power Sockets (15A)", `${breakdown.counts.pCount} pts`, formatCurrency(breakdown.power)],
+      ["Dist. Board & MCBs", "Lump sum", formatCurrency(breakdown.board)],
+    ];
+
+    downloadSpreadsheetPDF(
+      `Electrical-Estimate`, 
+      ['Component', 'Count', 'Cost'], 
+      rows, 
+      'TOTAL ESTIMATE', 
+      formatCurrency(totalCost)
+    );
   };
 
-  const handleSave = async () => {
-    if (!user) {
-      alert("Please Sign In to save.");
-      navigate("/signin");
-      return;
-    }
-    if (totalCost === 0) return;
-    const name = prompt("Project Name:");
-    if (!name) return;
-
-    setIsSaving(true);
-    try {
-      const { error } = await supabase.from('projects').insert({
-        user_id: user.id,
-        name,
-        type: "electrical",
-        data: {
-          lightPoints,
-          fanPoints,
-          powerPoints,
-          quality,
-          totalCost,
-          breakdown,
-          date: new Date().toISOString(),
-        },
-        date: new Date().toISOString(),
-      });
-      if (error) throw error;
-
-      alert("Project saved successfully!");
-      navigate("/dashboard");
-    } catch (e) {
-      console.error(e);
-      alert("Error saving project.");
-    } finally {
-      setIsSaving(false);
+  const handleSave = () => {
+    if (totalCost > 0) {
+      saveProject({ lightPoints, fanPoints, powerPoints, quality, breakdown }, totalCost);
     }
   };
 
@@ -178,13 +141,7 @@ const ElectricalCalculator: React.FC = () => {
             <div className="card" ref={resultsRef}>
               <div className="total-summary" style={{ marginTop: "2rem" }}>
                 <p>Total Electrical Estimate</p>
-                <span>
-                  {totalCost.toLocaleString("en-IN", {
-                    style: "currency",
-                    currency: "INR",
-                    maximumFractionDigits: 0,
-                  })}
-                </span>
+                <span>{formatCurrency(totalCost)}</span>
               </div>
               <div className="results-grid">
                 <div className="result-details">
@@ -192,10 +149,10 @@ const ElectricalCalculator: React.FC = () => {
                   <table>
                     <thead><tr><th>Component</th><th>Count</th><th className="text-right">Cost</th></tr></thead>
                     <tbody>
-                      <tr><td>Lights & Plugs (6A)</td><td>{breakdown.counts.lCount} pts</td><td className="text-right">₹{Math.round(breakdown.light).toLocaleString()}</td></tr>
-                      <tr><td>Fan Points</td><td>{breakdown.counts.fCount} pts</td><td className="text-right">₹{Math.round(breakdown.fan).toLocaleString()}</td></tr>
-                      <tr><td>Power Sockets (AC/Geyser)</td><td>{breakdown.counts.pCount} pts</td><td className="text-right">₹{Math.round(breakdown.power).toLocaleString()}</td></tr>
-                      <tr><td>Dist. Board & MCBs</td><td>Lump sum</td><td className="text-right">₹{Math.round(breakdown.board).toLocaleString()}</td></tr>
+                      <tr><td>Lights & Plugs (6A)</td><td>{breakdown.counts.lCount} pts</td><td className="text-right">{formatCurrency(breakdown.light)}</td></tr>
+                      <tr><td>Fan Points</td><td>{breakdown.counts.fCount} pts</td><td className="text-right">{formatCurrency(breakdown.fan)}</td></tr>
+                      <tr><td>Power Sockets (AC/Geyser)</td><td>{breakdown.counts.pCount} pts</td><td className="text-right">{formatCurrency(breakdown.power)}</td></tr>
+                      <tr><td>Dist. Board & MCBs</td><td>Lump sum</td><td className="text-right">{formatCurrency(breakdown.board)}</td></tr>
                     </tbody>
                   </table>
                   <div className="disclaimer-box" style={{ marginTop: "1rem", padding: "0.5rem", fontSize: "0.8rem" }}>
@@ -216,7 +173,7 @@ const ElectricalCalculator: React.FC = () => {
               </div>
               {hasPaid && (
                 <div className="action-buttons">
-                  <button className="btn" onClick={downloadPDF} disabled={isDownloading}>
+                  <button className="btn" onClick={handleDownloadPDF} disabled={isDownloading}>
                     <i className="fas fa-download"></i> {isDownloading ? "Downloading..." : "Download PDF"}
                   </button>
                   <button

@@ -15,7 +15,7 @@ const DEFAULT_PRICES = { cement: 400, steel: 65, sand: 60, aggregate: 40, paint:
 
 const MaterialQuantityCalculator: React.FC = () => {
   const { hasPaid } = useUser();
-  const { saveProject, downloadPDF, isSaving, isDownloading } = useProjectActions("materials");
+  const { saveProject, downloadSpreadsheetPDF, isSaving, isDownloading } = useProjectActions("materials");
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const [area, setArea] = useState("");
@@ -40,6 +40,24 @@ const MaterialQuantityCalculator: React.FC = () => {
 
   const handleSave = () => {
     if (results) saveProject({ area, wallType, ...results }, results.totalCost);
+  };
+
+  const handleDownloadPDF = () => {
+    if (!results) return;
+    const rows = [
+      ["Cement (Bags)", Math.round(results.cement).toString()],
+      ["Steel (kg)", Math.round(results.steel).toString()],
+      ["Sand (cft)", Math.round(results.sand).toString()],
+      [results.wallTypeName, Math.round(results.walls).toString()],
+    ];
+
+    downloadSpreadsheetPDF(
+      `Material-BOQ-${area}sqft`, 
+      ['Item', 'Estimated Quantity'], 
+      rows, 
+      'APPROX MATERIAL COST', 
+      formatCurrency(results.totalCost)
+    );
   };
 
   const isLocked = !hasPaid;
@@ -82,7 +100,7 @@ const MaterialQuantityCalculator: React.FC = () => {
             </table>
             {hasPaid && (
               <div className="grid grid-cols-2 gap-4">
-                <button onClick={() => downloadPDF(resultsRef, "boq-estimate")} disabled={isDownloading} className="py-3 bg-white border-2 border-secondary text-secondary font-bold rounded-xl hover:bg-secondary hover:text-white">PDF</button>
+                <button onClick={handleDownloadPDF} disabled={isDownloading} className="py-3 bg-white border-2 border-secondary text-secondary font-bold rounded-xl hover:bg-secondary hover:text-white">PDF</button>
                 <button onClick={handleSave} disabled={isSaving} className="py-3 bg-primary text-white font-bold rounded-xl hover:bg-yellow-600">Save</button>
               </div>
             )}

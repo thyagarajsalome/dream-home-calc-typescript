@@ -42,7 +42,7 @@ export const useProjectActions = (projectType: string) => {
     }
   };
 
-  // --- 2. ORIGINAL IMAGE-BASED PDF (For Construction, Interior, etc) ---
+  // --- 2. ORIGINAL IMAGE-BASED PDF (Fallback) ---
   const downloadPDF = async (elementRef: React.RefObject<HTMLElement>, fileName: string) => {
     if (!elementRef.current) return;
     setIsDownloading(true);
@@ -66,8 +66,14 @@ export const useProjectActions = (projectType: string) => {
     }
   };
 
-  // --- 3. NEW SPREADSHEET-STYLE PDF (For Flooring, etc) ---
-  const downloadSpreadsheetPDF = (projectName: string, tableData: any[], totalCost: number) => {
+  // --- 3. NEW UNIVERSAL SPREADSHEET-STYLE PDF ---
+  const downloadSpreadsheetPDF = (
+    projectName: string, 
+    headers: string[], 
+    rows: (string | number)[][], 
+    footerLabel?: string, 
+    footerValue?: string | number
+  ) => {
     setIsDownloading(true);
     showToast("Generating PDF...", "info");
     try {
@@ -82,11 +88,20 @@ export const useProjectActions = (projectType: string) => {
       doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 28);
       doc.text(`Category: ${projectType.toUpperCase()}`, 14, 34);
 
+      // Create the footer array dynamically based on the number of columns
+      let footData = undefined;
+      if (footerLabel && footerValue !== undefined) {
+        const footRow = Array(headers.length).fill('');
+        footRow[headers.length - 2] = footerLabel;
+        footRow[headers.length - 1] = footerValue.toString();
+        footData = [footRow];
+      }
+
       // Generate the Excel-style Table
       autoTable(doc, {
         startY: 45,
-        head: [['Description / Item', 'Details / Quantity', 'Estimated Cost (INR)']],
-        body: tableData.map(row => [row.item, row.details, `Rs. ${row.cost.toLocaleString('en-IN')}`]),
+        head: [headers],
+        body: rows,
         theme: 'grid', 
         styles: {
           font: 'helvetica',
@@ -100,7 +115,7 @@ export const useProjectActions = (projectType: string) => {
           textColor: [0, 0, 0],
           fontStyle: 'bold',
         },
-        foot: [['', 'TOTAL ESTIMATE', `Rs. ${totalCost.toLocaleString('en-IN')}`]],
+        foot: footData,
         footStyles: {
           fillColor: [255, 255, 255],
           textColor: [0, 0, 0],
@@ -119,6 +134,6 @@ export const useProjectActions = (projectType: string) => {
     }
   };
 
-  // Return ALL functions so older components don't break
+  // Return ALL functions so components don't break
   return { saveProject, downloadPDF, downloadSpreadsheetPDF, isSaving, isDownloading };
 };

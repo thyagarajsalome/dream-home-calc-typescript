@@ -24,7 +24,7 @@ const CHART_COLORS = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
 
 const PaintingCalculator: React.FC = () => {
   const { hasPaid } = useUser();
-  const { saveProject, downloadPDF, isSaving, isDownloading } = useProjectActions("painting");
+  const { saveProject, downloadSpreadsheetPDF, isSaving, isDownloading } = useProjectActions("painting");
   const location = useLocation();
   const resultsRef = useRef<HTMLDivElement>(null);
 
@@ -44,7 +44,6 @@ const PaintingCalculator: React.FC = () => {
     }
   }, [carpetArea, includeCeiling]);
 
-  // Load nav state
   useEffect(() => {
     if (location.state && (location.state as any).projectData) {
       const data = (location.state as any).projectData;
@@ -70,6 +69,22 @@ const PaintingCalculator: React.FC = () => {
       process,
       includeCeiling
     }, totalCost);
+  };
+
+  const handleDownloadPDF = () => {
+    const rows = [
+      ["Paint Material", "45% of total", formatCurrency(totalCost * 0.45)],
+      ["Putty & Primer", `${process === "fresh" ? "25%" : "10%"} of total`, formatCurrency(totalCost * (process === "fresh" ? 0.25 : 0.10))],
+      ["Labor", `${process === "fresh" ? "30%" : "45%"} of total`, formatCurrency(totalCost * (process === "fresh" ? 0.30 : 0.45))],
+    ];
+
+    downloadSpreadsheetPDF(
+      `Painting-Estimate-${carpetArea}sqft`, 
+      ['Component', 'Allocation', 'Approx Cost'], 
+      rows, 
+      'TOTAL ESTIMATE', 
+      formatCurrency(totalCost)
+    );
   };
 
   const isLocked = !hasPaid;
@@ -127,7 +142,7 @@ const PaintingCalculator: React.FC = () => {
 
             {hasPaid && (
               <div className="grid grid-cols-2 gap-4">
-                <button onClick={() => downloadPDF(resultsRef, "painting-estimate")} disabled={isDownloading} className="py-3 bg-white border-2 border-secondary text-secondary font-bold rounded-xl hover:bg-secondary hover:text-white transition-all">Download PDF</button>
+                <button onClick={handleDownloadPDF} disabled={isDownloading} className="py-3 bg-white border-2 border-secondary text-secondary font-bold rounded-xl hover:bg-secondary hover:text-white transition-all">Download PDF</button>
                 <button onClick={handleSave} disabled={isSaving} className="py-3 bg-primary text-white font-bold rounded-xl hover:bg-yellow-600 transition-all">Save Project</button>
               </div>
             )}
