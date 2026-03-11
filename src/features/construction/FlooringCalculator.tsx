@@ -1,9 +1,9 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import { useProjectActions } from "../../hooks/useProjectActions";
 import { Card } from "../../components/ui/Card";
-import { Input } from "../../components/ui/Input"; // Assuming Input can handle numbers
+import { Input } from "../../components/ui/Input";
 import Chart from "../../components/ui/Chart";
 import { formatCurrency } from "../../utils/currency";
 
@@ -20,9 +20,10 @@ const CHART_COLORS = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
 
 const FlooringCalculator: React.FC = () => {
   const { hasPaid } = useUser();
-  const { saveProject, downloadPDF, isSaving, isDownloading } = useProjectActions("flooring");
+  
+  // CHANGED: Pulled downloadSpreadsheetPDF instead of downloadPDF
+  const { saveProject, downloadSpreadsheetPDF, isSaving, isDownloading } = useProjectActions("flooring");
   const location = useLocation();
-  const resultsRef = useRef<HTMLDivElement>(null);
 
   // --- State ---
   const [area, setArea] = useState("");
@@ -87,6 +88,27 @@ const FlooringCalculator: React.FC = () => {
     }
   };
 
+  // NEW: Handler for formatting and passing data to the clean PDF generator
+  const handleDownloadPDF = () => {
+    if (!breakdown) return;
+
+    // Create the structured rows for the spreadsheet
+    const tableData = [
+      { item: "Material", details: `Incl. ${breakdown.wastageArea} sq.ft wastage`, cost: breakdown.material },
+      { item: "Labor", details: "Installation charges", cost: breakdown.labor },
+      { item: "Supplies", details: "Cement, Sand, Grout", cost: breakdown.supplies },
+    ];
+
+    if (breakdown.skirting > 0) {
+      tableData.push({ item: "Skirting", details: `Approx ${breakdown.skirtingLen} R.ft`, cost: breakdown.skirting });
+    }
+
+    // Call the new action
+    if (downloadSpreadsheetPDF) {
+      downloadSpreadsheetPDF(`Flooring-Estimate-${area}sqft`, tableData, breakdown.totalCost);
+    }
+  };
+
   const isLocked = !hasPaid;
 
   return (
@@ -147,7 +169,7 @@ const FlooringCalculator: React.FC = () => {
       </section>
 
       {/* --- Right Column: Results --- */}
-      <section ref={resultsRef}>
+      <section>
         {breakdown && breakdown.totalCost > 0 ? (
           <Card title="Flooring Cost Estimate" className="border-primary/20 shadow-glow relative">
              <div className="text-center py-6">
@@ -209,8 +231,9 @@ const FlooringCalculator: React.FC = () => {
               {/* Actions */}
               {hasPaid && (
                 <div className="grid grid-cols-2 gap-4 mt-6">
+                  {/* CHANGED: Now calls the new handleDownloadPDF function */}
                   <button
-                    onClick={() => downloadPDF(resultsRef, `flooring-estimate-${area}sqft`)}
+                    onClick={handleDownloadPDF}
                     disabled={isDownloading}
                     className="flex items-center justify-center gap-2 py-3 px-4 bg-white border-2 border-secondary text-secondary font-bold rounded-xl hover:bg-secondary hover:text-white transition-all duration-300"
                   >
