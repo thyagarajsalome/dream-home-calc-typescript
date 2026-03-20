@@ -1,12 +1,9 @@
-// src/features/construction/PlumbingCalculator.tsx
 import React, { useState, useRef, useEffect } from "react";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
-import { useNavigate, useLocation } from "react-router-dom";
-// FIX: Import from correct config location
-import { supabase } from "../../config/supabaseClient";
+import { useLocation } from "react-router-dom";
 import Chart from "../../components/ui/Chart";
 import { useUser } from "../../context/UserContext";
+import { useProjectActions } from "../../hooks/useProjectActions";
+import { formatCurrency } from "../../utils/currency";
 
 const unitRates = {
   kitchen: { name: "Kitchen (Sink + Taps)", rate: 12000 },
@@ -24,9 +21,9 @@ const qualityMultipliers = {
 const chartColors = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
 
 const PlumbingCalculator: React.FC = () => {
-  const { hasPaid, user } = useUser();
-  const navigate = useNavigate();
+  const { hasPaid } = useUser();
   const location = useLocation();
+  const { saveProject, downloadSpreadsheetPDF, isSaving, isDownloading } = useProjectActions("plumbing");
 
   const [kitchens, setKitchens] = useState("1");
   const [commonBaths, setCommonBaths] = useState("1");
@@ -37,8 +34,6 @@ const PlumbingCalculator: React.FC = () => {
   const [costBreakdown, setCostBreakdown] = useState<any>(null);
 
   const resultsRef = useRef<HTMLDivElement>(null);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (location.state && (location.state as any).projectData) {
@@ -53,61 +48,27 @@ const PlumbingCalculator: React.FC = () => {
     }
   }, [location]);
 
-  const downloadPDF = () => {
-    if (resultsRef.current) {
-      setIsDownloading(true);
-      html2canvas(resultsRef.current, { scale: 2, useCORS: true }).then(
-        (canvas) => {
-          const imgData = canvas.toDataURL("image/png");
-          const pdf = new jsPDF("p", "mm", "a4");
-          const pdfWidth = pdf.internal.pageSize.getWidth();
-          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-          pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-          pdf.save("plumbing-cost-estimate.pdf");
-          setIsDownloading(false);
-        }
-      );
-    }
+  const handleDownloadPDF = () => {
+    if (!costBreakdown) return;
+    const rows = [
+      ["Master Bathrooms", `${masterBaths} units`, formatCurrency(costBreakdown.master)],
+      ["Common Bathrooms", `${commonBaths} units`, formatCurrency(costBreakdown.common)],
+      ["Kitchens", `${kitchens} units`, formatCurrency(costBreakdown.kitchen)],
+    ];
+    if (costBreakdown.motor > 0) rows.push(["Motor & Tank", "1 unit", formatCurrency(costBreakdown.motor)]);
+
+    downloadSpreadsheetPDF(
+      `Plumbing-Estimate`, 
+      ['Item', 'Quantity', 'Est. Cost'], 
+      rows, 
+      'TOTAL ESTIMATE', 
+      formatCurrency(totalCost)
+    );
   };
 
-  const handleSave = async () => {
-    if (!user) {
-      alert("Please Sign In to save.");
-      navigate("/signin");
-      return;
-    }
-    if (totalCost === 0) return;
-    const name = prompt("Project Name:");
-    if (!name) return;
-
-    setIsSaving(true);
-    try {
-      const { error } = await supabase.from('projects').insert({
-        user_id: user.id,
-        name,
-        type: "plumbing",
-        data: {
-          kitchens,
-          commonBaths,
-          masterBaths,
-          includeMotor,
-          quality,
-          totalCost,
-          breakdown: costBreakdown,
-          date: new Date().toISOString(),
-        },
-        date: new Date().toISOString(),
-      });
-
-      if (error) throw error;
-
-      alert("Project saved successfully!");
-      navigate("/dashboard");
-    } catch (e) {
-      console.error(e);
-      alert("Error saving project.");
-    } finally {
-      setIsSaving(false);
+  const handleSave = () => {
+    if (totalCost > 0) {
+      saveProject({ kitchens, commonBaths, masterBaths, includeMotor, quality, breakdown: costBreakdown }, totalCost);
     }
   };
 
@@ -194,7 +155,7 @@ const PlumbingCalculator: React.FC = () => {
             <div className="card" ref={resultsRef}>
               <div className="total-summary" style={{ marginTop: "2rem" }}>
                 <p>Total Plumbing Estimate</p>
-                <span>{totalCost.toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 })}</span>
+                <span>{formatCurrency(totalCost)}</span>
               </div>
               <div className="results-grid">
                 <div className="result-details">
@@ -202,10 +163,10 @@ const PlumbingCalculator: React.FC = () => {
                   <table>
                     <thead><tr><th>Item</th><th>Est. Cost</th></tr></thead>
                     <tbody>
-                      <tr><td>Master Bathrooms ({masterBaths})</td><td className="text-right">₹{Math.round(costBreakdown.master).toLocaleString()}</td></tr>
-                      <tr><td>Common Bathrooms ({commonBaths})</td><td className="text-right">₹{Math.round(costBreakdown.common).toLocaleString()}</td></tr>
-                      <tr><td>Kitchens ({kitchens})</td><td className="text-right">₹{Math.round(costBreakdown.kitchen).toLocaleString()}</td></tr>
-                      {costBreakdown.motor > 0 && (<tr><td>Motor & Tank</td><td className="text-right">₹{Math.round(costBreakdown.motor).toLocaleString()}</td></tr>)}
+                      <tr><td>Master Bathrooms ({masterBaths})</td><td className="text-right">{formatCurrency(costBreakdown.master)}</td></tr>
+                      <tr><td>Common Bathrooms ({commonBaths})</td><td className="text-right">{formatCurrency(costBreakdown.common)}</td></tr>
+                      <tr><td>Kitchens ({kitchens})</td><td className="text-right">{formatCurrency(costBreakdown.kitchen)}</td></tr>
+                      {costBreakdown.motor > 0 && (<tr><td>Motor & Tank</td><td className="text-right">{formatCurrency(costBreakdown.motor)}</td></tr>)}
                     </tbody>
                   </table>
                 </div>
@@ -222,7 +183,7 @@ const PlumbingCalculator: React.FC = () => {
               </div>
               {hasPaid && (
                 <div className="action-buttons">
-                  <button className="btn" onClick={downloadPDF} disabled={isDownloading}><i className="fas fa-download"></i> {isDownloading ? "Downloading..." : "Download PDF"}</button>
+                  <button className="btn" onClick={handleDownloadPDF} disabled={isDownloading}><i className="fas fa-download"></i> {isDownloading ? "Downloading..." : "Download PDF"}</button>
                   <button className="btn" style={{ backgroundColor: "var(--secondary-color)", marginLeft: "10px" }} onClick={handleSave} disabled={isSaving}><i className="fas fa-save"></i> {isSaving ? "Saving..." : "Save to Dashboard"}</button>
                 </div>
               )}

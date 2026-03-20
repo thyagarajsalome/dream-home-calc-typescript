@@ -1,13 +1,12 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import { useProjectActions } from "../../hooks/useProjectActions";
 import { Card } from "../../components/ui/Card";
-import { Input } from "../../components/ui/Input"; // Assuming Input can handle numbers
+import { Input } from "../../components/ui/Input";
 import Chart from "../../components/ui/Chart";
 import { formatCurrency } from "../../utils/currency";
 
-// --- Constants & Business Logic ---
 const FLOORING_TYPES = {
   vitrified: { name: "Vitrified Tiles (Standard)", rate: 120, wastage: 0.1 },
   gvt: { name: "GVT / PGVT (High Gloss)", rate: 180, wastage: 0.1 },
@@ -20,19 +19,15 @@ const CHART_COLORS = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
 
 const FlooringCalculator: React.FC = () => {
   const { hasPaid } = useUser();
-  const { saveProject, downloadPDF, isSaving, isDownloading } = useProjectActions("flooring");
+  const { saveProject, downloadSpreadsheetPDF, isSaving, isDownloading } = useProjectActions("flooring");
   const location = useLocation();
-  const resultsRef = useRef<HTMLDivElement>(null);
 
-  // --- State ---
   const [area, setArea] = useState("");
   const [flooringType, setFlooringType] = useState<keyof typeof FLOORING_TYPES>("vitrified");
   const [includeSkirting, setIncludeSkirting] = useState(true);
   
-  // --- Derived State (Reactive Calculation) ---
   const parsedArea = parseFloat(area) || 0;
   
-  // Calculate breakdown only if area exists
   const breakdown = React.useMemo(() => {
     if (parsedArea === 0) return null;
 
@@ -64,7 +59,6 @@ const FlooringCalculator: React.FC = () => {
     };
   }, [parsedArea, flooringType, includeSkirting]);
 
-  // Load data from navigation state if available
   useEffect(() => {
     if (location.state && (location.state as any).projectData) {
       const data = (location.state as any).projectData;
@@ -87,11 +81,30 @@ const FlooringCalculator: React.FC = () => {
     }
   };
 
+  const handleDownloadPDF = () => {
+    if (!breakdown) return;
+    const rows = [
+      ["Material", `Incl. ${breakdown.wastageArea} sq.ft wastage`, formatCurrency(breakdown.material)],
+      ["Labor", "Installation charges", formatCurrency(breakdown.labor)],
+      ["Supplies", "Cement, Sand, Grout", formatCurrency(breakdown.supplies)],
+    ];
+    if (breakdown.skirting > 0) {
+      rows.push(["Skirting", `Approx ${breakdown.skirtingLen} R.ft`, formatCurrency(breakdown.skirting)]);
+    }
+    
+    downloadSpreadsheetPDF(
+      `Flooring-Estimate-${area}sqft`, 
+      ['Component', 'Details', 'Cost'], 
+      rows, 
+      'TOTAL ESTIMATE', 
+      formatCurrency(breakdown.totalCost)
+    );
+  };
+
   const isLocked = !hasPaid;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-fade-in">
-      {/* --- Left Column: Inputs --- */}
       <section>
         <Card title="Flooring Details">
           {isLocked && (
@@ -109,8 +122,6 @@ const FlooringCalculator: React.FC = () => {
               onChange={(e) => setArea(e.target.value)}
               disabled={isLocked}
             />
-
-            {/* Custom Select for Material Type */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">Material Type</label>
               <div className="relative">
@@ -128,8 +139,6 @@ const FlooringCalculator: React.FC = () => {
                 <i className="fas fa-chevron-down absolute right-3 top-4 text-gray-400 pointer-events-none"></i>
               </div>
             </div>
-
-            {/* Skirting Checkbox */}
             <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
               <label className="flex items-center cursor-pointer select-none">
                 <input
@@ -146,8 +155,7 @@ const FlooringCalculator: React.FC = () => {
         </Card>
       </section>
 
-      {/* --- Right Column: Results --- */}
-      <section ref={resultsRef}>
+      <section>
         {breakdown && breakdown.totalCost > 0 ? (
           <Card title="Flooring Cost Estimate" className="border-primary/20 shadow-glow relative">
              <div className="text-center py-6">
@@ -156,7 +164,6 @@ const FlooringCalculator: React.FC = () => {
             </div>
 
             <div className="space-y-6">
-              {/* Breakdown Table */}
               <div className="overflow-hidden rounded-xl border border-gray-100">
                 <table className="w-full text-sm text-left">
                   <thead className="bg-gray-50 text-gray-600 font-semibold uppercase text-xs">
@@ -193,7 +200,6 @@ const FlooringCalculator: React.FC = () => {
                 </table>
               </div>
 
-              {/* Chart */}
               <div className="h-64">
                 <Chart
                   data={{
@@ -206,11 +212,10 @@ const FlooringCalculator: React.FC = () => {
                 />
               </div>
 
-              {/* Actions */}
               {hasPaid && (
                 <div className="grid grid-cols-2 gap-4 mt-6">
                   <button
-                    onClick={() => downloadPDF(resultsRef, `flooring-estimate-${area}sqft`)}
+                    onClick={handleDownloadPDF}
                     disabled={isDownloading}
                     className="flex items-center justify-center gap-2 py-3 px-4 bg-white border-2 border-secondary text-secondary font-bold rounded-xl hover:bg-secondary hover:text-white transition-all duration-300"
                   >
@@ -230,7 +235,6 @@ const FlooringCalculator: React.FC = () => {
             </div>
           </Card>
         ) : (
-          /* Empty State */
           <div className="h-full flex flex-col items-center justify-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 p-12 text-center text-gray-400">
             <i className="fas fa-layer-group text-4xl mb-4 text-gray-300"></i>
             <p>Enter carpet area to view estimate</p>

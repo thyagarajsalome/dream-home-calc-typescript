@@ -21,7 +21,7 @@ const CHART_COLORS = ["#D9A443", "#59483B", "#8C6A4E", "#D9A443", "#C4B594"];
 
 export const ConstructionCalculator = () => {
   const { hasPaid } = useUser();
-  const { saveProject, downloadPDF, isSaving, isDownloading } = useProjectActions("construction");
+  const { saveProject, downloadSpreadsheetPDF, isSaving, isDownloading } = useProjectActions("construction");
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const [area, setArea] = useState("");
@@ -71,6 +71,23 @@ export const ConstructionCalculator = () => {
     }, totalCost);
   };
 
+  const handleDownloadPDF = () => {
+    const rows = [
+      ["Construction", `${area} sq.ft`, formatCurrency(costs.main)],
+    ];
+    if (costs.parking > 0) rows.push(["Parking", `${parkingArea} sq.ft`, formatCurrency(costs.parking)]);
+    if (costs.wall > 0) rows.push(["Compound Wall", `${compoundWallLength} ft`, formatCurrency(costs.wall)]);
+    if (costs.sump > 0) rows.push(["Sump & Septic", quality, formatCurrency(costs.sump)]);
+
+    downloadSpreadsheetPDF(
+      `Construction-Estimate-${area}sqft`, 
+      ['Item', 'Details', 'Cost'], 
+      rows, 
+      'TOTAL ESTIMATE', 
+      formatCurrency(totalCost)
+    );
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start animate-fade-in">
       
@@ -113,18 +130,15 @@ export const ConstructionCalculator = () => {
                         setQuality(q);
                         setIsEditingRate(false);
                     }}
-                    // UNLOCKED: Removed the disabled check (disabled={q === "premium" && !hasPaid})
                     disabled={false} 
                     className={`
                       py-3 px-2 rounded-xl border-2 font-medium capitalize transition-all flex items-center justify-center gap-2
                       ${quality === q
                         ? "border-primary bg-primary/10 text-primary shadow-sm ring-1 ring-primary"
                         : "border-gray-200 text-gray-500 hover:border-gray-300 bg-white"}
-                      /* UNLOCKED: Removed opacity styling for locked state */
                     `}
                   >
                     <span>{q}</span>
-                    {/* UNLOCKED: Removed the lock icon conditional rendering */}
                   </button>
                 ))}
               </div>
@@ -232,7 +246,7 @@ export const ConstructionCalculator = () => {
             <div className="grid grid-cols-2 gap-4">
               {hasPaid && (
                 <button
-                  onClick={() => downloadPDF(resultsRef, `Estimate-${area}sqft`)}
+                  onClick={handleDownloadPDF}
                   disabled={isDownloading}
                   className="flex items-center justify-center gap-2 py-3 px-4 bg-white border-2 border-secondary text-secondary font-bold rounded-xl hover:bg-secondary hover:text-white transition-all duration-300 shadow-sm"
                 >

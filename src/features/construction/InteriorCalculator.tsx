@@ -40,15 +40,13 @@ const INTERIOR_BREAKDOWN = {
 const CHART_COLORS = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594", "#A99A86"];
 
 const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
-  const { user } = useUser(); // Kept for safety, though hook handles check
-  const { saveProject, downloadPDF, isSaving, isDownloading } = useProjectActions("interior");
+  const { saveProject, downloadSpreadsheetPDF, isSaving, isDownloading } = useProjectActions("interior");
   const location = useLocation();
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const [area, setArea] = useState("1200");
   const [quality, setQuality] = useState<keyof typeof QUALITY_RATES>("standard");
 
-  // Load from nav state
   useEffect(() => {
     if (location.state && (location.state as any).projectData) {
       const data = (location.state as any).projectData;
@@ -59,7 +57,6 @@ const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
     }
   }, [location]);
 
-  // Reactive Logic
   const parsedArea = parseFloat(area) || 0;
   const totalCost = parsedArea * QUALITY_RATES[quality].rate;
 
@@ -67,8 +64,22 @@ const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
     saveProject({
       area,
       quality,
-      breakdown: INTERIOR_BREAKDOWN // Saving the breakdown % logic reference
+      breakdown: INTERIOR_BREAKDOWN 
     }, totalCost);
+  };
+
+  const handleDownloadPDF = () => {
+    const rows = Object.entries(INTERIOR_BREAKDOWN).map(([component, percentage]) => {
+      return [component, `${percentage}%`, formatCurrency((totalCost * percentage) / 100)];
+    });
+
+    downloadSpreadsheetPDF(
+      `Interior-Estimate-${area}sqft`, 
+      ['Component', 'Allocation', 'Approx Cost'], 
+      rows, 
+      'TOTAL ESTIMATE', 
+      formatCurrency(totalCost)
+    );
   };
 
   return (
@@ -126,7 +137,6 @@ const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
             </div>
 
             <div className="space-y-6">
-              {/* Breakdown Table */}
               <div className="overflow-hidden rounded-xl border border-gray-100">
                 <table className="w-full text-sm text-left">
                   <thead className="bg-gray-50 text-gray-600 font-semibold uppercase text-xs">
@@ -151,16 +161,14 @@ const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
                 </table>
               </div>
 
-              {/* Chart */}
               <div className="h-64">
                 <Chart data={INTERIOR_BREAKDOWN} colors={CHART_COLORS} />
               </div>
 
-              {/* Actions */}
               {hasPaid && (
                 <div className="grid grid-cols-2 gap-4 mt-6">
                   <button
-                    onClick={() => downloadPDF(resultsRef, `interior-estimate-${area}sqft`)}
+                    onClick={handleDownloadPDF}
                     disabled={isDownloading}
                     className="flex items-center justify-center gap-2 py-3 px-4 bg-white border-2 border-secondary text-secondary font-bold rounded-xl hover:bg-secondary hover:text-white transition-all duration-300"
                   >
