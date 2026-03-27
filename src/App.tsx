@@ -1,6 +1,4 @@
 // src/App.tsx
-// UPDATED: Added floor-planner to CalculatorType and renderCalculator
-
 import React, { Suspense, lazy, startTransition } from "react";
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { UserProvider, useUser } from "./context/UserContext";
@@ -16,7 +14,6 @@ import CalculatorTabs from "./features/construction/CalculatorTabs";
 
 // Lazy-loaded calculators
 const ConstructionCalculator  = lazy(() => import("./features/construction/ConstructionCalculator"));
-const FloorPlannerCalculator  = lazy(() => import("./features/construction/FloorPlannerCalculator")); // ← NEW
 const FlooringCalculator      = lazy(() => import("./features/construction/FlooringCalculator"));
 const PaintingCalculator      = lazy(() => import("./features/construction/PaintingCalculator"));
 const PlumbingCalculator      = lazy(() => import("./features/construction/PlumbingCalculator"));
@@ -40,10 +37,8 @@ const Loading = () => (
   </div>
 );
 
-// ── UPDATED: added "floor-planner" ──
 type CalculatorType =
   | "construction"
-  | "floor-planner"
   | "interior"
   | "doors-windows"
   | "flooring"
@@ -63,7 +58,6 @@ const MainLayout = () => {
   const renderCalculator = () => {
     switch (activeCalculator) {
       case "construction":  return <ConstructionCalculator />;
-      case "floor-planner": return <FloorPlannerCalculator />;          // ← NEW
       case "materials":     return <MaterialQuantityCalculator />;
       case "interior":      return <InteriorCalculator hasPaid={hasPaid} />;
       case "doors-windows": return <DoorsWindowsCalculator hasPaid={hasPaid} />;

@@ -1,12 +1,9 @@
 // src/features/construction/CalculatorTabs.tsx
-// UPDATED: Added "floor-planner" tab
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
 type CalculatorType =
   | "construction"
-  | "floor-planner"      // ← NEW
   | "interior"
   | "doors-windows"
   | "flooring"
@@ -28,7 +25,6 @@ const CALCULATORS: {
   isPremium: boolean;
 }[] = [
   { id: "construction",  name: "Construction",   icon: "fas fa-home",        isPremium: false },
-  { id: "floor-planner", name: "Floor Planner",  icon: "fas fa-drafting-compass", isPremium: false }, // ← NEW (free)
   { id: "materials",     name: "Materials BOQ",  icon: "fas fa-cubes",       isPremium: true  },
   { id: "interior",      name: "Interiors",      icon: "fas fa-couch",       isPremium: true  },
   { id: "doors-windows", name: "Doors/Windows",  icon: "fas fa-door-open",   isPremium: true  },
@@ -59,7 +55,6 @@ const CalculatorTabs: React.FC<CalculatorTabsProps> = ({
         {CALCULATORS.map(({ id, name, icon, isPremium }) => {
           const isActive = activeCalculator === id;
           const isLocked = isPremium && !hasPaid;
-          const isNew = id === "floor-planner";
 
           return (
             <button
@@ -77,12 +72,6 @@ const CalculatorTabs: React.FC<CalculatorTabsProps> = ({
               <i className={`${icon} ${isActive ? "text-primary" : "text-gray-400"}`}></i>
               <span className="whitespace-nowrap">{name}</span>
               {isLocked && <i className="fas fa-lock text-xs ml-1 text-gray-400"></i>}
-              {/* NEW badge for Floor Planner */}
-              {isNew && !isActive && (
-                <span className="absolute -top-2 -right-2 bg-green-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none">
-                  NEW
-                </span>
-              )}
             </button>
           );
         })}

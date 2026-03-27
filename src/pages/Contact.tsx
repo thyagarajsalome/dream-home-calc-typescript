@@ -17,6 +17,7 @@ const Contact = () => {
         >
           contact@toolwebsite.in
         </a>
+        
       </p>
       <p>We aim to respond to all inquiries within 48 business hours.</p>
     </div>
