@@ -99,4 +99,65 @@ const MainLayout = () => {
   );
 };
 
-// ... keep remaining ProtectedRoute, InfoLayout, AppRoutes, and App as they were ...
+const ProtectedRoute = () => {
+  const { user, loading } = useUser();
+  if (loading) return <Loading />;
+  if (!user) return <Navigate to="/signin" />;
+  return (
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      <Header />
+      <main className="flex-grow container mx-auto px-4 py-8 pt-24">
+        <Suspense fallback={<Loading />}><Outlet /></Suspense>
+      </main>
+      <Footer />
+    </div>
+  );
+};
+
+const InfoLayout = () => (
+  <div className="flex flex-col min-h-screen bg-gray-50">
+    <Header />
+    <main className="flex-grow container mx-auto px-4 py-8 pt-24">
+      <Suspense fallback={<Loading />}><Outlet /></Suspense>
+    </main>
+    <Footer />
+  </div>
+);
+
+const AppRoutes = () => {
+  const { user, loading } = useUser();
+  if (loading) return <Loading />;
+  return (
+    <Suspense fallback={<Loading />}>
+      <Routes>
+        <Route path="/signin" element={user ? <Navigate to="/" /> : <SignIn />} />
+        <Route path="/signup" element={user ? <Navigate to="/" /> : <SignUp />} />
+
+        <Route element={<InfoLayout />}>
+          <Route path="/privacy"     element={<PrivacyPolicy />} />
+          <Route path="/terms"       element={<TermsOfService />} />
+          <Route path="/contact"     element={<Contact />} />
+          <Route path="/disclaimer"  element={<Disclaimer />} />
+        </Route>
+
+        <Route element={<ProtectedRoute />}>
+          <Route path="/upgrade"    element={<UpgradePage />} />
+          <Route path="/dashboard"  element={<Dashboard />} />
+        </Route>
+
+        <Route path="/"  element={<MainLayout />} />
+        <Route path="*"  element={<Navigate to="/" />} />
+      </Routes>
+    </Suspense>
+  );
+};
+
+const App = () => (
+  <ToastProvider>
+    <UserProvider>
+      <AppRoutes />
+    </UserProvider>
+  </ToastProvider>
+);
+
+export default App;
