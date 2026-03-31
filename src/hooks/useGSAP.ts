@@ -1,0 +1,297 @@
+// src/hooks/useGSAP.ts
+// GSAP integration — loaded via CDN (no npm install needed)
+// Provides: animated cost counter, scroll-triggered reveals, hero parallax, and layout refresh.
+
+import { useEffect, useRef, useCallback } from "react";
+
+// ── Dynamically load GSAP + ScrollTrigger from CDN ───────────────────────────
+let gsapLoaded = false;
+let loadPromise: Promise<void> | null = null;
+
+function loadGSAP(): Promise<void> {
+  if (gsapLoaded) return Promise.resolve();
+  if (loadPromise) return loadPromise;
+
+  loadPromise = new Promise((resolve, reject) => {
+    const gsapScript = document.createElement("script");
+    gsapScript.src = "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js";
+    gsapScript.async = true;
+
+    gsapScript.onload = () => {
+      const stScript = document.createElement("script");
+      stScript.src = "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js";
+      stScript.async = true;
+      
+      stScript.onload = () => {
+        const g = (window as any).gsap;
+        const ST = (window as any).ScrollTrigger;
+        if (g && ST) {
+          g.registerPlugin(ST);
+          gsapLoaded = true;
+          resolve();
+        }
+      };
+      stScript.onerror = () => reject(new Error("ScrollTrigger load failed"));
+      document.head.appendChild(stScript);
+    };
+
+    gsapScript.onerror = () => reject(new Error("GSAP load failed"));
+    document.head.appendChild(gsapScript);
+  });
+
+  return loadPromise;
+}
+
+// ── 1. Animated Cost Counter ──────────────────────────────────────────────────
+export function useGSAPCounter() {
+  const counterRef = useRef<HTMLElement | null>(null);
+  const tweenRef = useRef<any>(null);
+  const currentValueRef = useRef(0);
+
+  const animateCounter = useCallback((
+    target: number,
+    formatter?: (val: number) => string
+  ) => {
+    loadGSAP().then(() => {
+      const gsap = (window as any).gsap;
+      if (!gsap || !counterRef.current) return;
+
+      if (tweenRef.current) tweenRef.current.kill();
+
+      const obj = { value: currentValueRef.current };
+
+      tweenRef.current = gsap.to(obj, {
+        value: target,
+        duration: 1.2,
+        ease: "power2.out",
+        onUpdate: () => {
+          currentValueRef.current = obj.value;
+          if (counterRef.current) {
+            const formatted = formatter
+              ? formatter(Math.round(obj.value))
+              : Math.round(obj.value).toLocaleString("en-IN");
+            counterRef.current.textContent = formatted;
+          }
+        },
+      });
+    });
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (tweenRef.current) tweenRef.current.kill();
+    };
+  }, []);
+
+  return { counterRef, animateCounter };
+}
+
+// ── 2. Scroll-triggered Reveal ────────────────────────────────────────────────
+interface RevealOptions {
+  delay?: number;
+  duration?: number;
+  y?: number;
+  once?: boolean;
+  selector?: string;
+  threshold?: string; // e.g. "top 80%"
+}
+
+export function useGSAPReveal(options: RevealOptions = {}) {
+  const revealRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const {
+      delay = 0.08,
+      duration = 0.65,
+      y = 24,
+      once = true,
+      selector = "> *",
+      threshold = "top 88%"
+    } = options;
+
+    let ctx: any = null;
+
+    loadGSAP().then(() => {
+      const gsap = (window as any).gsap;
+      const ScrollTrigger = (window as any).ScrollTrigger;
+      if (!gsap || !ScrollTrigger || !revealRef.current) return;
+
+      const targets = revealRef.current.querySelectorAll(selector);
+      if (!targets.length) return;
+
+      gsap.set(targets, { opacity: 0, y });
+
+      ctx = gsap.context(() => {
+        ScrollTrigger.create({
+          trigger: revealRef.current,
+          start: threshold,
+          once,
+          onEnter: () => {
+            gsap.to(targets, {
+              opacity: 1,
+              y: 0,
+              duration,
+              stagger: delay,
+              ease: "power3.out",
+              clearProps: "transform,opacity",
+            });
+          },
+        });
+      });
+    });
+
+    return () => ctx?.revert();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return { revealRef };
+}
+
+// ── 3. Hero Parallax ─────────────────────────────────────────────────────────
+export function useGSAPHeroParallax(
+  sectionSelector = "#home",
+  contentSelector = ".hero-content"
+) {
+  useEffect(() => {
+    let ctx: any = null;
+
+    loadGSAP().then(() => {
+      const gsap = (window as any).gsap;
+      const ScrollTrigger = (window as any).ScrollTrigger;
+      if (!gsap || !ScrollTrigger) return;
+
+      ctx = gsap.context(() => {
+        // Parallax background
+        gsap.to(sectionSelector, {
+          backgroundPositionY: "30%",
+          ease: "none",
+          scrollTrigger: {
+            trigger: sectionSelector,
+            start: "top top",
+            end: "bottom top",
+            scrub: 1.5,
+          },
+        });
+
+        // Content fade + rise
+        gsap.to(contentSelector, {
+          y: -40,
+          opacity: 0.4,
+          ease: "none",
+          scrollTrigger: {
+            trigger: sectionSelector,
+            start: "top top",
+            end: "60% top",
+            scrub: 1,
+          },
+        });
+      });
+    });
+
+    return () => ctx?.revert();
+  }, [sectionSelector, contentSelector]);
+}
+
+// ── 4. Tab Switch Animation ──────────────────────────────────────────────────
+export function useGSAPTabSwitch(activeKey: string) {
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const prevKey = useRef(activeKey);
+
+  useEffect(() => {
+    if (prevKey.current === activeKey) return;
+    prevKey.current = activeKey;
+
+    loadGSAP().then(() => {
+      const gsap = (window as any).gsap;
+      if (!gsap || !panelRef.current) return;
+
+      gsap.fromTo(
+        panelRef.current,
+        { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }
+      );
+    });
+  }, [activeKey]);
+
+  return { panelRef };
+}
+
+// ── 5. Number Pulse ──────────────────────────────────────────────────────────
+export function useGSAPPulse() {
+  const pulseRef = useRef<HTMLElement | null>(null);
+
+  const pulse = useCallback(() => {
+    loadGSAP().then(() => {
+      const gsap = (window as any).gsap;
+      if (!gsap || !pulseRef.current) return;
+      gsap.fromTo(
+        pulseRef.current,
+        { scale: 1.08 },
+        { scale: 1, duration: 0.5, ease: "elastic.out(1, 0.4)" }
+      );
+    });
+  }, []);
+
+  return { pulseRef, pulse };
+}
+
+// ── 6. ScrollTrigger Refresh ────────────────────────────────────────────────
+// Vital for React apps: call this when dynamic content (like accordion/tabs) 
+// changes the height of the page.
+export function useGSAPRefresh(dependency: any) {
+  useEffect(() => {
+    loadGSAP().then(() => {
+      const ST = (window as any).ScrollTrigger;
+      if (ST) ST.refresh();
+    });
+  }, [dependency]);
+}
+
+// ── 7. Magnetic Effect ──────────────────────────────────────────────────────
+// Usage: const { magneticRef } = useGSAPMagnetic()
+// Makes buttons/icons pull toward the cursor when nearby.
+export function useGSAPMagnetic() {
+  const magneticRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const el = magneticRef.current;
+    if (!el) return;
+
+    let ctx: any = null;
+
+    loadGSAP().then(() => {
+      const gsap = (window as any).gsap;
+      if (!gsap) return;
+
+      const xTo = gsap.quickTo(el, "x", { duration: 1, ease: "elastic.out(1, 0.3)" });
+      const yTo = gsap.quickTo(el, "y", { duration: 1, ease: "elastic.out(1, 0.3)" });
+
+      const handleMouseMove = (e: MouseEvent) => {
+        const { clientX, clientY } = e;
+        const { height, width, left, top } = el.getBoundingClientRect();
+        const x = clientX - (left + width / 2);
+        const y = clientY - (top + height / 2);
+        xTo(x * 0.35); // 35% pull strength
+        yTo(y * 0.35);
+      };
+
+      const handleMouseLeave = () => {
+        xTo(0);
+        yTo(0);
+      };
+
+      el.addEventListener("mousemove", handleMouseMove);
+      el.addEventListener("mouseleave", handleMouseLeave);
+      
+      ctx = {
+        revert: () => {
+          el.removeEventListener("mousemove", handleMouseMove);
+          el.removeEventListener("mouseleave", handleMouseLeave);
+        }
+      };
+    });
+
+    return () => ctx?.revert();
+  }, []);
+
+  return { magneticRef };
+}
