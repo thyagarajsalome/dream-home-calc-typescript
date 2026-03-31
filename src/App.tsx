@@ -1,6 +1,6 @@
 // src/App.tsx
-import React, { Suspense, lazy, startTransition } from "react";
-import { Routes, Route, Navigate, Outlet } from "react-router-dom";
+import React, { Suspense, lazy, startTransition, useEffect } from "react";
+import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import { UserProvider, useUser } from "./context/UserContext";
 import { ToastProvider } from "./context/ToastContext";
 
@@ -13,23 +13,23 @@ import SEO from "./components/layout/SEO";
 import CalculatorTabs from "./features/construction/CalculatorTabs";
 
 // Lazy-loaded calculators
-const ConstructionCalculator  = lazy(() => import("./features/construction/ConstructionCalculator"));
-const FlooringCalculator      = lazy(() => import("./features/construction/FlooringCalculator"));
-const PaintingCalculator      = lazy(() => import("./features/construction/PaintingCalculator"));
-const PlumbingCalculator      = lazy(() => import("./features/construction/PlumbingCalculator"));
-const ElectricalCalculator    = lazy(() => import("./features/construction/ElectricalCalculator"));
-const InteriorCalculator      = lazy(() => import("./features/construction/InteriorCalculator"));
-const DoorsWindowsCalculator  = lazy(() => import("./features/construction/DoorsWindowsCalculator"));
+const ConstructionCalculator    = lazy(() => import("./features/construction/ConstructionCalculator"));
+const FlooringCalculator        = lazy(() => import("./features/construction/FlooringCalculator"));
+const PaintingCalculator        = lazy(() => import("./features/construction/PaintingCalculator"));
+const PlumbingCalculator        = lazy(() => import("./features/construction/PlumbingCalculator"));
+const ElectricalCalculator      = lazy(() => import("./features/construction/ElectricalCalculator"));
+const InteriorCalculator        = lazy(() => import("./features/construction/InteriorCalculator"));
+const DoorsWindowsCalculator    = lazy(() => import("./features/construction/DoorsWindowsCalculator"));
 const MaterialQuantityCalculator = lazy(() => import("./features/construction/MaterialQuantityCalculator"));
 
-const SignIn       = lazy(() => import("./features/auth/SignIn"));
-const SignUp       = lazy(() => import("./features/auth/SignUp"));
-const UpgradePage  = lazy(() => import("./features/dashboard/UpgradePage"));
-const Dashboard    = lazy(() => import("./features/dashboard/Dashboard"));
-const PrivacyPolicy   = lazy(() => import("./pages/PrivacyPolicy"));
-const TermsOfService  = lazy(() => import("./pages/TermsOfService"));
-const Contact         = lazy(() => import("./pages/Contact"));
-const Disclaimer      = lazy(() => import("./pages/Disclaimer"));
+const SignIn      = lazy(() => import("./features/auth/SignIn"));
+const SignUp      = lazy(() => import("./features/auth/SignUp"));
+const UpgradePage = lazy(() => import("./features/dashboard/UpgradePage"));
+const Dashboard   = lazy(() => import("./features/dashboard/Dashboard"));
+const PrivacyPolicy  = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const Contact        = lazy(() => import("./pages/Contact"));
+const Disclaimer     = lazy(() => import("./pages/Disclaimer"));
 
 const Loading = () => (
   <div className="flex justify-center items-center min-h-[50vh] bg-gray-50">
@@ -49,11 +49,38 @@ type CalculatorType =
 
 const MainLayout = () => {
   const { hasPaid } = useUser();
-  const [activeCalculator, setActiveCalculator] = React.useState<CalculatorType>("construction");
+  const location = useLocation();
+
+  // Read route state set by Dashboard when user clicks "Open/Edit"
+  const routeState = location.state as {
+    openCalculator?: CalculatorType;
+    projectData?: any;
+    projectName?: string;
+  } | null;
+
+  const [activeCalculator, setActiveCalculator] = React.useState<CalculatorType>(
+    routeState?.openCalculator ?? "construction"
+  );
+
+  // If user navigates here from Dashboard with a specific calculator to open,
+  // switch to it and scroll down to the calculator area.
+  useEffect(() => {
+    if (routeState?.openCalculator) {
+      startTransition(() => setActiveCalculator(routeState.openCalculator!));
+      // Slight delay so the tab renders before scrolling
+      setTimeout(() => {
+        const el = document.getElementById("tools");
+        if (el) el.scrollIntoView({ behavior: "smooth" });
+      }, 150);
+    }
+  }, [routeState?.openCalculator]);
 
   const handleTabChange = (tab: CalculatorType) => {
     startTransition(() => setActiveCalculator(tab));
   };
+
+  // Pass projectData via location.state so each calculator can read it
+  const projectData = routeState?.projectData ?? null;
 
   const renderCalculator = () => {
     switch (activeCalculator) {
@@ -79,7 +106,18 @@ const MainLayout = () => {
 
       <main className="flex-grow">
         <Hero />
-        <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="container mx-auto px-4 py-8 max-w-7xl" id="tools">
+          {/* Banner shown when a saved project is loaded */}
+          {projectData && routeState?.projectName && (
+            <div className="mb-4 flex items-center gap-3 px-4 py-3 bg-primary/10 border border-primary/30 rounded-xl text-sm">
+              <i className="fas fa-folder-open text-primary"></i>
+              <span className="text-gray-700">
+                Editing saved project: <strong className="text-primary">{routeState.projectName}</strong>
+              </span>
+              <span className="text-gray-400 text-xs ml-1">— modify values and save again to update</span>
+            </div>
+          )}
+
           <CalculatorTabs
             activeCalculator={activeCalculator}
             setActiveCalculator={handleTabChange}
@@ -134,15 +172,15 @@ const AppRoutes = () => {
         <Route path="/signup" element={user ? <Navigate to="/" /> : <SignUp />} />
 
         <Route element={<InfoLayout />}>
-          <Route path="/privacy"     element={<PrivacyPolicy />} />
-          <Route path="/terms"       element={<TermsOfService />} />
-          <Route path="/contact"     element={<Contact />} />
-          <Route path="/disclaimer"  element={<Disclaimer />} />
+          <Route path="/privacy"    element={<PrivacyPolicy />} />
+          <Route path="/terms"      element={<TermsOfService />} />
+          <Route path="/contact"    element={<Contact />} />
+          <Route path="/disclaimer" element={<Disclaimer />} />
         </Route>
 
         <Route element={<ProtectedRoute />}>
-          <Route path="/upgrade"    element={<UpgradePage />} />
-          <Route path="/dashboard"  element={<Dashboard />} />
+          <Route path="/upgrade"   element={<UpgradePage />} />
+          <Route path="/dashboard" element={<Dashboard />} />
         </Route>
 
         <Route path="/"  element={<MainLayout />} />

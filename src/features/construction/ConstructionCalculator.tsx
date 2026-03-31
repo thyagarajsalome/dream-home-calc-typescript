@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import { useProjectActions } from "../../hooks/useProjectActions";
 import { useUser } from "../../context/UserContext";
 import { Card } from "../../components/ui/Card";
@@ -67,6 +68,7 @@ const CONSTRUCTION_PHASES = [
 // ── Component ──────────────────────────────────────────────────────────────────
 export const ConstructionCalculator = () => {
   const { hasPaid }  = useUser();
+  const location     = useLocation();
   const { saveProject, downloadSpreadsheetPDF, isSaving, isDownloading } = useProjectActions("construction");
   const resultsRef   = useRef<HTMLDivElement>(null);
 
@@ -78,6 +80,23 @@ export const ConstructionCalculator = () => {
   const [customRate,          setCustomRate]        = useState<number>(QUALITY_RATES.basic);
   const [isEditingRate,       setIsEditingRate]     = useState(false);
   const [activeTab,           setActiveTab]         = useState<"estimate"|"timeline"|"rates">("estimate");
+
+  // ── Pre-fill from saved project (via Dashboard "Edit" click) ──────────────
+  useEffect(() => {
+    const state = location.state as { projectData?: any } | null;
+    const data = state?.projectData;
+    if (!data) return;
+
+    if (data.area)               setArea(String(data.area));
+    if (data.parkingArea)        setParkingArea(String(data.parkingArea));
+    if (data.compoundWallLength) setCompoundWallLength(String(data.compoundWallLength));
+    if (data.includeSump !== undefined) setIncludeSump(Boolean(data.includeSump));
+    if (data.quality)            setQuality(data.quality);
+    if (data.rate) {
+      setCustomRate(data.rate);
+      setIsEditingRate(data.rate !== QUALITY_RATES[data.quality as keyof typeof QUALITY_RATES]);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     if (!isEditingRate) setCustomRate(QUALITY_RATES[quality]);
