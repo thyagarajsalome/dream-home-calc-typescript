@@ -1,20 +1,29 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import { ProjectService } from "../../services/projectService";
-import { useToast } from "../../context/ToastContext"; // <-- Import ToastContext
+import { useToast } from "../../context/ToastContext";
+
+const CALCULATOR_META: Record<string, { label: string; icon: string; color: string }> = {
+  construction:  { label: "Construction",   icon: "fas fa-home",         color: "bg-amber-50 text-amber-600"   },
+  materials:     { label: "Materials BOQ",  icon: "fas fa-cubes",        color: "bg-stone-50 text-stone-600"   },
+  interior:      { label: "Interiors",      icon: "fas fa-couch",        color: "bg-rose-50 text-rose-600"     },
+  "doors-windows":{ label: "Doors/Windows", icon: "fas fa-door-open",    color: "bg-sky-50 text-sky-600"       },
+  flooring:      { label: "Flooring",       icon: "fas fa-layer-group",  color: "bg-teal-50 text-teal-600"     },
+  painting:      { label: "Painting",       icon: "fas fa-paint-roller", color: "bg-purple-50 text-purple-600" },
+  plumbing:      { label: "Plumbing",       icon: "fas fa-bath",         color: "bg-cyan-50 text-cyan-600"     },
+  electrical:    { label: "Electrical",     icon: "fas fa-bolt",         color: "bg-yellow-50 text-yellow-600" },
+};
 
 const Dashboard = () => {
   const { user, hasPaid, loading } = useUser();
-  const { showToast } = useToast(); // <-- Initialize Toast
+  const { showToast } = useToast();
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<any[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
 
-  // Fetch projects when the dashboard loads and user is available
   useEffect(() => {
-    if (user) {
-      fetchProjects();
-    }
+    if (user) fetchProjects();
   }, [user]);
 
   const fetchProjects = async () => {
@@ -29,20 +38,28 @@ const Dashboard = () => {
     }
   };
 
-  // Function to handle deleting a project
-  const handleDelete = async (projectId: string) => {
-    const isConfirmed = window.confirm("Are you sure you want to delete this project? This cannot be undone.");
+  const handleDelete = async (e: React.MouseEvent, projectId: string) => {
+    e.stopPropagation(); // prevent card click
+    const isConfirmed = window.confirm("Are you sure you want to delete this project?");
     if (!isConfirmed) return;
-
     try {
       await ProjectService.deleteProject(projectId);
-      // Remove the deleted project from the screen immediately
-      setProjects(projects.filter(project => project.id !== projectId));
-      showToast("Project deleted successfully!", "success"); // <-- Toast Success
+      setProjects(projects.filter((p) => p.id !== projectId));
+      showToast("Project deleted successfully!", "success");
     } catch (error) {
-      console.error("Error deleting project:", error);
-      showToast("Failed to delete project.", "error"); // <-- Toast Error
+      showToast("Failed to delete project.", "error");
     }
+  };
+
+  const handleOpenProject = (project: any) => {
+    // Navigate to home with the calculator type and pre-filled project data
+    navigate("/", {
+      state: {
+        openCalculator: project.type,
+        projectData: project.data,
+        projectName: project.name,
+      },
+    });
   };
 
   if (loading) {
@@ -58,7 +75,7 @@ const Dashboard = () => {
       <div className="container mx-auto px-4 py-12 text-center">
         <div className="max-w-md mx-auto bg-white rounded-xl shadow-md p-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">Access Restricted</h2>
-          <p className="text-gray-600 mb-6">Please sign in to view your dashboard and saved projects.</p>
+          <p className="text-gray-600 mb-6">Please sign in to view your dashboard.</p>
           <Link to="/signin" className="inline-block px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-yellow-600 transition-colors">
             Sign In Now
           </Link>
@@ -71,12 +88,13 @@ const Dashboard = () => {
     <div className="container mx-auto px-4 py-8 max-w-5xl animate-fade-in">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800">My Dashboard</h1>
-        <p className="text-gray-600 mt-1">Welcome back, <span className="font-semibold text-primary">{user.email}</span></p>
+        <p className="text-gray-600 mt-1">
+          Welcome back, <span className="font-semibold text-primary">{user.email}</span>
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        {/* --- Left Column: Account Status --- */}
+        {/* Left: Account Status */}
         <div className="md:col-span-1">
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="bg-secondary p-4 text-center">
@@ -94,7 +112,6 @@ const Dashboard = () => {
                   <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full uppercase tracking-wider">Free Tier</span>
                 )}
               </div>
-              
               {!hasPaid ? (
                 <div className="text-center">
                   <p className="text-sm text-gray-500 mb-4">Unlock premium calculators and save unlimited reports.</p>
@@ -113,10 +130,9 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* --- Right Column: Stats & Projects --- */}
+        {/* Right: Stats & Projects */}
         <div className="md:col-span-2 space-y-6">
-          
-          {/* Top Stats Boxes */}
+          {/* Stats */}
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4 transition-transform hover:-translate-y-1">
               <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-500">
@@ -140,57 +156,109 @@ const Dashboard = () => {
 
           {/* Project List */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-[300px]">
-            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <i className="fas fa-history text-primary"></i> Recent Estimates
+            <h3 className="text-lg font-bold text-gray-800 mb-1 flex items-center gap-2">
+              <i className="fas fa-history text-primary"></i> Saved Estimates
             </h3>
-            
+            <p className="text-xs text-gray-400 mb-4">Click any project to open and edit it in the calculator.</p>
+
             {loadingProjects ? (
               <div className="flex justify-center items-center h-32">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : projects.length > 0 ? (
-              <div className="space-y-4">
-                {projects.map((project) => (
-                  <div key={project.id} className="p-4 border border-gray-100 rounded-xl hover:shadow-md transition-all bg-gray-50 hover:bg-white flex justify-between items-center group">
-                    <div>
-                      <h4 className="font-bold text-gray-800 text-lg group-hover:text-primary transition-colors">{project.name}</h4>
-                      <div className="flex gap-4 text-xs text-gray-500 mt-2">
-                        <span className="capitalize font-medium px-2 py-1 bg-gray-200 rounded-md">
-                          <i className="fas fa-calculator mr-1"></i>{project.type.replace('-', ' ')}
-                        </span>
-                        <span className="flex items-center">
-                          <i className="far fa-calendar-alt mr-1"></i>
-                          {new Date(project.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                        </span>
+              <div className="space-y-3">
+                {projects.map((project) => {
+                  const meta = CALCULATOR_META[project.type] || {
+                    label: project.type,
+                    icon: "fas fa-calculator",
+                    color: "bg-gray-50 text-gray-600",
+                  };
+                  return (
+                    <div
+                      key={project.id}
+                      onClick={() => handleOpenProject(project)}
+                      className="group relative p-4 border border-gray-100 rounded-xl cursor-pointer
+                                 hover:border-primary/40 hover:shadow-md hover:bg-amber-50/30
+                                 transition-all duration-200 bg-gray-50"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        {/* Icon + Info */}
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${meta.color}`}>
+                            <i className={`${meta.icon} text-sm`}></i>
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="font-bold text-gray-800 text-sm group-hover:text-primary transition-colors truncate">
+                              {project.name}
+                            </h4>
+                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                              <span className="text-xs text-gray-400 capitalize">{meta.label}</span>
+                              <span className="text-gray-300 text-xs">·</span>
+                              <span className="text-xs text-gray-400">
+                                {new Date(project.date).toLocaleDateString("en-IN", {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                })}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Cost + Actions */}
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          <div className="text-right">
+                            <p className="text-base font-extrabold text-secondary">
+                              {project.data?.totalCost
+                                ? `₹${project.data.totalCost.toLocaleString("en-IN")}`
+                                : "—"}
+                            </p>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div
+                              className="flex items-center gap-1 text-xs font-bold text-primary
+                                         bg-primary/10 hover:bg-primary/20 px-2.5 py-1.5 rounded-lg
+                                         transition-colors"
+                              title="Open in calculator"
+                            >
+                              <i className="fas fa-pen-to-square text-xs"></i>
+                              <span className="hidden sm:inline">Edit</span>
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={(e) => handleDelete(e, project.id)}
+                            className="flex items-center justify-center w-7 h-7 rounded-lg
+                                       text-gray-300 hover:text-red-500 hover:bg-red-50
+                                       transition-colors flex-shrink-0"
+                            title="Delete project"
+                          >
+                            <i className="fas fa-trash-alt text-xs"></i>
+                          </button>
+                        </div>
                       </div>
+
+                      {/* Hover hint */}
+                      <div className="absolute inset-x-0 bottom-0 h-0.5 bg-primary/0 group-hover:bg-primary/30 rounded-b-xl transition-all duration-300"></div>
                     </div>
-                    {/* Delete button layout */}
-                    <div className="text-right flex flex-col items-end gap-2">
-                      <p className="text-xl font-extrabold text-secondary">
-                        {project.data?.totalCost ? `₹${project.data.totalCost.toLocaleString('en-IN')}` : '-'}
-                      </p>
-                      <button 
-                        onClick={() => handleDelete(project.id)}
-                        className="text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors flex items-center gap-1"
-                        title="Delete Project"
-                      >
-                        <i className="fas fa-trash-alt"></i> Delete
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-48 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
                 <i className="fas fa-clipboard-list text-4xl mb-3 text-gray-300"></i>
                 <p className="font-medium">No projects saved yet.</p>
-                <Link to="/" className="mt-4 text-primary hover:text-yellow-600 text-sm font-bold bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm transition-all hover:shadow">
+                <Link
+                  to="/"
+                  className="mt-4 text-primary hover:text-yellow-600 text-sm font-bold bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm transition-all hover:shadow"
+                >
                   Start a new calculation
                 </Link>
               </div>
             )}
           </div>
-
         </div>
       </div>
     </div>
