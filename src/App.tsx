@@ -11,15 +11,16 @@ import Hero from "./components/layout/Hero";
 import FAQ from "./components/layout/FAQ";
 import SEO from "./components/layout/SEO";
 import CalculatorTabs from "./features/construction/CalculatorTabs";
+import { useGSAPTabSwitch } from "./hooks/useGSAP";
 
 // Lazy-loaded calculators
-const ConstructionCalculator    = lazy(() => import("./features/construction/ConstructionCalculator"));
-const FlooringCalculator        = lazy(() => import("./features/construction/FlooringCalculator"));
-const PaintingCalculator        = lazy(() => import("./features/construction/PaintingCalculator"));
-const PlumbingCalculator        = lazy(() => import("./features/construction/PlumbingCalculator"));
-const ElectricalCalculator      = lazy(() => import("./features/construction/ElectricalCalculator"));
-const InteriorCalculator        = lazy(() => import("./features/construction/InteriorCalculator"));
-const DoorsWindowsCalculator    = lazy(() => import("./features/construction/DoorsWindowsCalculator"));
+const ConstructionCalculator     = lazy(() => import("./features/construction/ConstructionCalculator"));
+const FlooringCalculator         = lazy(() => import("./features/construction/FlooringCalculator"));
+const PaintingCalculator         = lazy(() => import("./features/construction/PaintingCalculator"));
+const PlumbingCalculator         = lazy(() => import("./features/construction/PlumbingCalculator"));
+const ElectricalCalculator       = lazy(() => import("./features/construction/ElectricalCalculator"));
+const InteriorCalculator         = lazy(() => import("./features/construction/InteriorCalculator"));
+const DoorsWindowsCalculator     = lazy(() => import("./features/construction/DoorsWindowsCalculator"));
 const MaterialQuantityCalculator = lazy(() => import("./features/construction/MaterialQuantityCalculator"));
 
 const SignIn      = lazy(() => import("./features/auth/SignIn"));
@@ -49,9 +50,8 @@ type CalculatorType =
 
 const MainLayout = () => {
   const { hasPaid } = useUser();
-  const location = useLocation();
+  const location    = useLocation();
 
-  // Read route state set by Dashboard when user clicks "Open/Edit"
   const routeState = location.state as {
     openCalculator?: CalculatorType;
     projectData?: any;
@@ -62,12 +62,12 @@ const MainLayout = () => {
     routeState?.openCalculator ?? "construction"
   );
 
-  // If user navigates here from Dashboard with a specific calculator to open,
-  // switch to it and scroll down to the calculator area.
+  // GSAP: smooth fade+slide when switching calculator tabs
+  const { panelRef } = useGSAPTabSwitch(activeCalculator);
+
   useEffect(() => {
     if (routeState?.openCalculator) {
       startTransition(() => setActiveCalculator(routeState.openCalculator!));
-      // Slight delay so the tab renders before scrolling
       setTimeout(() => {
         const el = document.getElementById("tools");
         if (el) el.scrollIntoView({ behavior: "smooth" });
@@ -79,7 +79,6 @@ const MainLayout = () => {
     startTransition(() => setActiveCalculator(tab));
   };
 
-  // Pass projectData via location.state so each calculator can read it
   const projectData = routeState?.projectData ?? null;
 
   const renderCalculator = () => {
@@ -106,8 +105,8 @@ const MainLayout = () => {
 
       <main className="flex-grow">
         <Hero />
+
         <div className="container mx-auto px-4 py-8 max-w-7xl" id="tools">
-          {/* Banner shown when a saved project is loaded */}
           {projectData && routeState?.projectName && (
             <div className="mb-4 flex items-center gap-3 px-4 py-3 bg-primary/10 border border-primary/30 rounded-xl text-sm">
               <i className="fas fa-folder-open text-primary"></i>
@@ -123,12 +122,15 @@ const MainLayout = () => {
             setActiveCalculator={handleTabChange}
             hasPaid={hasPaid}
           />
-          <div className="mt-8 min-h-[600px]">
+
+          {/* panelRef: GSAP fades/slides this div in on every tab switch */}
+          <div ref={panelRef} className="mt-8 min-h-[600px]">
             <Suspense fallback={<Loading />}>
               {renderCalculator()}
             </Suspense>
           </div>
         </div>
+
         <FAQ />
       </main>
 
