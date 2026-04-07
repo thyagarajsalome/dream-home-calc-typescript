@@ -35,14 +35,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      if (session?.user) fetchProfile(session.user.id, session.user.email);
+      if (session?.user) fetchProfile(session.user.id);
       else setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        await fetchProfile(session.user.id, session.user.email);
+        await fetchProfile(session.user.id);
       } else {
         setHasPaid(false);
       }
@@ -52,18 +52,17 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchProfile = async (userId: string, email?: string) => {
-    if (email === 'thyagaraja1983@gmail.com') {
-      setHasPaid(true);
-      return;
-    }
+  // Removed the 'email' parameter since we no longer need to check it on the client side
+  const fetchProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('has_paid')
         .eq('id', userId)
         .maybeSingle(); 
+      
       if (error) console.error("Error fetching profile:", error);
+      
       setHasPaid(data?.has_paid || false);
     } catch (err) {
       console.error("Unexpected error fetching profile:", err);
