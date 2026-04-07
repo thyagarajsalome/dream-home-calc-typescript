@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-// FIX: Point to new config location
 import { supabase } from "../config/supabaseClient";
 import { User } from "@supabase/supabase-js";
 
@@ -9,6 +8,8 @@ interface UserContextType {
   setHasPaid: (status: boolean) => void;
   loading: boolean;
   installPrompt: any;
+  markup: number;
+  setMarkup: (val: number) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -18,6 +19,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [hasPaid, setHasPaid] = useState(false);
   const [loading, setLoading] = useState(true);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
+  
+  // NEW: Hidden Builder Profit Margin
+  const [markup, setMarkup] = useState(0);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -31,7 +35,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      // Pass the email to fetchProfile
       if (session?.user) fetchProfile(session.user.id, session.user.email);
       else setLoading(false);
     });
@@ -39,7 +42,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        // Pass the email to fetchProfile
         await fetchProfile(session.user.id, session.user.email);
       } else {
         setHasPaid(false);
@@ -50,21 +52,17 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  // Updated to accept email for the admin check
   const fetchProfile = async (userId: string, email?: string) => {
-    // ADMIN OVERRIDE FOR TESTING: Bypasses database and grants Pro access
     if (email === 'thyagaraja1983@gmail.com') {
       setHasPaid(true);
       return;
     }
-
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('has_paid')
         .eq('id', userId)
         .maybeSingle(); 
-
       if (error) console.error("Error fetching profile:", error);
       setHasPaid(data?.has_paid || false);
     } catch (err) {
@@ -74,7 +72,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <UserContext.Provider value={{ user, hasPaid, setHasPaid, loading, installPrompt }}>
+    <UserContext.Provider value={{ user, hasPaid, setHasPaid, loading, installPrompt, markup, setMarkup }}>
       {children}
     </UserContext.Provider>
   );
@@ -82,8 +80,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useUser = () => {
   const context = useContext(UserContext);
-  if (context === undefined) {
-    throw new Error("useUser must be used within a UserProvider");
-  }
+  if (context === undefined) throw new Error("useUser must be used within a UserProvider");
   return context;
 };

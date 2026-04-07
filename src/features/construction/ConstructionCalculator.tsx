@@ -1,3 +1,4 @@
+// src/features/construction/ConstructionCalculator.tsx
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { useProjectActions } from "../../hooks/useProjectActions";
@@ -68,7 +69,9 @@ function formatINR(val: number): string {
 
 // ── Component ──────────────────────────────────────────────────────────────────
 export const ConstructionCalculator = () => {
-  const { hasPaid } = useUser();
+  // FIXED: Single destructured assignment for UserContext data at the top
+  const { hasPaid, markup = 0 } = useUser();
+  
   const location    = useLocation();
   const { saveProject, downloadSpreadsheetPDF, isSaving, isDownloading } = useProjectActions("construction");
   const resultsRef  = useRef<HTMLDivElement>(null);
@@ -112,12 +115,16 @@ export const ConstructionCalculator = () => {
   const parsedParking = parseFloat(parkingArea)        || 0;
   const parsedWall    = parseFloat(compoundWallLength) || 0;
 
+  // Builder Markup Multiplier
+  const mFactor = hasPaid ? (1 + markup / 100) : 1;
+
+  // FIXED: Multiply raw costs by mFactor to apply the hidden margin safely
   const costs = useMemo(() => ({
-    main:    parsedArea    * customRate,
-    parking: parsedParking * (customRate * PARKING_RATE_FACTOR),
-    wall:    parsedWall    * COMPOUND_WALL_RATE,
-    sump:    includeSump   ? SUMP_TANK_COST[quality] : 0,
-  }), [parsedArea, parsedParking, parsedWall, customRate, includeSump, quality]);
+    main:    (parsedArea    * customRate) * mFactor,
+    parking: (parsedParking * (customRate * PARKING_RATE_FACTOR)) * mFactor,
+    wall:    (parsedWall    * COMPOUND_WALL_RATE) * mFactor,
+    sump:    (includeSump   ? SUMP_TANK_COST[quality] : 0) * mFactor,
+  }), [parsedArea, parsedParking, parsedWall, customRate, includeSump, quality, mFactor]);
 
   const totalCost   = costs.main + costs.parking + costs.wall + costs.sump;
   const perSqftCost = parsedArea > 0 ? Math.round(totalCost / parsedArea) : 0;
@@ -139,8 +146,9 @@ export const ConstructionCalculator = () => {
   };
 
   const handleDownloadPDF = () => {
+    // Note: PDF will show the marked-up cost, hiding the builder's raw profit margin from the client
     const rows: [string, string, string][] = [
-      ["Construction", `${area} sq.ft @ Rs.${customRate}/sqft`, formatCurrency(costs.main)],
+      ["Construction", `${area} sq.ft @ Rs.${Math.round(customRate * mFactor)}/sqft`, formatCurrency(costs.main)],
     ];
     if (costs.parking > 0) rows.push(["Parking Area",  `${parkingArea} sq.ft`,      formatCurrency(costs.parking)]);
     if (costs.wall    > 0) rows.push(["Compound Wall", `${compoundWallLength} ft`,   formatCurrency(costs.wall)]);
@@ -201,14 +209,14 @@ export const ConstructionCalculator = () => {
                     className="w-5 h-5 text-primary rounded border-gray-300 focus:ring-primary accent-primary" />
                   <span className="ml-3 text-gray-700 font-medium text-sm">Include Sump & Septic Tank</span>
                 </label>
-                {includeSump && <span className="text-sm font-bold text-primary">+{formatCurrency(SUMP_TANK_COST[quality])}</span>}
+                {includeSump && <span className="text-sm font-bold text-primary">+{formatCurrency(SUMP_TANK_COST[quality] * mFactor)}</span>}
               </div>
               <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                 <div className="flex flex-col">
                   <span className="text-sm font-semibold text-gray-600">Custom Rate (Rs./sq.ft)</span>
                   <button type="button" onClick={() => setIsEditingRate(!isEditingRate)}
                     className="text-xs text-primary hover:underline text-left">
-                    {isEditingRate ? "<- Reset to Default" : "Edit Rate"}
+                    {isEditingRate ? "<- Reset to Default" : "Edit Raw Rate"}
                   </button>
                 </div>
                 <div className="relative w-36">
@@ -338,7 +346,7 @@ export const ConstructionCalculator = () => {
                   <tbody className="divide-y divide-gray-100">
                     <tr className="bg-primary/5">
                       <td className="px-4 py-3 font-semibold text-secondary">
-                        Construction <span className="text-xs text-gray-400 block font-normal">({area} sqft @ Rs.{customRate})</span>
+                        Construction <span className="text-xs text-gray-400 block font-normal">({area} sqft @ Rs.{Math.round(customRate * mFactor)})</span>
                       </td>
                       <td className="px-4 py-3 text-right font-bold">{formatCurrency(costs.main)}</td>
                       <td className="px-4 py-3 text-right text-gray-500 hidden sm:table-cell">

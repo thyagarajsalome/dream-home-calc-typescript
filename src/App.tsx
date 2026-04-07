@@ -50,7 +50,8 @@ type CalculatorType =
   | "materials";
 
 const MainLayout = () => {
-  const { hasPaid } = useUser();
+  // NEW: Extracted markup and setMarkup from useUser
+  const { hasPaid, markup, setMarkup } = useUser();
   const location    = useLocation();
 
   const routeState = location.state as {
@@ -124,6 +125,36 @@ const MainLayout = () => {
             hasPaid={hasPaid}
           />
 
+          {/* NEW: Builder Mode Profit Margin Adjuster */}
+          {hasPaid && (
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gradient-to-r from-gray-900 to-secondary p-4 rounded-xl shadow-lg border border-gray-800 animate-fade-in">
+              <div className="flex items-center gap-3 text-white">
+                <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
+                  <i className="fas fa-user-tie text-primary"></i>
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm">Builder Mode Active</h4>
+                  <p className="text-xs text-gray-400">Client only sees final totals. Profit margin is hidden.</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-bold text-primary uppercase tracking-wider hidden md:block">Profit Margin:</span>
+                <select 
+                  value={markup} 
+                  onChange={(e) => setMarkup(Number(e.target.value))}
+                  className="bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all cursor-pointer w-full sm:w-auto"
+                >
+                  <option value={0}>0% (Raw Cost)</option>
+                  <option value={10}>+ 10% Margin</option>
+                  <option value={15}>+ 15% Margin</option>
+                  <option value={20}>+ 20% Margin</option>
+                  <option value={25}>+ 25% Margin</option>
+                  <option value={30}>+ 30% Margin</option>
+                </select>
+              </div>
+            </div>
+          )}
+
           {/* panelRef: GSAP fades/slides this div in on every tab switch */}
           <div ref={panelRef} className="mt-8 min-h-[600px]">
             <Suspense fallback={<Loading />}>
@@ -188,7 +219,7 @@ const AppRoutes = () => {
 
         <Route path="/"  element={<MainLayout />} />
         <Route path="*"  element={<Navigate to="/" />} />
-<Route path="/plans" element={<PlanGallery />} />
+        <Route path="/plans" element={<PlanGallery />} />
 
       </Routes>
     </Suspense>

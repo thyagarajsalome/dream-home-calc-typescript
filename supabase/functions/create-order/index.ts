@@ -6,10 +6,10 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-// UPDATED PRICING (in paise: 29900 = ₹299)
+// UPDATED PRICING FOR B2B (in paise: 99900 = ₹999, 499900 = ₹4,999)
 const PLANS: Record<string, number> = {
-  monthly: 29900,
-  annual: 149900
+  monthly: 99900,
+  annual: 499900
 };
 
 Deno.serve(async (req) => {
@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const planId = body.planId || "monthly";
-    const amount = PLANS[planId as string] || 29900;
+    const amount = PLANS[planId as string] || 99900;
 
     const key_id = Deno.env.get('RAZORPAY_KEY_ID');
     const key_secret = Deno.env.get('RAZORPAY_KEY_SECRET');

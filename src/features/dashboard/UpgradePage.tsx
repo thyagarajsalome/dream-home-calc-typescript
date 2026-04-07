@@ -10,21 +10,20 @@ interface UpgradePageProps {
 
 type PlanID = "monthly" | "annual";
 
-// UPDATED PRICING TEXT
 const plans = {
   monthly: {
     id: "monthly" as PlanID,
-    name: "Pro Monthly",
-    priceString: "₹299",
+    name: "Builder Pro Monthly",
+    priceString: "₹999",
     term: "/ month",
-    description: "Pro Monthly Plan",
+    description: "Professional tools for contractors & builders",
   },
   annual: {
     id: "annual" as PlanID,
-    name: "Pro Annual",
-    priceString: "₹1,499",
+    name: "Builder Pro Annual",
+    priceString: "₹4,999",
     term: "/ year",
-    description: "Pro Annual Plan",
+    description: "Professional tools for contractors & builders",
     badge: "Best Value",
     savings: "Save 58% vs. Monthly",
   },
@@ -58,10 +57,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user }) => {
       });
 
       if (invokeError) throw new Error(invokeError.message);
-      
-      if (data && data.error) {
-        throw new Error(data.error); 
-      }
+      if (data && data.error) throw new Error(data.error); 
 
       const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
       if (!razorpayKey) throw new Error("Razorpay configuration missing on frontend.");
@@ -70,7 +66,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user }) => {
         key: razorpayKey as string,
         amount: data.amount,
         currency: data.currency,
-        name: "DreamHomeCalc Pro",
+        name: "HDE Builder Pro",
         description: selectedPlan.description,
         order_id: data.id,
         handler: async (response: any) => {
@@ -115,16 +111,16 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user }) => {
             <i className="fas fa-check"></i>
           </div>
           <h3 className="text-2xl font-bold text-gray-800 mb-2">Payment Successful!</h3>
-          <p className="text-gray-600">Pro access unlocked. Redirecting...</p>
+          <p className="text-gray-600">Builder Pro access unlocked. Redirecting...</p>
         </div>
       ) : (
         <>
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <span className="bg-primary/10 text-primary font-bold px-4 py-1.5 rounded-full text-sm uppercase tracking-wider mb-4 inline-block">Premium Access</span>
+            <span className="bg-primary/10 text-primary font-bold px-4 py-1.5 rounded-full text-sm uppercase tracking-wider mb-4 inline-block border border-primary/20">For Contractors & Builders</span>
             <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6 leading-tight">
-              Upgrade to <span className="text-primary">DreamHomeCalc Pro</span>
+              Upgrade to <span className="text-primary">HDE Builder Pro</span>
             </h2>
-            <p className="text-xl text-gray-600">Unlock reports, material breakdowns, and save unlimited projects.</p>
+            <p className="text-xl text-gray-600">The ultimate estimation tool. Add hidden profit margins, export professional PDF quotes, and win more clients.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto items-center">
