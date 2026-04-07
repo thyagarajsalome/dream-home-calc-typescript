@@ -6,9 +6,10 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
+// UPDATED PRICING (in paise: 29900 = ₹299)
 const PLANS: Record<string, number> = {
-  monthly: 9900,
-  annual: 49900
+  monthly: 29900,
+  annual: 149900
 };
 
 Deno.serve(async (req) => {
@@ -20,7 +21,6 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) throw new Error('No authorization header found');
 
-    // Extract the JWT token
     const token = authHeader.replace('Bearer ', '');
 
     const supabaseClient = createClient(
@@ -29,13 +29,12 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    // Pass the token explicitly here!
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
     if (authError || !user) throw new Error('Session expired. Please log out and log back in.');
 
     const body = await req.json().catch(() => ({}));
     const planId = body.planId || "monthly";
-    const amount = PLANS[planId as string] || 9900;
+    const amount = PLANS[planId as string] || 29900;
 
     const key_id = Deno.env.get('RAZORPAY_KEY_ID');
     const key_secret = Deno.env.get('RAZORPAY_KEY_SECRET');
