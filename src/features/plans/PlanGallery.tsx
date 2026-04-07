@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../../config/supabaseClient";
 import { useUser } from "../../context/UserContext";
 import { useToast } from "../../context/ToastContext";
-import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { PlanUploader } from "./PlanUploader";
 
@@ -16,11 +15,10 @@ interface HousePlan {
   title: string;
   area_sqft: number;
   facing: string;
-  preview_url: string;
   file_url: string;
 }
 
-// AMAZON STYLE HOVER ZOOM (No Blur)
+// AMAZON STYLE HOVER ZOOM (Directly on the actual image)
 const HoverZoomImage = ({ src, alt, onClick }: { src: string, alt: string, onClick: () => void }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [position, setPosition] = useState({ x: 50, y: 50 });
@@ -34,7 +32,7 @@ const HoverZoomImage = ({ src, alt, onClick }: { src: string, alt: string, onCli
 
   return (
     <div 
-      className="relative aspect-[9/16] bg-gray-100 group cursor-crosshair overflow-hidden"
+      className="relative aspect-[3/4] bg-gray-100 group cursor-crosshair overflow-hidden w-full"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onMouseMove={handleMouseMove}
@@ -43,7 +41,7 @@ const HoverZoomImage = ({ src, alt, onClick }: { src: string, alt: string, onCli
       <img 
         src={src} 
         alt={alt}
-        className={`w-full h-full object-cover filter transition-all duration-150 ${isHovered ? 'opacity-0' : 'opacity-100'}`}
+        className={`w-full h-full object-cover transition-opacity duration-150 ${isHovered ? 'opacity-0' : 'opacity-100'}`}
         loading="lazy"
       />
       <div 
@@ -55,8 +53,8 @@ const HoverZoomImage = ({ src, alt, onClick }: { src: string, alt: string, onCli
           backgroundRepeat: 'no-repeat'
         }}
       />
-      <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-         <i className="fas fa-expand text-white text-3xl drop-shadow-md opacity-50"></i>
+      <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+         <i className="fas fa-expand text-white text-3xl drop-shadow-md opacity-70"></i>
       </div>
     </div>
   );
@@ -69,8 +67,6 @@ export const PlanGallery: React.FC = () => {
   const [hasMore, setHasMore] = useState(true);
   
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
-  
-  // Download Progress State
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [downloadProgress, setDownloadProgress] = useState(0);
 
@@ -86,7 +82,7 @@ export const PlanGallery: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('house_plans')
-        .select('*')
+        .select('id, title, area_sqft, facing, file_url')
         .order('created_at', { ascending: false })
         .range(from, to);
 
@@ -106,73 +102,42 @@ export const PlanGallery: React.FC = () => {
     fetchPlans(0);
   }, [fetchPlans]);
 
-  // DELETE FUNCTION
   const handleDelete = async (plan: HousePlan) => {
-    const isConfirmed = window.confirm(
-      `⚠️ ALERT: You are about to delete:\n\n"${plan.title}"\n\nThis will remove the file from the database and storage. Are you sure?`
-    );
-    if (!isConfirmed) return;
-
+    if (!window.confirm(`⚠️ Delete "${plan.title}" entirely?`)) return;
     try {
       showToast("Deleting plan...", "info");
-      
-      // 1. Delete from Database
       const { error: dbError } = await supabase.from('house_plans').delete().eq('id', plan.id);
       if (dbError) throw dbError;
 
-      // 2. Try to Delete from Storage (Clean URLs to relative paths first)
-      const getRelativePath = (url: string) => {
-        if (url.includes('/house-plans/')) return url.split('/house-plans/')[1].replace(/^\/+/, '');
-        return url;
-      };
-      await supabase.storage.from('house-plans').remove([
-        getRelativePath(plan.file_url), 
-        getRelativePath(plan.preview_url)
-      ]);
-
+      const getRelativePath = (url: string) => url.includes('/house-plans/') ? url.split('/house-plans/')[1].replace(/^\/+/, '') : url;
+      
+      await supabase.storage.from('house-plans').remove([getRelativePath(plan.file_url)]);
+      
       setPlans(prev => prev.filter(p => p.id !== plan.id));
-      showToast("Plan deleted successfully.", "success");
+      showToast("Plan deleted.", "success");
     } catch (err: any) {
       showToast("Failed to delete plan: " + err.message, "error");
     }
   };
 
-  // DOWNLOAD FUNCTION
   const handleDownload = async (plan: HousePlan) => {
-    if (!user) {
-      showToast("Please sign in to download plans", "info");
-      navigate("/signin");
-      return;
-    }
-
-    if (!hasPaid && user.email !== ADMIN_EMAIL) {
-      navigate("/upgrade");
-      return;
-    }
+    if (!user) { navigate("/signin"); return; }
+    if (!hasPaid && user.email !== ADMIN_EMAIL) { navigate("/upgrade"); return; }
 
     setDownloadingId(plan.id);
     setDownloadProgress(10);
 
-    // Simulate progress bar for generating the secure link
-    const interval = setInterval(() => {
-      setDownloadProgress(prev => (prev < 90 ? prev + 15 : prev));
-    }, 200);
+    const interval = setInterval(() => setDownloadProgress(prev => (prev < 90 ? prev + 15 : prev)), 200);
 
     try {
       let cleanPath = plan.file_url;
       if (cleanPath.includes('http')) {
-        try {
-          const urlObj = new URL(cleanPath);
-          const parts = urlObj.pathname.split('/house-plans/');
-          if (parts.length > 1) cleanPath = parts[1];
-        } catch (e) {
-          if(cleanPath.includes('/house-plans/')) cleanPath = cleanPath.split('/house-plans/')[1];
-        }
+        try { cleanPath = new URL(cleanPath).pathname.split('/house-plans/')[1]; } 
+        catch (e) { cleanPath = cleanPath.split('/house-plans/')[1]; }
       }
       cleanPath = cleanPath.replace(/^\/+/, '');
 
       const { data, error } = await supabase.storage.from('house-plans').createSignedUrl(cleanPath, 60);
-
       if (error) throw error;
       
       setDownloadProgress(100);
@@ -181,96 +146,74 @@ export const PlanGallery: React.FC = () => {
       if (data?.signedUrl) {
         setTimeout(() => {
           window.open(data.signedUrl, '_blank');
-          showToast("Download started!", "success");
           setDownloadingId(null);
           setDownloadProgress(0);
-        }, 500);
+        }, 300);
       }
     } catch (err: any) {
       clearInterval(interval);
-      showToast("Download failed: " + err.message, "error");
+      showToast("Download failed.", "error");
       setDownloadingId(null);
       setDownloadProgress(0);
     }
   };
 
-  const getPreviewUrl = (path: string) => {
+  // Now we just fetch the actual file_url for viewing
+  const getImageUrl = (path: string) => {
     if (path.startsWith('http')) return path;
-    const cleanPath = path.includes('/') ? path : `previews/${path}`;
-    const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-    return `${baseUrl}/storage/v1/object/public/house-plans/${cleanPath}`;
+    const cleanPath = path.replace(/^\/+/, '');
+    return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/house-plans/${cleanPath}`;
   };
 
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
       
-      {user?.email === ADMIN_EMAIL && (
-        <PlanUploader onUploadSuccess={() => fetchPlans(0)} />
-      )}
+      {user?.email === ADMIN_EMAIL && <PlanUploader onUploadSuccess={() => fetchPlans(0)} />}
 
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold text-secondary">House Plan Library</h1>
-        <p className="text-gray-500 mt-2">Explore professional floor plans ready for download.</p>
+        <p className="text-gray-500 mt-2">Click to zoom, or download the high-resolution files.</p>
       </div>
 
-      {/* COMPACT RESPONSIVE GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
+      {/* SLEEK, NO-PADDING GRID */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
         {plans.map((plan) => (
-          <Card key={plan.id} className="overflow-hidden border-gray-100 flex flex-col h-full p-0 relative">
+          <div key={plan.id} className="bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-100 overflow-hidden flex flex-col relative transition-shadow">
             
-            {/* Admin Delete Button */}
             {user?.email === ADMIN_EMAIL && (
-              <button 
-                onClick={() => handleDelete(plan)}
-                className="absolute top-2 right-2 z-20 bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110"
-                title="Delete Plan"
-              >
-                <i className="fas fa-trash-alt text-sm"></i>
+              <button onClick={() => handleDelete(plan)} className="absolute top-2 right-2 z-20 bg-red-500/90 hover:bg-red-600 text-white w-7 h-7 rounded-md flex items-center justify-center shadow transition-transform hover:scale-105" title="Delete Plan">
+                <i className="fas fa-trash-alt text-xs"></i>
               </button>
             )}
 
-            <HoverZoomImage 
-              src={getPreviewUrl(plan.preview_url)} 
-              alt={plan.title} 
-              onClick={() => setZoomedImage(getPreviewUrl(plan.preview_url))} 
-            />
+            {/* Image hits the very edge of the card */}
+            <HoverZoomImage src={getImageUrl(plan.file_url)} alt={plan.title} onClick={() => setZoomedImage(getImageUrl(plan.file_url))} />
             
-            <div className="p-4 flex-grow flex flex-col justify-between border-t border-gray-100 bg-white z-10 relative">
-              <div>
-                <h3 className="font-bold text-gray-800 text-base line-clamp-1">{plan.title}</h3>
-                <div className="flex gap-2 mt-1 mb-3">
-                  <span className="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-600 font-medium">
-                    <i className="fas fa-ruler-combined mr-1"></i>{plan.area_sqft} sq.ft
-                  </span>
-                  <span className="text-[10px] bg-primary/10 px-2 py-1 rounded text-primary font-bold">
-                    <i className="fas fa-compass mr-1"></i>{plan.facing}
-                  </span>
-                </div>
+            {/* Extremely tight info bar */}
+            <div className="p-3 flex flex-col gap-2 bg-white">
+              <h3 className="font-bold text-gray-800 text-sm truncate" title={plan.title}>{plan.title}</h3>
+              <div className="flex justify-between items-center text-[10px] font-bold">
+                <span className="text-gray-500 bg-gray-100 px-2 py-1 rounded"><i className="fas fa-ruler-combined mr-1"></i>{plan.area_sqft} sqft</span>
+                <span className="text-primary bg-primary/10 px-2 py-1 rounded"><i className="fas fa-compass mr-1"></i>{plan.facing}</span>
               </div>
               
-              {/* Download Button / Progress Bar */}
               {downloadingId === plan.id ? (
-                <div className="w-full">
-                   <div className="flex justify-between text-[10px] font-bold text-gray-500 mb-1">
-                      <span>Preparing...</span>
-                      <span>{downloadProgress}%</span>
-                   </div>
-                   <div className="w-full bg-gray-200 rounded-full h-2">
-                     <div className="bg-primary h-2 rounded-full transition-all duration-200" style={{ width: `${downloadProgress}%` }}></div>
+                <div className="w-full mt-1">
+                   <div className="w-full bg-gray-200 rounded-full h-1.5">
+                     <div className="bg-primary h-1.5 rounded-full transition-all duration-200" style={{ width: `${downloadProgress}%` }}></div>
                    </div>
                 </div>
               ) : (
-                <Button 
+                <button 
                   onClick={() => handleDownload(plan)}
-                  variant={hasPaid || user?.email === ADMIN_EMAIL ? "primary" : "outline"}
-                  className="w-full text-sm py-2"
-                  icon={hasPaid || user?.email === ADMIN_EMAIL ? "fas fa-download" : "fas fa-lock"}
+                  className={`mt-1 w-full py-1.5 text-xs font-bold rounded-lg transition-colors ${hasPaid || user?.email === ADMIN_EMAIL ? "bg-primary text-white hover:bg-yellow-600" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
                 >
+                  <i className={`mr-1.5 ${hasPaid || user?.email === ADMIN_EMAIL ? "fas fa-download" : "fas fa-lock"}`}></i>
                   {hasPaid || user?.email === ADMIN_EMAIL ? "Download" : "Unlock"}
-                </Button>
+                </button>
               )}
             </div>
-          </Card>
+          </div>
         ))}
       </div>
 
@@ -282,20 +225,11 @@ export const PlanGallery: React.FC = () => {
         </div>
       )}
 
+      {/* Fullscreen Lightbox */}
       {zoomedImage && (
-        <div 
-          className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center p-4 cursor-zoom-out animate-fade-in"
-          onClick={() => setZoomedImage(null)}
-        >
-          <button className="absolute top-6 right-6 text-white/50 hover:text-white text-4xl transition-colors">
-            &times;
-          </button>
-          <img 
-            src={zoomedImage} 
-            alt="Zoomed Plan" 
-            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-            onClick={(e) => e.stopPropagation()} 
-          />
+        <div className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center p-2 md:p-8 cursor-zoom-out animate-fade-in" onClick={() => setZoomedImage(null)}>
+          <button className="absolute top-4 right-4 md:top-6 md:right-6 text-white/50 hover:text-white text-3xl md:text-4xl transition-colors">&times;</button>
+          <img src={zoomedImage} alt="Zoomed Plan" className="max-w-full max-h-full object-contain rounded shadow-2xl" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
     </div>
