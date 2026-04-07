@@ -19,7 +19,7 @@ interface HousePlan {
 }
 
 // AMAZON STYLE HOVER ZOOM (Directly on the actual image)
-const HoverZoomImage = ({ src, alt, onClick }: { src: string, alt: string, onClick: () => void }) => {
+const HoverZoomImage = ({ src, alt, onClick, isLocked }: { src: string, alt: string, onClick: () => void, isLocked: boolean }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [position, setPosition] = useState({ x: 50, y: 50 });
 
@@ -32,7 +32,7 @@ const HoverZoomImage = ({ src, alt, onClick }: { src: string, alt: string, onCli
 
   return (
     <div 
-      className="relative aspect-[3/4] bg-gray-100 group cursor-crosshair overflow-hidden w-full"
+      className="relative aspect-[3/4] bg-gray-100 group cursor-pointer overflow-hidden w-full"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onMouseMove={handleMouseMove}
@@ -42,7 +42,6 @@ const HoverZoomImage = ({ src, alt, onClick }: { src: string, alt: string, onCli
         src={src} 
         alt={alt}
         className={`w-full h-full object-cover transition-opacity duration-150 ${isHovered ? 'opacity-0' : 'opacity-100'}`}
-        loading="lazy"
       />
       <div 
         className={`absolute inset-0 transition-opacity duration-150 pointer-events-none ${isHovered ? 'opacity-100' : 'opacity-0'}`}
@@ -53,8 +52,12 @@ const HoverZoomImage = ({ src, alt, onClick }: { src: string, alt: string, onCli
           backgroundRepeat: 'no-repeat'
         }}
       />
+      
+      {/* Show a subtle lock icon if they need to upgrade, or download icon if they have access */}
       <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-         <i className="fas fa-expand text-white text-3xl drop-shadow-md opacity-70"></i>
+         <div className="bg-black/50 text-white rounded-full w-12 h-12 flex items-center justify-center backdrop-blur-sm drop-shadow-md">
+            <i className={`fas ${isLocked ? 'fa-lock' : 'fa-download'} text-xl`}></i>
+         </div>
       </div>
     </div>
   );
@@ -66,7 +69,6 @@ export const PlanGallery: React.FC = () => {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   
-  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [downloadProgress, setDownloadProgress] = useState(0);
 
@@ -158,12 +160,29 @@ export const PlanGallery: React.FC = () => {
     }
   };
 
-  // Now we just fetch the actual file_url for viewing
+  // --- NEW: Image Click Handler ---
+  const handleImageClick = (plan: HousePlan) => {
+    if (!user) {
+      showToast("Please sign in to access premium plans.", "info");
+      navigate("/signin");
+      return;
+    }
+    // If not paid and not admin, send to upgrade page!
+    if (!hasPaid && user.email !== ADMIN_EMAIL) {
+      navigate("/upgrade");
+      return;
+    }
+    // If they ARE paid, clicking the image starts the download
+    handleDownload(plan);
+  };
+
   const getImageUrl = (path: string) => {
     if (path.startsWith('http')) return path;
     const cleanPath = path.replace(/^\/+/, '');
     return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/house-plans/${cleanPath}`;
   };
+
+  const isLockedForUser = !hasPaid && user?.email !== ADMIN_EMAIL;
 
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
@@ -172,10 +191,9 @@ export const PlanGallery: React.FC = () => {
 
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold text-secondary">House Plan Library</h1>
-        <p className="text-gray-500 mt-2">Click to zoom, or download the high-resolution files.</p>
+        <p className="text-gray-500 mt-2">Hover to zoom. Click to unlock full high-resolution plans.</p>
       </div>
 
-      {/* SLEEK, NO-PADDING GRID */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
         {plans.map((plan) => (
           <div key={plan.id} className="bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-100 overflow-hidden flex flex-col relative transition-shadow">
@@ -186,10 +204,14 @@ export const PlanGallery: React.FC = () => {
               </button>
             )}
 
-            {/* Image hits the very edge of the card */}
-            <HoverZoomImage src={getImageUrl(plan.file_url)} alt={plan.title} onClick={() => setZoomedImage(getImageUrl(plan.file_url))} />
+            {/* Click now redirects to upgrade or downloads directly */}
+            <HoverZoomImage 
+              src={getImageUrl(plan.file_url)} 
+              alt={plan.title} 
+              onClick={() => handleImageClick(plan)} 
+              isLocked={isLockedForUser}
+            />
             
-            {/* Extremely tight info bar */}
             <div className="p-3 flex flex-col gap-2 bg-white">
               <h3 className="font-bold text-gray-800 text-sm truncate" title={plan.title}>{plan.title}</h3>
               <div className="flex justify-between items-center text-[10px] font-bold">
@@ -206,10 +228,10 @@ export const PlanGallery: React.FC = () => {
               ) : (
                 <button 
                   onClick={() => handleDownload(plan)}
-                  className={`mt-1 w-full py-1.5 text-xs font-bold rounded-lg transition-colors ${hasPaid || user?.email === ADMIN_EMAIL ? "bg-primary text-white hover:bg-yellow-600" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                  className={`mt-1 w-full py-1.5 text-xs font-bold rounded-lg transition-colors ${!isLockedForUser ? "bg-primary text-white hover:bg-yellow-600" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
                 >
-                  <i className={`mr-1.5 ${hasPaid || user?.email === ADMIN_EMAIL ? "fas fa-download" : "fas fa-lock"}`}></i>
-                  {hasPaid || user?.email === ADMIN_EMAIL ? "Download" : "Unlock"}
+                  <i className={`mr-1.5 ${!isLockedForUser ? "fas fa-download" : "fas fa-lock"}`}></i>
+                  {!isLockedForUser ? "Download" : "Unlock"}
                 </button>
               )}
             </div>
@@ -224,14 +246,8 @@ export const PlanGallery: React.FC = () => {
           </Button>
         </div>
       )}
-
-      {/* Fullscreen Lightbox */}
-      {zoomedImage && (
-        <div className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center p-2 md:p-8 cursor-zoom-out animate-fade-in" onClick={() => setZoomedImage(null)}>
-          <button className="absolute top-4 right-4 md:top-6 md:right-6 text-white/50 hover:text-white text-3xl md:text-4xl transition-colors">&times;</button>
-          <img src={zoomedImage} alt="Zoomed Plan" className="max-w-full max-h-full object-contain rounded shadow-2xl" onClick={(e) => e.stopPropagation()} />
-        </div>
-      )}
+      
+      {/* Removed the Fullscreen Lightbox entirely */}
     </div>
   );
 };
