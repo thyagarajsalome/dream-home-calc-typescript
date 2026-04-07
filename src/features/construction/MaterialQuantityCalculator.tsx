@@ -1,3 +1,4 @@
+// src/features/construction/MaterialQuantityCalculator.tsx
 import React, { useState, useMemo } from "react";
 import { useUser } from "../../context/UserContext";
 import { useProjectActions } from "../../hooks/useProjectActions";
@@ -202,7 +203,8 @@ function computeBOQ(
 
 // ── Component ──────────────────────────────────────────────────────────────────
 const MaterialQuantityCalculator: React.FC = () => {
-  const { hasPaid } = useUser();
+  // NEW: Destructure markup (default to 0)
+  const { hasPaid, markup = 0 } = useUser();
   const { saveProject, downloadSpreadsheetPDF, isSaving, isDownloading } = useProjectActions("materials");
 
   const [area,    setArea]    = useState("");
@@ -212,11 +214,31 @@ const MaterialQuantityCalculator: React.FC = () => {
   const [showBOQ, setShowBOQ] = useState(false);
   const [openPhase, setOpenPhase] = useState<number | null>(0);
 
+  // Calculate Builder Markup Multiplier
+  const mFactor = hasPaid ? (1 + markup / 100) : 1;
+
   const phases = useMemo(() => {
     const a = parseFloat(area);
     if (!a || a <= 0) return null;
-    return computeBOQ(a, wallType, floors, quality);
-  }, [area, wallType, floors, quality]);
+    const basePhases = computeBOQ(a, wallType, floors, quality);
+    
+    // NEW: Automatically apply builder markup silently across all materials
+    if (mFactor !== 1) {
+      return basePhases.map(ph => {
+         const newRows = ph.rows.map(r => ({
+           ...r,
+           rate: Math.round(r.rate * mFactor),
+           cost: Math.round(r.cost * mFactor)
+         }));
+         return {
+           ...ph,
+           rows: newRows,
+           subtotal: newRows.reduce((sum, row) => sum + row.cost, 0)
+         };
+      });
+    }
+    return basePhases;
+  }, [area, wallType, floors, quality, mFactor]);
 
   const grandTotal  = phases ? phases.reduce((s, p) => s + p.subtotal, 0) : 0;
   const totalBags   = phases ? phases.flatMap(p => p.rows).filter(r => r.unit === "Bags (50kg)").reduce((s, r) => s + r.qty, 0) : 0;
@@ -239,6 +261,7 @@ const MaterialQuantityCalculator: React.FC = () => {
     const rows: [string, string, string, string][] = [];
     phases.forEach(ph => {
       ph.rows.forEach(r => {
+        // PDF hides builder margin internally by displaying marked-up rates
         rows.push([`[${ph.phase}] ${r.item}`, `${r.qty} ${r.unit}`, r.brand, formatCurrency(r.cost)]);
       });
     });
