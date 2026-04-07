@@ -16,7 +16,6 @@ interface HousePlan {
   area_sqft: number;
   facing: string;
   file_url: string;
-  // NEW FIELDS
   dimensions: string;
   floors: string;
   bedrooms: number;
@@ -67,7 +66,6 @@ export const PlanGallery: React.FC = () => {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [downloadProgress, setDownloadProgress] = useState(0);
   
-  // NEW: State for the Details Modal
   const [selectedPlan, setSelectedPlan] = useState<HousePlan | null>(null);
 
   const { user, hasPaid } = useUser();
@@ -82,7 +80,7 @@ export const PlanGallery: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('house_plans')
-        .select('*') // Ensure we select ALL fields now
+        .select('*')
         .order('created_at', { ascending: false })
         .range(from, to);
 
@@ -103,13 +101,28 @@ export const PlanGallery: React.FC = () => {
   const handleDelete = async (plan: HousePlan) => {
     if (!window.confirm(`⚠️ Delete "${plan.title}" entirely?`)) return;
     try {
-      const { error: dbError } = await supabase.from('house_plans').delete().eq('id', plan.id);
+      // Added .select() to verify deletion. Without it, RLS silently fails and returns no error!
+      const { data, error: dbError } = await supabase
+        .from('house_plans')
+        .delete()
+        .eq('id', plan.id)
+        .select();
+
       if (dbError) throw dbError;
+      
+      // If data is empty, RLS blocked the deletion
+      if (!data || data.length === 0) {
+        throw new Error("Deletion blocked by Database RLS Policy. Ensure Admin has DELETE permissions.");
+      }
+
       const getRelativePath = (url: string) => url.includes('/house-plans/') ? url.split('/house-plans/')[1].replace(/^\/+/, '') : url;
       await supabase.storage.from('house-plans').remove([getRelativePath(plan.file_url)]);
+      
       setPlans(prev => prev.filter(p => p.id !== plan.id));
       showToast("Plan deleted.", "success");
-    } catch (err: any) { showToast("Failed to delete plan: " + err.message, "error"); }
+    } catch (err: any) { 
+      showToast("Failed to delete plan: " + err.message, "error"); 
+    }
   };
 
   const handleDownload = async (plan: HousePlan) => {
@@ -185,7 +198,6 @@ export const PlanGallery: React.FC = () => {
                 </div>
               </div>
 
-              {/* NEW: Clean Icon Row for Specs */}
               <div className="flex justify-between items-center text-[10px] text-gray-500 border-t border-gray-100 pt-2 px-1">
                 <span title="Bedrooms"><i className="fas fa-bed mr-1"></i>{plan.bedrooms}</span>
                 <span title="Bathrooms"><i className="fas fa-bath mr-1"></i>{plan.bathrooms}</span>
@@ -193,7 +205,6 @@ export const PlanGallery: React.FC = () => {
                 <span title="Parking"><i className="fas fa-car mr-1"></i>{plan.parking?.split(' ')[0] || '1'}</span>
               </div>
               
-              {/* Action Buttons */}
               <div className="grid grid-cols-2 gap-2 mt-1">
                 <button 
                   onClick={() => setSelectedPlan(plan)}
@@ -226,17 +237,27 @@ export const PlanGallery: React.FC = () => {
         </div>
       )}
 
-      {/* NEW: QUICK VIEW MODAL */}
+      {/* QUICK VIEW MODAL */}
       {selectedPlan && (
         <div className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" onClick={() => setSelectedPlan(null)}>
           <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row shadow-2xl" onClick={e => e.stopPropagation()}>
             
-            {/* Image Side */}
-            <div className="md:w-1/2 bg-gray-100 relative h-64 md:h-auto">
+            {/* Image Side with Watermark */}
+            <div className="md:w-1/2 bg-gray-100 relative h-64 md:h-auto overflow-hidden">
                <img src={getImageUrl(selectedPlan.file_url)} className="w-full h-full object-contain" alt={selectedPlan.title} />
+               
                {isLockedForUser && (
-                 <div className="absolute inset-0 bg-black/20 flex items-center justify-center pointer-events-none">
-                    <i className="fas fa-lock text-white text-4xl drop-shadow-lg opacity-50"></i>
+                 <div className="absolute inset-0 bg-black/10 flex items-center justify-center pointer-events-none overflow-hidden">
+                    {/* Repeating HDE Watermark */}
+                    <div className="absolute inset-0 flex flex-wrap content-center justify-center gap-10 opacity-20 transform -rotate-12 scale-150">
+                      {Array.from({ length: 30 }).map((_, i) => (
+                        <span key={i} className="text-black font-black text-5xl select-none">HDE</span>
+                      ))}
+                    </div>
+                    {/* Center Lock Icon */}
+                    <div className="relative z-10 w-20 h-20 bg-black/60 rounded-full flex items-center justify-center backdrop-blur-sm">
+                      <i className="fas fa-lock text-white text-3xl drop-shadow-lg"></i>
+                    </div>
                  </div>
                )}
             </div>
@@ -269,7 +290,12 @@ export const PlanGallery: React.FC = () => {
                 </>
               )}
 
-              <div className="mt-auto pt-4 border-t">
+              {/* Disclaimer Block */}
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 leading-relaxed mb-4 mt-auto">
+                <strong>Disclaimer:</strong> This plan is provided as a bonus for Pro account users. It is intended for conceptual design purposes only and to give you an idea for planning your house. For accurate planning, safety, and execution, it is always recommended to consult a professional architect.
+              </div>
+
+              <div className="pt-4 border-t">
                 <Button 
                   onClick={() => { setSelectedPlan(null); handleDownload(selectedPlan); }}
                   className="w-full py-3"
