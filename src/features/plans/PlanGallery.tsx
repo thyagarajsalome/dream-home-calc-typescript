@@ -16,9 +16,15 @@ interface HousePlan {
   area_sqft: number;
   facing: string;
   file_url: string;
+  // NEW FIELDS
+  dimensions: string;
+  floors: string;
+  bedrooms: number;
+  bathrooms: number;
+  parking: string;
+  description: string;
 }
 
-// AMAZON STYLE HOVER ZOOM (Directly on the actual image)
 const HoverZoomImage = ({ src, alt, onClick, isLocked }: { src: string, alt: string, onClick: () => void, isLocked: boolean }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [position, setPosition] = useState({ x: 50, y: 50 });
@@ -38,22 +44,11 @@ const HoverZoomImage = ({ src, alt, onClick, isLocked }: { src: string, alt: str
       onMouseMove={handleMouseMove}
       onClick={onClick}
     >
-      <img 
-        src={src} 
-        alt={alt}
-        className={`w-full h-full object-cover transition-opacity duration-150 ${isHovered ? 'opacity-0' : 'opacity-100'}`}
-      />
+      <img src={src} alt={alt} className={`w-full h-full object-cover transition-opacity duration-150 ${isHovered ? 'opacity-0' : 'opacity-100'}`} />
       <div 
         className={`absolute inset-0 transition-opacity duration-150 pointer-events-none ${isHovered ? 'opacity-100' : 'opacity-0'}`}
-        style={{
-          backgroundImage: `url(${src})`,
-          backgroundPosition: `${position.x}% ${position.y}%`,
-          backgroundSize: '250%', 
-          backgroundRepeat: 'no-repeat'
-        }}
+        style={{ backgroundImage: `url(${src})`, backgroundPosition: `${position.x}% ${position.y}%`, backgroundSize: '250%', backgroundRepeat: 'no-repeat' }}
       />
-      
-      {/* Show a subtle lock icon if they need to upgrade, or download icon if they have access */}
       <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
          <div className="bg-black/50 text-white rounded-full w-12 h-12 flex items-center justify-center backdrop-blur-sm drop-shadow-md">
             <i className={`fas ${isLocked ? 'fa-lock' : 'fa-download'} text-xl`}></i>
@@ -71,6 +66,9 @@ export const PlanGallery: React.FC = () => {
   
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [downloadProgress, setDownloadProgress] = useState(0);
+  
+  // NEW: State for the Details Modal
+  const [selectedPlan, setSelectedPlan] = useState<HousePlan | null>(null);
 
   const { user, hasPaid } = useUser();
   const { showToast } = useToast();
@@ -84,7 +82,7 @@ export const PlanGallery: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('house_plans')
-        .select('id, title, area_sqft, facing, file_url')
+        .select('*') // Ensure we select ALL fields now
         .order('created_at', { ascending: false })
         .range(from, to);
 
@@ -100,35 +98,25 @@ export const PlanGallery: React.FC = () => {
     }
   }, [showToast]);
 
-  useEffect(() => {
-    fetchPlans(0);
-  }, [fetchPlans]);
+  useEffect(() => { fetchPlans(0); }, [fetchPlans]);
 
   const handleDelete = async (plan: HousePlan) => {
     if (!window.confirm(`⚠️ Delete "${plan.title}" entirely?`)) return;
     try {
-      showToast("Deleting plan...", "info");
       const { error: dbError } = await supabase.from('house_plans').delete().eq('id', plan.id);
       if (dbError) throw dbError;
-
       const getRelativePath = (url: string) => url.includes('/house-plans/') ? url.split('/house-plans/')[1].replace(/^\/+/, '') : url;
-      
       await supabase.storage.from('house-plans').remove([getRelativePath(plan.file_url)]);
-      
       setPlans(prev => prev.filter(p => p.id !== plan.id));
       showToast("Plan deleted.", "success");
-    } catch (err: any) {
-      showToast("Failed to delete plan: " + err.message, "error");
-    }
+    } catch (err: any) { showToast("Failed to delete plan: " + err.message, "error"); }
   };
 
   const handleDownload = async (plan: HousePlan) => {
     if (!user) { navigate("/signin"); return; }
     if (!hasPaid && user.email !== ADMIN_EMAIL) { navigate("/upgrade"); return; }
-
     setDownloadingId(plan.id);
     setDownloadProgress(10);
-
     const interval = setInterval(() => setDownloadProgress(prev => (prev < 90 ? prev + 15 : prev)), 200);
 
     try {
@@ -138,60 +126,42 @@ export const PlanGallery: React.FC = () => {
         catch (e) { cleanPath = cleanPath.split('/house-plans/')[1]; }
       }
       cleanPath = cleanPath.replace(/^\/+/, '');
-
       const { data, error } = await supabase.storage.from('house-plans').createSignedUrl(cleanPath, 60);
       if (error) throw error;
-      
       setDownloadProgress(100);
       clearInterval(interval);
-
       if (data?.signedUrl) {
         setTimeout(() => {
           window.open(data.signedUrl, '_blank');
-          setDownloadingId(null);
-          setDownloadProgress(0);
+          setDownloadingId(null); setDownloadProgress(0);
         }, 300);
       }
     } catch (err: any) {
-      clearInterval(interval);
-      showToast("Download failed.", "error");
-      setDownloadingId(null);
-      setDownloadProgress(0);
+      clearInterval(interval); showToast("Download failed.", "error"); setDownloadingId(null); setDownloadProgress(0);
     }
   };
 
-  // --- NEW: Image Click Handler ---
   const handleImageClick = (plan: HousePlan) => {
-    if (!user) {
-      showToast("Please sign in to access premium plans.", "info");
-      navigate("/signin");
-      return;
-    }
-    // If not paid and not admin, send to upgrade page!
-    if (!hasPaid && user.email !== ADMIN_EMAIL) {
-      navigate("/upgrade");
-      return;
-    }
-    // If they ARE paid, clicking the image starts the download
+    if (!user) { navigate("/signin"); return; }
+    if (!hasPaid && user.email !== ADMIN_EMAIL) { navigate("/upgrade"); return; }
     handleDownload(plan);
   };
 
   const getImageUrl = (path: string) => {
     if (path.startsWith('http')) return path;
-    const cleanPath = path.replace(/^\/+/, '');
-    return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/house-plans/${cleanPath}`;
+    return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/house-plans/${path.replace(/^\/+/, '')}`;
   };
 
   const isLockedForUser = !hasPaid && user?.email !== ADMIN_EMAIL;
 
   return (
-    <div className="container mx-auto px-4 py-8 animate-fade-in">
+    <div className="container mx-auto px-4 py-8 animate-fade-in relative">
       
       {user?.email === ADMIN_EMAIL && <PlanUploader onUploadSuccess={() => fetchPlans(0)} />}
 
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold text-secondary">House Plan Library</h1>
-        <p className="text-gray-500 mt-2">Hover to zoom. Click to unlock full high-resolution plans.</p>
+        <p className="text-gray-500 mt-2">Hover to zoom. Click image to unlock, or view specs for details.</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
@@ -199,41 +169,50 @@ export const PlanGallery: React.FC = () => {
           <div key={plan.id} className="bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-100 overflow-hidden flex flex-col relative transition-shadow">
             
             {user?.email === ADMIN_EMAIL && (
-              <button onClick={() => handleDelete(plan)} className="absolute top-2 right-2 z-20 bg-red-500/90 hover:bg-red-600 text-white w-7 h-7 rounded-md flex items-center justify-center shadow transition-transform hover:scale-105" title="Delete Plan">
+              <button onClick={() => handleDelete(plan)} className="absolute top-2 right-2 z-20 bg-red-500/90 hover:bg-red-600 text-white w-7 h-7 rounded-md flex items-center justify-center shadow">
                 <i className="fas fa-trash-alt text-xs"></i>
               </button>
             )}
 
-            {/* Click now redirects to upgrade or downloads directly */}
-            <HoverZoomImage 
-              src={getImageUrl(plan.file_url)} 
-              alt={plan.title} 
-              onClick={() => handleImageClick(plan)} 
-              isLocked={isLockedForUser}
-            />
+            <HoverZoomImage src={getImageUrl(plan.file_url)} alt={plan.title} onClick={() => handleImageClick(plan)} isLocked={isLockedForUser} />
             
             <div className="p-3 flex flex-col gap-2 bg-white">
-              <h3 className="font-bold text-gray-800 text-sm truncate" title={plan.title}>{plan.title}</h3>
-              <div className="flex justify-between items-center text-[10px] font-bold">
-                <span className="text-gray-500 bg-gray-100 px-2 py-1 rounded"><i className="fas fa-ruler-combined mr-1"></i>{plan.area_sqft} sqft</span>
-                <span className="text-primary bg-primary/10 px-2 py-1 rounded"><i className="fas fa-compass mr-1"></i>{plan.facing}</span>
+              <div>
+                <h3 className="font-bold text-gray-800 text-sm truncate" title={plan.title}>{plan.title}</h3>
+                <div className="flex justify-between items-center text-[10px] font-bold mt-1">
+                  <span className="text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{plan.dimensions || `${plan.area_sqft} sqft`}</span>
+                  <span className="text-primary bg-primary/10 px-2 py-0.5 rounded">{plan.facing}</span>
+                </div>
+              </div>
+
+              {/* NEW: Clean Icon Row for Specs */}
+              <div className="flex justify-between items-center text-[10px] text-gray-500 border-t border-gray-100 pt-2 px-1">
+                <span title="Bedrooms"><i className="fas fa-bed mr-1"></i>{plan.bedrooms}</span>
+                <span title="Bathrooms"><i className="fas fa-bath mr-1"></i>{plan.bathrooms}</span>
+                <span title="Floors"><i className="fas fa-layer-group mr-1"></i>{plan.floors}</span>
+                <span title="Parking"><i className="fas fa-car mr-1"></i>{plan.parking?.split(' ')[0] || '1'}</span>
               </div>
               
-              {downloadingId === plan.id ? (
-                <div className="w-full mt-1">
-                   <div className="w-full bg-gray-200 rounded-full h-1.5">
-                     <div className="bg-primary h-1.5 rounded-full transition-all duration-200" style={{ width: `${downloadProgress}%` }}></div>
-                   </div>
-                </div>
-              ) : (
+              {/* Action Buttons */}
+              <div className="grid grid-cols-2 gap-2 mt-1">
                 <button 
-                  onClick={() => handleDownload(plan)}
-                  className={`mt-1 w-full py-1.5 text-xs font-bold rounded-lg transition-colors ${!isLockedForUser ? "bg-primary text-white hover:bg-yellow-600" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                  onClick={() => setSelectedPlan(plan)}
+                  className="w-full py-1.5 text-xs font-bold rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
                 >
-                  <i className={`mr-1.5 ${!isLockedForUser ? "fas fa-download" : "fas fa-lock"}`}></i>
-                  {!isLockedForUser ? "Download" : "Unlock"}
+                  <i className="fas fa-info-circle mr-1"></i> Specs
                 </button>
-              )}
+
+                {downloadingId === plan.id ? (
+                   <div className="w-full flex items-center bg-gray-100 rounded-lg px-2"><div className="w-full bg-gray-200 rounded-full h-1.5"><div className="bg-primary h-1.5 rounded-full" style={{ width: `${downloadProgress}%` }}></div></div></div>
+                ) : (
+                  <button 
+                    onClick={() => handleDownload(plan)}
+                    className={`w-full py-1.5 text-xs font-bold rounded-lg transition-colors ${!isLockedForUser ? "bg-primary text-white hover:bg-yellow-600" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                  >
+                    <i className={`mr-1 ${!isLockedForUser ? "fas fa-download" : "fas fa-lock"}`}></i> {!isLockedForUser ? "DL" : "Pro"}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         ))}
@@ -246,8 +225,65 @@ export const PlanGallery: React.FC = () => {
           </Button>
         </div>
       )}
-      
-      {/* Removed the Fullscreen Lightbox entirely */}
+
+      {/* NEW: QUICK VIEW MODAL */}
+      {selectedPlan && (
+        <div className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" onClick={() => setSelectedPlan(null)}>
+          <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row shadow-2xl" onClick={e => e.stopPropagation()}>
+            
+            {/* Image Side */}
+            <div className="md:w-1/2 bg-gray-100 relative h-64 md:h-auto">
+               <img src={getImageUrl(selectedPlan.file_url)} className="w-full h-full object-contain" alt={selectedPlan.title} />
+               {isLockedForUser && (
+                 <div className="absolute inset-0 bg-black/20 flex items-center justify-center pointer-events-none">
+                    <i className="fas fa-lock text-white text-4xl drop-shadow-lg opacity-50"></i>
+                 </div>
+               )}
+            </div>
+
+            {/* Details Side */}
+            <div className="md:w-1/2 p-6 md:p-8 flex flex-col h-[50vh] md:h-auto overflow-y-auto">
+              <div className="flex justify-between items-start mb-4">
+                <h2 className="text-2xl font-bold text-gray-800 pr-4">{selectedPlan.title}</h2>
+                <button onClick={() => setSelectedPlan(null)} className="text-gray-400 hover:text-gray-800 text-2xl leading-none">&times;</button>
+              </div>
+
+              <div className="flex flex-wrap gap-2 mb-6">
+                 <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold"><i className="fas fa-ruler-combined mr-1"></i> {selectedPlan.area_sqft} Sq.Ft</span>
+                 <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-bold"><i className="fas fa-compass mr-1"></i> Facing: {selectedPlan.facing}</span>
+                 {selectedPlan.dimensions && <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-bold"><i className="fas fa-vector-square mr-1"></i> {selectedPlan.dimensions}</span>}
+              </div>
+
+              <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider border-b pb-2 mb-4">Key Specifications</h4>
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="flex items-center gap-3"><div className="w-8 h-8 rounded bg-blue-50 text-blue-500 flex items-center justify-center"><i className="fas fa-bed"></i></div><div><p className="text-[10px] text-gray-500 font-bold uppercase">Bedrooms</p><p className="font-bold text-gray-800">{selectedPlan.bedrooms}</p></div></div>
+                <div className="flex items-center gap-3"><div className="w-8 h-8 rounded bg-cyan-50 text-cyan-500 flex items-center justify-center"><i className="fas fa-bath"></i></div><div><p className="text-[10px] text-gray-500 font-bold uppercase">Bathrooms</p><p className="font-bold text-gray-800">{selectedPlan.bathrooms}</p></div></div>
+                <div className="flex items-center gap-3"><div className="w-8 h-8 rounded bg-purple-50 text-purple-500 flex items-center justify-center"><i className="fas fa-layer-group"></i></div><div><p className="text-[10px] text-gray-500 font-bold uppercase">Floors</p><p className="font-bold text-gray-800">{selectedPlan.floors}</p></div></div>
+                <div className="flex items-center gap-3"><div className="w-8 h-8 rounded bg-green-50 text-green-500 flex items-center justify-center"><i className="fas fa-car"></i></div><div><p className="text-[10px] text-gray-500 font-bold uppercase">Parking</p><p className="font-bold text-gray-800">{selectedPlan.parking}</p></div></div>
+              </div>
+
+              {selectedPlan.description && (
+                <>
+                  <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider border-b pb-2 mb-3">Detailed Description</h4>
+                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap mb-6 flex-grow">{selectedPlan.description}</p>
+                </>
+              )}
+
+              <div className="mt-auto pt-4 border-t">
+                <Button 
+                  onClick={() => { setSelectedPlan(null); handleDownload(selectedPlan); }}
+                  className="w-full py-3"
+                  icon={!isLockedForUser ? "fas fa-download" : "fas fa-lock"}
+                >
+                  {!isLockedForUser ? "Download High-Res Plan" : "Unlock to Download"}
+                </Button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
