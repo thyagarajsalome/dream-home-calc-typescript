@@ -10,18 +10,19 @@ interface UpgradePageProps {
 
 type PlanID = "monthly" | "annual";
 
+// UPDATED PRICING TEXT
 const plans = {
   monthly: {
     id: "monthly" as PlanID,
     name: "Pro Monthly",
-    priceString: "₹99",
+    priceString: "₹299",
     term: "/ month",
     description: "Pro Monthly Plan",
   },
   annual: {
     id: "annual" as PlanID,
     name: "Pro Annual",
-    priceString: "₹499",
+    priceString: "₹1,499",
     term: "/ year",
     description: "Pro Annual Plan",
     badge: "Best Value",
@@ -58,7 +59,6 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user }) => {
 
       if (invokeError) throw new Error(invokeError.message);
       
-      // DEBUGGING FIX: Catch the exact error sent from our Edge Function
       if (data && data.error) {
         throw new Error(data.error); 
       }
@@ -101,7 +101,6 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user }) => {
       rzp.open();
     } catch (err: any) {
       console.error(err);
-      // This will now print the EXACT true error to your screen!
       setError(String(err.message || "Error creating payment order. Please try again."));
     } finally {
       setLoadingPlan(null);
@@ -129,7 +128,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user }) => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto items-center">
-            {/* Monthly - Original White/Gold Theme */}
+            {/* Monthly */}
             <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 flex flex-col hover:shadow-2xl transition-all duration-300 relative z-0">
               <h3 className="text-2xl font-bold text-gray-800 mb-2">{plans.monthly.name}</h3>
               <div className="flex items-baseline mb-6">
@@ -145,7 +144,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ user }) => {
               </button>
             </div>
 
-            {/* Annual - Original Dark Theme */}
+            {/* Annual */}
             <div className="bg-secondary rounded-2xl shadow-2xl p-8 flex flex-col transform md:scale-105 relative z-10 border-4 border-primary/20">
               <div className="absolute top-0 right-0 bg-primary text-white text-xs font-bold px-3 py-1.5 rounded-bl-xl rounded-tr-lg shadow-sm">{plans.annual.badge}</div>
               <h3 className="text-2xl font-bold text-white mb-2">{plans.annual.name}</h3>
