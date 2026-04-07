@@ -13,6 +13,7 @@ interface PlanUploaderProps {
 export const PlanUploader: React.FC<PlanUploaderProps> = ({ onUploadSuccess }) => {
   const { showToast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   
   const [title, setTitle] = useState("");
   const [area, setArea] = useState("");
@@ -28,10 +29,15 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({ onUploadSuccess }) =
     }
 
     setIsUploading(true);
-    showToast("Uploading files... please wait", "info");
+    setUploadProgress(10);
+    showToast("Upload started. Please do not close the page.", "info");
+
+    // Simulate progress bar advancing while we wait for Supabase
+    const progressInterval = setInterval(() => {
+      setUploadProgress(prev => (prev < 85 ? prev + 5 : prev));
+    }, 500);
 
     try {
-      // 1. Generate unique filenames to prevent overwriting
       const timestamp = Date.now();
       const previewExt = previewFile.name.split('.').pop();
       const fullExt = fullFile.name.split('.').pop();
@@ -39,19 +45,21 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({ onUploadSuccess }) =
       const previewPath = `previews/${timestamp}-preview.${previewExt}`;
       const fullPath = `full-plans/${timestamp}-full.${fullExt}`;
 
-      // 2. Upload Preview Image to Storage
+      // Upload Preview
       const { error: previewError } = await supabase.storage
         .from('house-plans')
         .upload(previewPath, previewFile);
       if (previewError) throw previewError;
+      setUploadProgress(50);
 
-      // 3. Upload Full File to Storage
+      // Upload Full File
       const { error: fullError } = await supabase.storage
         .from('house-plans')
         .upload(fullPath, fullFile);
       if (fullError) throw fullError;
+      setUploadProgress(90);
 
-      // 4. Save to Database (Using exact relative paths!)
+      // Save to Database
       const { error: dbError } = await supabase.from('house_plans').insert({
         title: title,
         area_sqft: parseInt(area),
@@ -61,6 +69,8 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({ onUploadSuccess }) =
       });
       if (dbError) throw dbError;
 
+      setUploadProgress(100);
+      clearInterval(progressInterval);
       showToast("Plan uploaded successfully!", "success");
       
       // Reset form
@@ -69,26 +79,33 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({ onUploadSuccess }) =
       setPreviewFile(null);
       setFullFile(null);
       
-      // Tell the gallery to refresh
-      onUploadSuccess();
+      // Refresh gallery
+      setTimeout(() => {
+        setUploadProgress(0);
+        onUploadSuccess();
+      }, 1000);
 
     } catch (error: any) {
+      clearInterval(progressInterval);
       console.error("Upload Error:", error);
       showToast("Upload failed: " + error.message, "error");
+      setUploadProgress(0);
     } finally {
       setIsUploading(false);
     }
   };
 
   return (
-    <Card className="mb-8 border-primary/30 shadow-glow bg-amber-50/30">
+    <Card className={`mb-8 border-primary/30 shadow-glow transition-all ${isUploading ? 'bg-gray-100 opacity-80 pointer-events-none' : 'bg-amber-50/30'}`}>
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center">
-          <i className="fas fa-upload"></i>
+          {isUploading ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-upload"></i>}
         </div>
         <div>
           <h2 className="text-xl font-bold text-gray-800">Admin Upload Portal</h2>
-          <p className="text-sm text-gray-500">Upload new plans directly to the database.</p>
+          <p className="text-sm text-gray-500">
+            {isUploading ? "Uploading in progress... Safety lock active." : "Upload one plan at a time to prevent server overload."}
+          </p>
         </div>
       </div>
 
@@ -118,8 +135,20 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({ onUploadSuccess }) =
           </div>
         </div>
 
-        <Button type="submit" isLoading={isUploading} className="md:col-span-2 mt-4">
-          {isUploading ? "Uploading to Supabase..." : "Upload Plan"}
+        {uploadProgress > 0 && (
+          <div className="md:col-span-2 mt-2">
+            <div className="flex justify-between text-xs font-bold text-gray-500 mb-1">
+              <span>Uploading...</span>
+              <span>{uploadProgress}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div className="bg-primary h-2.5 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div>
+            </div>
+          </div>
+        )}
+
+        <Button type="submit" isLoading={isUploading} disabled={isUploading} className="md:col-span-2 mt-4">
+          {isUploading ? "Processing Upload..." : "Upload Plan"}
         </Button>
       </form>
     </Card>
