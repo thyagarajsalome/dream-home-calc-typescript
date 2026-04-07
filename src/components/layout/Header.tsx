@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-// FIX: Go up two levels (../../)
 import { useUser } from "../../context/UserContext";
 import { supabase } from "../../config/supabaseClient";
 
@@ -25,14 +24,18 @@ const Header = () => {
         <div className="flex justify-between items-center h-16">
           <div className="flex-shrink-0 flex items-center">
             <Link to="/" className="flex items-center gap-2 text-2xl font-bold text-secondary hover:text-primary transition-colors">
-              {/* Replaced FontAwesome icon with the custom logo */}
-              <img src="/bg-logo.png" alt="DreamHomeCalc Logo" className="w-12 h-12 object-contain" />
-        <span className="text-primary">HDE<span className="text-primary"></span></span>
+              <img src="/bg-logo.png" alt="HDE Logo" className="w-12 h-12 object-contain" />
+              <span className="text-primary">HDE</span>
             </Link>
           </div>
 
+          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <Link to="/" className="text-gray-600 hover:text-primary font-medium transition-colors">Home</Link>
+            
+            {/* Moved House Plans here so everyone can see it */}
+            <Link to="/plans" className="text-gray-600 hover:text-primary font-medium transition-colors">House Plans</Link>
+
             {user ? (
               <>
                 <Link to="/dashboard" className="text-gray-600 hover:text-primary font-medium transition-colors">Dashboard</Link>
@@ -49,7 +52,6 @@ const Header = () => {
               <Link to="/signin" className="px-5 py-2 text-sm font-medium text-white bg-primary rounded-full shadow-md hover:bg-yellow-600 hover:shadow-lg transition-all">
                 Sign In
               </Link>
-              <Link to="/plans" className="text-gray-600 hover:text-primary font-medium transition-colors">House Plans</Link>
             )}
           </nav>
 
@@ -61,11 +63,15 @@ const Header = () => {
         </div>
       </div>
 
+      {/* Mobile Navigation */}
       {menuOpen && (
         <div className="md:hidden bg-white border-t border-gray-100 absolute w-full left-0 shadow-lg">
           <div className="px-4 pt-2 pb-4 space-y-2 flex flex-col">
             <Link to="/" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
               Home
+            </Link>
+            <Link to="/plans" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
+              House Plans
             </Link>
             {user ? (
               <>

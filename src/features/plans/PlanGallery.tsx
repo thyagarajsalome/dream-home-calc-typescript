@@ -14,8 +14,8 @@ interface HousePlan {
   title: string;
   area_sqft: number;
   facing: string;
-  preview_url: string;
-  file_url: string; // This should be the storage path, e.g., 'full-plans/plan1.png'
+  preview_url: string; // Filename or relative path in 'previews/'
+  file_url: string;    // Storage path in 'full-plans/' e.g., 'full-plans/plan1.webp'
 }
 
 export const PlanGallery: React.FC = () => {
@@ -38,7 +38,7 @@ export const PlanGallery: React.FC = () => {
         .from('house_plans')
         .select('*')
         .order('created_at', { ascending: false })
-        .range(from, to); // Pagination logic
+        .range(from, to);
 
       if (error) throw error;
 
@@ -69,7 +69,7 @@ export const PlanGallery: React.FC = () => {
       return;
     }
 
-    // Pro User Logic: Generate a secure, temporary download link
+    // Logic for Pro Users: Generate a secure, temporary download link
     try {
       const { data, error } = await supabase.storage
         .from('house-plans')
@@ -91,6 +91,16 @@ export const PlanGallery: React.FC = () => {
     fetchPlans(nextPage);
   };
 
+  /**
+   * Refinement: Helper to construct the Public URL for preview images.
+   * Assuming your bucket is 'house-plans' and previews are in a folder named 'previews'.
+   */
+  const getPreviewUrl = (path: string) => {
+    const fileName = path.split('/').pop();
+    const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+    return `${baseUrl}/storage/v1/object/public/house-plans/previews/${fileName}`;
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
       <div className="mb-8 text-center">
@@ -103,7 +113,7 @@ export const PlanGallery: React.FC = () => {
           <Card key={plan.id} className="overflow-hidden border-gray-100 flex flex-col h-full">
             <div className="relative aspect-[9/16] bg-gray-100 group">
               <img 
-                src={plan.preview_url} 
+                src={getPreviewUrl(plan.preview_url)} 
                 alt={plan.title}
                 className="w-full h-full object-cover filter blur-[0.5px] group-hover:blur-none transition-all duration-500"
                 loading="lazy"
@@ -139,7 +149,7 @@ export const PlanGallery: React.FC = () => {
         ))}
       </div>
 
-      {hasMore && (
+      {hasMore && plans.length > 0 && (
         <div className="mt-12 flex justify-center">
           <Button 
             onClick={loadMore} 
