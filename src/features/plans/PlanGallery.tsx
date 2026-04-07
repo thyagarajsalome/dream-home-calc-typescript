@@ -9,7 +9,7 @@ import { Button } from "../../components/ui/Button";
 import { PlanUploader } from "./PlanUploader";
 
 const PLANS_PER_PAGE = 12;
-const ADMIN_EMAIL = "thyagaraja1983@gmail.com"; // Your admin email
+const ADMIN_EMAIL = "thyagaraja1983@gmail.com";
 
 interface HousePlan {
   id: string;
@@ -20,13 +20,57 @@ interface HousePlan {
   file_url: string;
 }
 
+// --- AMAZON STYLE HOVER ZOOM COMPONENT ---
+const HoverZoomImage = ({ src, alt, onClick }: { src: string, alt: string, onClick: () => void }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const [position, setPosition] = useState({ x: 50, y: 50 });
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - left) / width) * 100;
+    const y = ((e.clientY - top) / height) * 100;
+    setPosition({ x, y });
+  };
+
+  return (
+    <div 
+      className="relative aspect-[9/16] bg-gray-100 group cursor-crosshair overflow-hidden"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onMouseMove={handleMouseMove}
+      onClick={onClick}
+    >
+      {/* Base Image */}
+      <img 
+        src={src} 
+        alt={alt}
+        className={`w-full h-full object-cover filter transition-all duration-300 ${isHovered ? 'opacity-0' : 'opacity-100 blur-[1px]'}`}
+        loading="lazy"
+      />
+      {/* Zoomed Image Overlay */}
+      <div 
+        className={`absolute inset-0 transition-opacity duration-150 pointer-events-none ${isHovered ? 'opacity-100' : 'opacity-0'}`}
+        style={{
+          backgroundImage: `url(${src})`,
+          backgroundPosition: `${position.x}% ${position.y}%`,
+          backgroundSize: '250%', // Adjust this percentage to change zoom level!
+          backgroundRepeat: 'no-repeat'
+        }}
+      />
+      {/* Subtle Fullscreen Hint Icon */}
+      <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+         <i className="fas fa-expand text-white text-4xl drop-shadow-md opacity-40"></i>
+      </div>
+    </div>
+  );
+};
+
 export const PlanGallery: React.FC = () => {
   const [plans, setPlans] = useState<HousePlan[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   
-  // State for the Image Lightbox (Zoom)
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
 
   const { user, hasPaid } = useUser();
@@ -75,12 +119,25 @@ export const PlanGallery: React.FC = () => {
     }
 
     try {
-      // 🚨 FIX FOR 400 BAD REQUEST: Strip the base URL if it accidentally got saved to the DB
       let cleanPath = plan.file_url;
+      
+      // 🚨 FIX FOR 400 BAD REQUEST: Strip out domains to get pure relative path
       if (cleanPath.includes('http')) {
-        const parts = cleanPath.split('/house-plans/');
-        if (parts.length > 1) cleanPath = parts[1];
+        try {
+          const urlObj = new URL(cleanPath);
+          const parts = urlObj.pathname.split('/house-plans/');
+          if (parts.length > 1) {
+            cleanPath = parts[1];
+          }
+        } catch (e) {
+          // If URL parsing fails, fallback to string splitting
+          if(cleanPath.includes('/house-plans/')) {
+            cleanPath = cleanPath.split('/house-plans/')[1];
+          }
+        }
       }
+      // Remove leading slashes just in case
+      cleanPath = cleanPath.replace(/^\/+/, '');
 
       const { data, error } = await supabase.storage
         .from('house-plans')
@@ -97,9 +154,7 @@ export const PlanGallery: React.FC = () => {
   };
 
   const getPreviewUrl = (path: string) => {
-    if (path.startsWith('http')) return path; // If it's already a full URL, use it
-    
-    // If it's just a filename (e.g. from the old SQL script), prepend the folder
+    if (path.startsWith('http')) return path;
     const cleanPath = path.includes('/') ? path : `previews/${path}`;
     const baseUrl = import.meta.env.VITE_SUPABASE_URL;
     return `${baseUrl}/storage/v1/object/public/house-plans/${cleanPath}`;
@@ -108,7 +163,7 @@ export const PlanGallery: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
       
-      {/* 🚨 ADMIN ONLY UPLOADER 🚨 */}
+      {/* ADMIN UPLOADER */}
       {user?.email === ADMIN_EMAIL && (
         <PlanUploader onUploadSuccess={() => fetchPlans(0)} />
       )}
@@ -121,23 +176,15 @@ export const PlanGallery: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {plans.map((plan) => (
           <Card key={plan.id} className="overflow-hidden border-gray-100 flex flex-col h-full p-0">
-            {/* Image Container with Click-to-Zoom */}
-            <div 
-              className="relative aspect-[9/16] bg-gray-100 group cursor-zoom-in"
-              onClick={() => setZoomedImage(getPreviewUrl(plan.preview_url))}
-            >
-              <img 
-                src={getPreviewUrl(plan.preview_url)} 
-                alt={plan.title}
-                className="w-full h-full object-cover filter blur-[1px] group-hover:blur-none transition-all duration-500"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <i className="fas fa-search-plus text-white text-4xl drop-shadow-md"></i>
-              </div>
-            </div>
             
-            <div className="p-5 flex-grow flex flex-col justify-between border-t border-gray-100">
+            {/* New Hover Zoom Image */}
+            <HoverZoomImage 
+              src={getPreviewUrl(plan.preview_url)} 
+              alt={plan.title} 
+              onClick={() => setZoomedImage(getPreviewUrl(plan.preview_url))} 
+            />
+            
+            <div className="p-5 flex-grow flex flex-col justify-between border-t border-gray-100 bg-white z-10 relative">
               <div>
                 <h3 className="font-bold text-gray-800 text-lg line-clamp-1">{plan.title}</h3>
                 <div className="flex gap-2 mt-2 mb-5">
@@ -163,7 +210,6 @@ export const PlanGallery: React.FC = () => {
         ))}
       </div>
 
-      {/* Load More Button */}
       {hasMore && plans.length > 0 && (
         <div className="mt-12 flex justify-center">
           <Button onClick={() => { setPage(page + 1); fetchPlans(page + 1); }} variant="secondary" isLoading={loading} disabled={loading}>
@@ -172,7 +218,7 @@ export const PlanGallery: React.FC = () => {
         </div>
       )}
 
-      {/* Fullscreen Zoom Lightbox */}
+      {/* Fullscreen Click-to-Expand Lightbox */}
       {zoomedImage && (
         <div 
           className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center p-4 cursor-zoom-out animate-fade-in"
@@ -185,7 +231,7 @@ export const PlanGallery: React.FC = () => {
             src={zoomedImage} 
             alt="Zoomed Plan" 
             className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-            onClick={(e) => e.stopPropagation()} // Prevent click on image from closing
+            onClick={(e) => e.stopPropagation()} 
           />
         </div>
       )}

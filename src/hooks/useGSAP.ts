@@ -116,7 +116,10 @@ export function useGSAPReveal(options: RevealOptions = {}) {
       const ScrollTrigger = (window as any).ScrollTrigger;
       if (!gsap || !ScrollTrigger || !revealRef.current) return;
 
-      const targets = revealRef.current.querySelectorAll(selector);
+     const targets = selector === "> *" 
+  ? Array.from(revealRef.current.children) 
+  : revealRef.current.querySelectorAll(selector);
+
       if (!targets.length) return;
 
       gsap.set(targets, { opacity: 0, y });
