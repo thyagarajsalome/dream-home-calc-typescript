@@ -136,18 +136,36 @@ export const PlanGallery: React.FC = () => {
         catch (e) { cleanPath = cleanPath.split('/house-plans/')[1]; }
       }
       cleanPath = cleanPath.replace(/^\/+/, '');
-      const { data, error } = await supabase.storage.from('house-plans').createSignedUrl(cleanPath, 60);
+      
+      // FIX: Use download() instead of createSignedUrl() for public buckets
+      const { data, error } = await supabase.storage.from('house-plans').download(cleanPath);
+      
       if (error) throw error;
+      
       setDownloadProgress(100);
       clearInterval(interval);
-      if (data?.signedUrl) {
+      
+      if (data) {
         setTimeout(() => {
-          window.open(data.signedUrl, '_blank');
-          setDownloadingId(null); setDownloadProgress(0);
+          // FIX: Force browser to download the file as an attachment
+          const url = URL.createObjectURL(data);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = cleanPath.split('/').pop() || 'House-Plan';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          
+          setDownloadingId(null); 
+          setDownloadProgress(0);
         }, 300);
       }
     } catch (err: any) {
-      clearInterval(interval); showToast("Download failed.", "error"); setDownloadingId(null); setDownloadProgress(0);
+      clearInterval(interval); 
+      showToast("Download failed.", "error"); 
+      setDownloadingId(null); 
+      setDownloadProgress(0);
     }
   };
 
