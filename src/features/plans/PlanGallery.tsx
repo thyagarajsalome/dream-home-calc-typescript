@@ -152,12 +152,19 @@ export const PlanGallery: React.FC = () => {
         description: editData.description
       };
 
-      const { error } = await supabase
+      // UPDATED: Added .select() to catch silent RLS failures
+      const { data, error } = await supabase
         .from('house_plans')
         .update(payload)
-        .eq('id', selectedPlan.id);
+        .eq('id', selectedPlan.id)
+        .select();
 
       if (error) throw error;
+
+      // UPDATED: Check if data is empty (meaning the update was blocked)
+      if (!data || data.length === 0) {
+        throw new Error("Update blocked by Database RLS Policy. Admin permissions required.");
+      }
 
       const updatedPlan = { ...selectedPlan, ...payload } as HousePlan;
       setPlans(prev => prev.map(p => p.id === updatedPlan.id ? updatedPlan : p));
@@ -171,7 +178,6 @@ export const PlanGallery: React.FC = () => {
     }
   };
 
-  // UPDATED: Download logic with Tier Limits
   const handleDownload = async (plan: HousePlan) => {
     if (!user) { navigate("/signin"); return; }
     
