@@ -73,7 +73,8 @@ export const PlanGallery: React.FC = () => {
   const [editData, setEditData] = useState<Partial<HousePlan>>({});
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const { user, hasPaid } = useUser();
+  // NEW: Extracted planTier from useUser
+  const { user, hasPaid, planTier } = useUser();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -170,9 +171,42 @@ export const PlanGallery: React.FC = () => {
     }
   };
 
+  // UPDATED: Download logic with Tier Limits
   const handleDownload = async (plan: HousePlan) => {
     if (!user) { navigate("/signin"); return; }
-    if (!hasPaid && user.email !== ADMIN_EMAIL) { navigate("/upgrade"); return; }
+    
+    // Determine user's active tier (fallback to 'pro' if they paid before tiers existed)
+    const currentTier = planTier || (hasPaid ? 'pro' : 'free');
+    
+    // Define the daily limits per tier
+    const limits: Record<string, number> = { basic: 1, standard: 2, pro: 3 };
+    const userLimit = limits[currentTier] || 0;
+
+    if (user.email !== ADMIN_EMAIL) {
+      if (userLimit === 0) { 
+        navigate("/upgrade"); 
+        return; 
+      }
+
+      // Check current daily usage from DB
+      const today = new Date().toISOString().split('T')[0];
+      const { count, error: countError } = await supabase
+        .from('download_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('downloaded_at', today);
+
+      if (countError) {
+        showToast("Error checking download quota", "error");
+        return;
+      }
+
+      if (count !== null && count >= userLimit) {
+        showToast(`Daily limit reached! ${currentTier.toUpperCase()} plan allows ${userLimit} download(s)/day.`, "error");
+        return;
+      }
+    }
+
     setDownloadingId(plan.id);
     setDownloadProgress(10);
     const interval = setInterval(() => setDownloadProgress(prev => (prev < 90 ? prev + 15 : prev)), 200);
@@ -193,6 +227,14 @@ export const PlanGallery: React.FC = () => {
       clearInterval(interval);
       
       if (data) {
+        // Log successful download to DB
+        if (user.email !== ADMIN_EMAIL) {
+          await supabase.from('download_logs').insert({ 
+            user_id: user.id, 
+            plan_id: plan.id 
+          });
+        }
+
         setTimeout(() => {
           const url = URL.createObjectURL(data);
           const a = document.createElement('a');
@@ -216,8 +258,6 @@ export const PlanGallery: React.FC = () => {
   };
 
   const handleImageClick = (plan: HousePlan) => {
-    if (!user) { navigate("/signin"); return; }
-    if (!hasPaid && user.email !== ADMIN_EMAIL) { navigate("/upgrade"); return; }
     handleDownload(plan);
   };
 
@@ -226,7 +266,9 @@ export const PlanGallery: React.FC = () => {
     return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/house-plans/${path.replace(/^\/+/, '')}`;
   };
 
-  const isLockedForUser = !hasPaid && user?.email !== ADMIN_EMAIL;
+  // Check if locked (fallback to free if no tier)
+  const currentTier = planTier || (hasPaid ? 'pro' : 'free');
+  const isLockedForUser = currentTier === 'free' && user?.email !== ADMIN_EMAIL;
 
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in relative">
@@ -456,7 +498,7 @@ export const PlanGallery: React.FC = () => {
               )}
 
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 leading-relaxed mb-4 mt-auto shadow-sm">
-                <strong>Disclaimer:</strong> This plan is provided as a bonus for Pro account users. It is intended for conceptual design purposes only and to give you an idea for planning your house. For accurate planning, safety, and execution, it is always recommended to consult a professional architect.
+                <strong>Disclaimer:</strong> This plan is provided as a bonus. It is intended for conceptual design purposes only and to give you an idea for planning your house. For accurate planning, safety, and execution, it is always recommended to consult a professional architect.
               </div>
 
               <div className="pt-4 border-t border-gray-100">
