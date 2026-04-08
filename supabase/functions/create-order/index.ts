@@ -6,12 +6,13 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-// UPDATED PRICING FOR B2B (in paise: 99900 = ₹999, 499900 = ₹4,999)
+// Replace the old PLANS dictionary with this:
 const PLANS: Record<string, number> = {
-  monthly: 99900,
-  annual: 499900
+  basic: 9900,      // ₹99
+  standard: 29900,  // ₹299
+  pro: 99900        // ₹999
 };
-
+// Everything else remains exactly the same
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
