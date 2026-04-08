@@ -1,6 +1,6 @@
 // src/features/plans/PlanGallery.tsx
 import React, { useEffect, useState, useCallback } from "react";
-import { useNavigate, Link } from "react-router-dom"; // Added Link
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../../config/supabaseClient";
 import { useUser } from "../../context/UserContext";
 import { useToast } from "../../context/ToastContext";
@@ -67,6 +67,11 @@ export const PlanGallery: React.FC = () => {
   const [downloadProgress, setDownloadProgress] = useState(0);
   
   const [selectedPlan, setSelectedPlan] = useState<HousePlan | null>(null);
+  
+  // Edit State
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState<Partial<HousePlan>>({});
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const { user, hasPaid } = useUser();
   const { showToast } = useToast();
@@ -98,6 +103,14 @@ export const PlanGallery: React.FC = () => {
 
   useEffect(() => { fetchPlans(0); }, [fetchPlans]);
 
+  // Reset edit state when opening a new plan
+  useEffect(() => {
+    setIsEditing(false);
+    if (selectedPlan) {
+      setEditData(selectedPlan);
+    }
+  }, [selectedPlan]);
+
   const handleDelete = async (plan: HousePlan) => {
     if (!window.confirm(`⚠️ Delete "${plan.title}" entirely?`)) return;
     try {
@@ -122,6 +135,41 @@ export const PlanGallery: React.FC = () => {
     }
   };
 
+  const handleUpdatePlan = async () => {
+    if (!selectedPlan) return;
+    setIsUpdating(true);
+    try {
+      const payload = {
+        title: editData.title,
+        area_sqft: editData.area_sqft,
+        facing: editData.facing,
+        dimensions: editData.dimensions,
+        bedrooms: editData.bedrooms,
+        bathrooms: editData.bathrooms,
+        floors: editData.floors,
+        parking: editData.parking,
+        description: editData.description
+      };
+
+      const { error } = await supabase
+        .from('house_plans')
+        .update(payload)
+        .eq('id', selectedPlan.id);
+
+      if (error) throw error;
+
+      const updatedPlan = { ...selectedPlan, ...payload } as HousePlan;
+      setPlans(prev => prev.map(p => p.id === updatedPlan.id ? updatedPlan : p));
+      setSelectedPlan(updatedPlan);
+      setIsEditing(false);
+      showToast("Specs updated successfully!", "success");
+    } catch (err: any) {
+      showToast("Failed to update specs: " + err.message, "error");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const handleDownload = async (plan: HousePlan) => {
     if (!user) { navigate("/signin"); return; }
     if (!hasPaid && user.email !== ADMIN_EMAIL) { navigate("/upgrade"); return; }
@@ -137,7 +185,6 @@ export const PlanGallery: React.FC = () => {
       }
       cleanPath = cleanPath.replace(/^\/+/, '');
       
-      // FIX: Use download() instead of createSignedUrl() for public buckets
       const { data, error } = await supabase.storage.from('house-plans').download(cleanPath);
       
       if (error) throw error;
@@ -147,7 +194,6 @@ export const PlanGallery: React.FC = () => {
       
       if (data) {
         setTimeout(() => {
-          // FIX: Force browser to download the file as an attachment
           const url = URL.createObjectURL(data);
           const a = document.createElement('a');
           a.href = url;
@@ -185,7 +231,7 @@ export const PlanGallery: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in relative">
       
-      {/* NEW: Back to Home Button */}
+      {/* Back to Home Button */}
       <div className="mb-6">
         <Link to="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-primary transition-colors font-bold bg-white px-5 py-2.5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md w-fit">
           <i className="fas fa-arrow-left"></i> Back to Calculator
@@ -194,9 +240,8 @@ export const PlanGallery: React.FC = () => {
 
       {user?.email === ADMIN_EMAIL && <PlanUploader onUploadSuccess={() => fetchPlans(0)} />}
 
-      {/* NEW: Premium Hero Banner */}
+      {/* Premium Hero Banner */}
       <div className="relative bg-gradient-to-br from-secondary to-gray-900 rounded-3xl p-8 md:p-12 mb-10 overflow-hidden shadow-2xl">
-        {/* Abstract Background Elements */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none"></div>
         
@@ -210,7 +255,6 @@ export const PlanGallery: React.FC = () => {
               Explore our curated gallery of modern, compliant designs. Hover to inspect layouts, or unlock high-resolution blueprints and detailed specifications for your dream home.
             </p>
           </div>
-          {/* Decorative Icon Graphic */}
           <div className="hidden md:flex flex-shrink-0 w-32 h-32 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 items-center justify-center transform rotate-3 hover:rotate-0 transition-transform duration-500 shadow-xl">
              <i className="fas fa-drafting-compass text-6xl text-primary drop-shadow-lg"></i>
           </div>
@@ -278,13 +322,13 @@ export const PlanGallery: React.FC = () => {
         </div>
       )}
 
-      {/* QUICK VIEW MODAL */}
+      {/* QUICK VIEW MODAL (WITH INLINE EDITING) */}
       {selectedPlan && (
-        <div className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" onClick={() => setSelectedPlan(null)}>
+        <div className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" onClick={() => { if(!isEditing) setSelectedPlan(null) }}>
           <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row shadow-2xl" onClick={e => e.stopPropagation()}>
             
             {/* Image Side with Watermark */}
-            <div className="md:w-1/2 bg-gray-100 relative h-64 md:h-auto overflow-hidden">
+            <div className="md:w-1/2 bg-gray-100 relative h-64 md:h-auto overflow-hidden flex-shrink-0">
                <img src={getImageUrl(selectedPlan.file_url)} className="w-full h-full object-contain" alt={selectedPlan.title} />
                
                {isLockedForUser && (
@@ -302,30 +346,112 @@ export const PlanGallery: React.FC = () => {
             </div>
 
             {/* Details Side */}
-            <div className="md:w-1/2 p-6 md:p-8 flex flex-col h-[50vh] md:h-auto overflow-y-auto">
+            <div className="md:w-1/2 p-6 md:p-8 flex flex-col h-[50vh] md:h-auto overflow-y-auto relative">
+              
+              {/* Title & Close */}
               <div className="flex justify-between items-start mb-4">
-                <h2 className="text-2xl font-bold text-gray-800 pr-4">{selectedPlan.title}</h2>
-                <button onClick={() => setSelectedPlan(null)} className="text-gray-400 hover:text-gray-800 text-3xl leading-none transition-colors">&times;</button>
+                {isEditing ? (
+                  <input 
+                    type="text" 
+                    value={editData.title} 
+                    onChange={e => setEditData({...editData, title: e.target.value})} 
+                    className="text-2xl font-bold text-gray-800 pr-4 w-full border-b-2 border-primary outline-none focus:bg-gray-50"
+                  />
+                ) : (
+                  <h2 className="text-2xl font-bold text-gray-800 pr-4">{selectedPlan.title}</h2>
+                )}
+                <button onClick={() => { setSelectedPlan(null); setIsEditing(false); }} className="text-gray-400 hover:text-gray-800 text-3xl leading-none transition-colors">&times;</button>
               </div>
 
+              {/* Area, Facing, Dimensions */}
               <div className="flex flex-wrap gap-2 mb-6">
-                 <span className="bg-primary/10 text-primary px-3 py-1.5 rounded-lg text-xs font-bold border border-primary/20"><i className="fas fa-ruler-combined mr-1"></i> {selectedPlan.area_sqft} Sq.Ft</span>
-                 <span className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200"><i className="fas fa-compass mr-1"></i> Facing: {selectedPlan.facing}</span>
-                 {selectedPlan.dimensions && <span className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200"><i className="fas fa-vector-square mr-1"></i> {selectedPlan.dimensions}</span>}
+                {isEditing ? (
+                  <>
+                    <div className="flex items-center gap-1">
+                      <i className="fas fa-ruler-combined text-primary"></i>
+                      <input type="number" value={editData.area_sqft} onChange={e => setEditData({...editData, area_sqft: parseInt(e.target.value)||0})} className="w-20 border rounded px-2 py-1 text-xs font-bold text-primary outline-none bg-gray-50" placeholder="Sq.Ft" />
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <i className="fas fa-compass text-gray-500"></i>
+                      <input type="text" value={editData.facing} onChange={e => setEditData({...editData, facing: e.target.value})} className="w-20 border rounded px-2 py-1 text-xs font-bold text-gray-700 outline-none bg-gray-50" placeholder="Facing" />
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <i className="fas fa-vector-square text-gray-500"></i>
+                      <input type="text" value={editData.dimensions} onChange={e => setEditData({...editData, dimensions: e.target.value})} className="w-24 border rounded px-2 py-1 text-xs font-bold text-gray-700 outline-none bg-gray-50" placeholder="Dimensions" />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <span className="bg-primary/10 text-primary px-3 py-1.5 rounded-lg text-xs font-bold border border-primary/20"><i className="fas fa-ruler-combined mr-1"></i> {selectedPlan.area_sqft} Sq.Ft</span>
+                    <span className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200"><i className="fas fa-compass mr-1"></i> Facing: {selectedPlan.facing}</span>
+                    {selectedPlan.dimensions && <span className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200"><i className="fas fa-vector-square mr-1"></i> {selectedPlan.dimensions}</span>}
+                  </>
+                )}
               </div>
 
-              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 pb-2 mb-4">Key Specifications</h4>
+              {/* Specs Header with Edit Button */}
+              <div className="flex justify-between items-center border-b border-gray-100 pb-2 mb-4">
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Key Specifications</h4>
+                {user?.email === ADMIN_EMAIL && (
+                  <button 
+                    onClick={() => {
+                      if (isEditing) handleUpdatePlan();
+                      else { setEditData(selectedPlan); setIsEditing(true); }
+                    }}
+                    disabled={isUpdating}
+                    className="text-xs font-bold bg-primary/10 text-primary px-3 py-1.5 rounded-lg hover:bg-primary hover:text-white transition-colors flex items-center gap-1"
+                  >
+                    {isUpdating ? <i className="fas fa-spinner fa-spin"></i> : isEditing ? <><i className="fas fa-save"></i> Save</> : <><i className="fas fa-edit"></i> Edit</>}
+                  </button>
+                )}
+              </div>
+
+              {/* 4 Key Specs */}
               <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center border border-blue-100"><i className="fas fa-bed"></i></div><div><p className="text-[10px] text-gray-500 font-bold uppercase">Bedrooms</p><p className="font-bold text-gray-800">{selectedPlan.bedrooms}</p></div></div>
-                <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-500 flex items-center justify-center border border-cyan-100"><i className="fas fa-bath"></i></div><div><p className="text-[10px] text-gray-500 font-bold uppercase">Bathrooms</p><p className="font-bold text-gray-800">{selectedPlan.bathrooms}</p></div></div>
-                <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center border border-purple-100"><i className="fas fa-layer-group"></i></div><div><p className="text-[10px] text-gray-500 font-bold uppercase">Floors</p><p className="font-bold text-gray-800">{selectedPlan.floors}</p></div></div>
-                <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-green-50 text-green-500 flex items-center justify-center border border-green-100"><i className="fas fa-car"></i></div><div><p className="text-[10px] text-gray-500 font-bold uppercase">Parking</p><p className="font-bold text-gray-800">{selectedPlan.parking}</p></div></div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center border border-blue-100"><i className="fas fa-bed"></i></div>
+                  <div>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase">Bedrooms</p>
+                    {isEditing ? <input type="number" value={editData.bedrooms} onChange={e=>setEditData({...editData, bedrooms: parseInt(e.target.value)||0})} className="w-16 border border-primary rounded px-1 text-sm font-bold text-gray-800 outline-none bg-gray-50" /> : <p className="font-bold text-gray-800">{selectedPlan.bedrooms}</p>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-500 flex items-center justify-center border border-cyan-100"><i className="fas fa-bath"></i></div>
+                  <div>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase">Bathrooms</p>
+                    {isEditing ? <input type="number" value={editData.bathrooms} onChange={e=>setEditData({...editData, bathrooms: parseInt(e.target.value)||0})} className="w-16 border border-primary rounded px-1 text-sm font-bold text-gray-800 outline-none bg-gray-50" /> : <p className="font-bold text-gray-800">{selectedPlan.bathrooms}</p>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center border border-purple-100"><i className="fas fa-layer-group"></i></div>
+                  <div>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase">Floors</p>
+                    {isEditing ? <input type="text" value={editData.floors} onChange={e=>setEditData({...editData, floors: e.target.value})} className="w-16 border border-primary rounded px-1 text-sm font-bold text-gray-800 outline-none bg-gray-50" /> : <p className="font-bold text-gray-800">{selectedPlan.floors}</p>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-green-50 text-green-500 flex items-center justify-center border border-green-100"><i className="fas fa-car"></i></div>
+                  <div>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase">Parking</p>
+                    {isEditing ? <input type="text" value={editData.parking} onChange={e=>setEditData({...editData, parking: e.target.value})} className="w-24 border border-primary rounded px-1 text-sm font-bold text-gray-800 outline-none bg-gray-50" /> : <p className="font-bold text-gray-800">{selectedPlan.parking}</p>}
+                  </div>
+                </div>
               </div>
 
-              {selectedPlan.description && (
+              {/* Description */}
+              {(selectedPlan.description || isEditing) && (
                 <>
                   <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 pb-2 mb-3">Detailed Description</h4>
-                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap mb-6 flex-grow">{selectedPlan.description}</p>
+                  {isEditing ? (
+                    <textarea 
+                      value={editData.description} 
+                      onChange={e => setEditData({...editData, description: e.target.value})}
+                      className="w-full h-24 border border-primary rounded p-2 text-sm text-gray-600 mb-6 resize-none outline-none bg-gray-50"
+                      placeholder="Add detailed description here..."
+                    />
+                  ) : (
+                    <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap mb-6 flex-grow">{selectedPlan.description}</p>
+                  )}
                 </>
               )}
 
@@ -338,6 +464,7 @@ export const PlanGallery: React.FC = () => {
                   onClick={() => { setSelectedPlan(null); handleDownload(selectedPlan); }}
                   className="w-full py-4 text-sm shadow-md"
                   icon={!isLockedForUser ? "fas fa-download" : "fas fa-lock"}
+                  disabled={isEditing}
                 >
                   {!isLockedForUser ? "Download High-Res Blueprint" : "Unlock to Download Plan"}
                 </Button>
