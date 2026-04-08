@@ -48,7 +48,8 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
     if (authError || !user) throw new Error('Unauthorized');
 
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = await req.json();
+    // NEW: Added planId to the destructured JSON payload
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, planId } = await req.json();
     
     const secret = Deno.env.get('RAZORPAY_KEY_SECRET') || '';
     const body = razorpay_order_id + "|" + razorpay_payment_id;
@@ -61,9 +62,21 @@ Deno.serve(async (req) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       );
 
+      // NEW: Determine which tier string to save to the database
+      let plan_tier = 'free';
+      if (planId === 'basic') plan_tier = 'basic';
+      else if (planId === 'standard') plan_tier = 'standard';
+      else if (planId === 'pro') plan_tier = 'pro';
+
+      // NEW: Included plan_tier in the upsert
       const { error: dbError } = await supabaseAdmin
         .from('profiles')
-        .upsert({ id: user.id, has_paid: true, updated_at: new Date().toISOString() });
+        .upsert({ 
+          id: user.id, 
+          has_paid: true, // Kept for backward compatibility
+          plan_tier: plan_tier, 
+          updated_at: new Date().toISOString() 
+        });
 
       if (dbError) throw dbError;
 
