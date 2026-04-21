@@ -33,7 +33,9 @@ const Header = () => {
           <nav className="hidden md:flex items-center space-x-8">
             <Link to="/" className="text-gray-600 hover:text-primary font-medium transition-colors">Home</Link>
             
-            {/* Moved House Plans here so everyone can see it */}
+            {/* Professional Directory Link */}
+            <Link to="/directory" className="text-gray-600 hover:text-primary font-medium transition-colors">Find Professionals</Link>
+            
             <Link to="/plans" className="text-gray-600 hover:text-primary font-medium transition-colors">House Plans</Link>
 
             {user ? (
@@ -69,6 +71,10 @@ const Header = () => {
           <div className="px-4 pt-2 pb-4 space-y-2 flex flex-col">
             <Link to="/" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
               Home
+            </Link>
+            {/* Added Directory Link for Mobile */}
+            <Link to="/directory" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
+              Find Professionals
             </Link>
             <Link to="/plans" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
               House Plans
