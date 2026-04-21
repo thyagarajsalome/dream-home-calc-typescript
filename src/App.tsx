@@ -3,15 +3,18 @@ import React, { Suspense, lazy, startTransition, useEffect } from "react";
 import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import { UserProvider, useUser } from "./context/UserContext";
 import { ToastProvider } from "./context/ToastContext";
+
+// Lazy-loaded pages
 const PlanGallery = lazy(() => import("./features/plans/PlanGallery"));
 const DirectoryPage = lazy(() => import("./features/directory/DirectoryPage"));
+const ProRegistration = lazy(() => import("./features/directory/ProRegistration")); // Added this import
 
 // Layout components
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
 import Hero from "./components/layout/Hero";
 import FAQ from "./components/layout/FAQ";
-import Testimonials from "./components/layout/Testimonials"; // Added this import
+import Testimonials from "./components/layout/Testimonials";
 import SEO from "./components/layout/SEO";
 import CalculatorTabs from "./features/construction/CalculatorTabs";
 import { useGSAPTabSwitch } from "./hooks/useGSAP";
@@ -162,7 +165,7 @@ const MainLayout = () => {
         </div>
 
         <FAQ />
-        <Testimonials /> {/* Added this component here */}
+        <Testimonials />
       </main>
 
       <Footer />
@@ -220,6 +223,7 @@ const AppRoutes = () => {
         <Route path="*"  element={<Navigate to="/" />} />
         <Route path="/plans" element={<PlanGallery />} />
         <Route path="/directory" element={<DirectoryPage />} />
+        <Route path="/register-pro" element={<ProRegistration />} /> {/* Added this route */}
 
       </Routes>
     </Suspense>
