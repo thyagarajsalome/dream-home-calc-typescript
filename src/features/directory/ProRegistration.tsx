@@ -1,3 +1,4 @@
+// src/features/directory/ProRegistration.tsx
 import React, { useState } from "react";
 import { supabase } from "../../config/supabaseClient";
 import { useUser } from "../../context/UserContext";
@@ -23,7 +24,7 @@ export const ProRegistration = () => {
     setLoading(true);
     try {
       const { error } = await supabase.from('professionals').insert({
-        user_id: user.id, // Links the profile to the registered user
+        user_id: user.id,
         name: formData.name,
         category: formData.category,
         years_of_experience: formData.experience,
@@ -32,7 +33,7 @@ export const ProRegistration = () => {
         contact_number: formData.contact,
         whatsapp_number: formData.whatsapp,
         bio: formData.bio,
-        is_verified: false // Defaults to unverified until admin review
+        is_verified: false 
       });
 
       if (error) throw error;
@@ -68,3 +69,6 @@ export const ProRegistration = () => {
     </Card>
   );
 };
+
+// ADD THIS LINE BELOW
+export default ProRegistration;
