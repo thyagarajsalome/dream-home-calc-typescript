@@ -10,6 +10,7 @@ import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
 import Hero from "./components/layout/Hero";
 import FAQ from "./components/layout/FAQ";
+import Testimonials from "./components/layout/Testimonials"; // Added this import
 import SEO from "./components/layout/SEO";
 import CalculatorTabs from "./features/construction/CalculatorTabs";
 import { useGSAPTabSwitch } from "./hooks/useGSAP";
@@ -50,7 +51,6 @@ type CalculatorType =
   | "materials";
 
 const MainLayout = () => {
-  // NEW: Extracted markup and setMarkup from useUser
   const { hasPaid, markup, setMarkup } = useUser();
   const location    = useLocation();
 
@@ -64,7 +64,6 @@ const MainLayout = () => {
     routeState?.openCalculator ?? "construction"
   );
 
-  // GSAP: smooth fade+slide when switching calculator tabs
   const { panelRef } = useGSAPTabSwitch(activeCalculator);
 
   useEffect(() => {
@@ -125,7 +124,6 @@ const MainLayout = () => {
             hasPaid={hasPaid}
           />
 
-          {/* NEW: Builder Mode Profit Margin Adjuster */}
           {hasPaid && (
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gradient-to-r from-gray-900 to-secondary p-4 rounded-xl shadow-lg border border-gray-800 animate-fade-in">
               <div className="flex items-center gap-3 text-white">
@@ -155,7 +153,6 @@ const MainLayout = () => {
             </div>
           )}
 
-          {/* panelRef: GSAP fades/slides this div in on every tab switch */}
           <div ref={panelRef} className="mt-8 min-h-[600px]">
             <Suspense fallback={<Loading />}>
               {renderCalculator()}
@@ -164,6 +161,7 @@ const MainLayout = () => {
         </div>
 
         <FAQ />
+        <Testimonials /> {/* Added this component here */}
       </main>
 
       <Footer />
