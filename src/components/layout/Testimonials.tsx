@@ -3,13 +3,13 @@ import React from "react";
 
 const TESTIMONIALS = [
   { name: "Anand Sharma", city: "Delhi", comment: "The construction calculator is spot on. It saved me from a major budgeting error during my foundation phase." },
-  { name: "Priya Nair", city: "Bengaluru", comment: "I love the house plans collection! The Vastu-compliant designs helped us finalize our dream home layout." },
+  { name: "Manjunatha R", city: "Bengaluru", comment: "I love the house plans collection! The compliant designs helped us finalize our dream home layout." },
   { name: "Vikram Rao", city: "Hyderabad", comment: "HDE's material BOQ tool is a game changer for contractors. The brand recommendations are very practical." },
   { name: "Sneha Patil", city: "Mumbai", comment: "The interior cost estimator helped us plan our 3BHK renovation perfectly without any hidden surprises." },
   { name: "Rajesh Gupta", city: "Kolkata", comment: "Simple, effective, and finally a tool tailored specifically for the Indian construction market." },
-  { name: "Meera Krishnan", city: "Chennai", comment: "The plumbing and electrical calculators are incredibly detailed. Great job on the technical specs!" },
+  { name: "Murugan Raj", city: "Chennai", comment: "The plumbing and electrical calculators are incredibly detailed. Great job on the technical specs!" },
   { name: "Amit Shah", city: "Ahmedabad", comment: "Saved hours of manual calculations. The PDF reports are professional and easy to share with builders." },
-  { name: "Sunita Deshmukh", city: "Pune", comment: "Highly recommend HDE for anyone building a home. The floor plans are modern and functional." },
+  { name: "David Johnson", city: "Pune", comment: "Highly recommend HDE for anyone building a home. The floor plans are modern and functional." },
 ];
 
 export default function Testimonials() {
