@@ -7,7 +7,7 @@ import { ToastProvider } from "./context/ToastContext";
 // Lazy-loaded pages
 const PlanGallery = lazy(() => import("./features/plans/PlanGallery"));
 const DirectoryPage = lazy(() => import("./features/directory/DirectoryPage"));
-const ProRegistration = lazy(() => import("./features/directory/ProRegistration")); // Added this import
+const ProRegistration = lazy(() => import("./features/directory/ProRegistration"));
 
 // Layout components
 import Header from "./components/layout/Header";
@@ -217,13 +217,13 @@ const AppRoutes = () => {
         <Route element={<ProtectedRoute />}>
           <Route path="/upgrade"   element={<UpgradePage />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/register-pro" element={<ProRegistration />} /> {/* Moved inside ProtectedRoute */}
         </Route>
 
         <Route path="/"  element={<MainLayout />} />
         <Route path="*"  element={<Navigate to="/" />} />
         <Route path="/plans" element={<PlanGallery />} />
         <Route path="/directory" element={<DirectoryPage />} />
-        <Route path="/register-pro" element={<ProRegistration />} /> {/* Added this route */}
 
       </Routes>
     </Suspense>
