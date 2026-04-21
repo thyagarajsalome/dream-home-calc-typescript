@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom'; // Added this import
 import { ProService } from '../../services/proService';
 import { Professional, ProCategory } from '../../types/directory';
 import { ProCard } from './ProCard';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import SEO from '../../components/layout/SEO';
+
 
 const CATEGORIES: ProCategory[] = [
   'House Contractor', 'Architect', 'Plumber', 'Electrician', 
@@ -48,9 +50,19 @@ const DirectoryPage = () => {
     <div className="container mx-auto px-4 py-8 animate-fade-in">
       <SEO title="Verified Professionals - HDE" description="Find verified architects, contractors, and plumbers for your home construction." />
       
-      <div className="text-center max-w-3xl mx-auto mb-12">
-        <h1 className="text-4xl font-extrabold text-secondary mb-4">Find Verified Professionals</h1>
-        <p className="text-gray-600">Connect with the best experts in your city to build your dream home.</p>
+      {/* Updated Header Section with "Join" Button */}
+      <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
+        <div className="text-center md:text-left max-w-2xl">
+          <h1 className="text-4xl font-extrabold text-secondary mb-2">Find Verified Professionals</h1>
+          <p className="text-gray-600">Connect with the best experts in your city to build your dream home.</p>
+        </div>
+        <Link 
+          to="/register-pro" 
+          className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-xl font-bold shadow-md hover:bg-yellow-600 transition-all whitespace-nowrap"
+        >
+          <i className="fas fa-user-plus"></i>
+          Join as a Professional
+        </Link>
       </div>
 
       {/* Search Filters */}
