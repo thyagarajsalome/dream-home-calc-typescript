@@ -4,6 +4,7 @@ import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import { UserProvider, useUser } from "./context/UserContext";
 import { ToastProvider } from "./context/ToastContext";
 const PlanGallery = lazy(() => import("./features/plans/PlanGallery"));
+const DirectoryPage = lazy(() => import("./features/directory/DirectoryPage"));
 
 // Layout components
 import Header from "./components/layout/Header";
@@ -218,6 +219,7 @@ const AppRoutes = () => {
         <Route path="/"  element={<MainLayout />} />
         <Route path="*"  element={<Navigate to="/" />} />
         <Route path="/plans" element={<PlanGallery />} />
+        <Route path="/directory" element={<DirectoryPage />} />
 
       </Routes>
     </Suspense>
