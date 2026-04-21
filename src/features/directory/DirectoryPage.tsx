@@ -1,12 +1,12 @@
+// src/features/directory/DirectoryPage.tsx
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom'; // Added this import
+import { Link } from 'react-router-dom';
 import { ProService } from '../../services/proService';
 import { Professional, ProCategory } from '../../types/directory';
 import { ProCard } from './ProCard';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import SEO from '../../components/layout/SEO';
-
 
 const CATEGORIES: ProCategory[] = [
   'House Contractor', 'Architect', 'Plumber', 'Electrician', 
@@ -29,7 +29,7 @@ const DirectoryPage = () => {
       
       if (data) {
         setPros(prev => isNewSearch ? data : [...prev, ...data]);
-        setHasMore(pros.length + data.length < (count || 0));
+        setHasMore((isNewSearch ? 0 : pros.length) + data.length < (count || 0));
         if (!isNewSearch) setPage(currentPage + 1);
       }
     } catch (err) {
@@ -50,7 +50,6 @@ const DirectoryPage = () => {
     <div className="container mx-auto px-4 py-8 animate-fade-in">
       <SEO title="Verified Professionals - HDE" description="Find verified architects, contractors, and plumbers for your home construction." />
       
-      {/* Updated Header Section with "Join" Button */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
         <div className="text-center md:text-left max-w-2xl">
           <h1 className="text-4xl font-extrabold text-secondary mb-2">Find Verified Professionals</h1>
@@ -65,31 +64,37 @@ const DirectoryPage = () => {
         </Link>
       </div>
 
-      {/* Search Filters */}
+      {/* Search Filters - Enhanced Alignment */}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-10">
-        <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-          <div>
-            <label className="block text-xs font-bold text-gray-500 mb-2 uppercase">Profession</label>
+        <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
+          <div className="md:col-span-4">
+            <label className="block text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest ml-1">Professional Category</label>
             <select 
               value={category} 
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full p-3 border-2 border-gray-200 rounded-xl bg-white text-sm focus:border-primary outline-none"
+              className="w-full p-3.5 border-2 border-gray-100 rounded-xl bg-gray-50/50 text-sm focus:border-primary focus:bg-white outline-none transition-all"
             >
               <option value="">All Categories</option>
               {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
             </select>
           </div>
-          <Input 
-            label="City (e.g. Bengaluru)" 
-            value={city} 
-            onChange={(e) => setCity(e.target.value)} 
-            className="mb-0"
-          />
-          <Button type="submit" isLoading={loading} className="w-full">Search</Button>
+          <div className="md:col-span-5">
+            <Input 
+              label="City (e.g. Bengaluru)" 
+              value={city} 
+              onChange={(e) => setCity(e.target.value)} 
+              className="mb-0" 
+              icon="fas fa-location-dot"
+            />
+          </div>
+          <div className="md:col-span-3">
+            <Button type="submit" isLoading={loading} className="w-full py-4 shadow-lg shadow-primary/20">
+              <i className="fas fa-search mr-2"></i> Search
+            </Button>
+          </div>
         </form>
       </div>
 
-      {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {pros.map(pro => <ProCard key={pro.id} pro={pro} />)}
       </div>
@@ -97,15 +102,8 @@ const DirectoryPage = () => {
       {hasMore && pros.length > 0 && (
         <div className="mt-12 flex justify-center">
           <Button onClick={() => fetchPros()} variant="outline" isLoading={loading}>
-            Load More
+            Load More Professionals
           </Button>
-        </div>
-      )}
-
-      {!loading && pros.length === 0 && (
-        <div className="text-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
-          <i className="fas fa-search text-4xl text-gray-300 mb-4"></i>
-          <p className="text-gray-500 font-medium">No professionals found in this category or city yet.</p>
         </div>
       )}
     </div>
