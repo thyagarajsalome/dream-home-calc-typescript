@@ -26,9 +26,9 @@ export const ProCard: React.FC<ProCardProps> = ({ pro }) => {
           
           {/* UPDATED: Larger, Stylish, Green Verified Badge overlay */}
           {pro.is_verified && (
-            <div className="absolute -top-2.5 -right-2.5 bg-gradient-to-br from-green-400 to-green-600 rounded-full p-1.5 shadow-lg border-2 border-white scale-100 group-hover:scale-110 transition-transform duration-300" title="HDE Verified Professional">
-              <i className="fas fa-check text-white text-[11px] font-bold"></i>
-            </div>
+            <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-md border-2 border-white scale-100 group-hover:scale-110 transition-transform duration-300" title="HDE Verified Professional">
+  <i className="fas fa-check text-white text-[9px] font-bold"></i>
+</div>
           )}
         </div>
 
