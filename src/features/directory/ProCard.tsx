@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card } from '../../components/ui/Card';
 import { Professional } from '../../types/directory';
-import { useUser } from '../../context/UserContext';
+import { useUser } from '../../context/UserContext'; // To protect sensitive contact data
 import { Link } from 'react-router-dom';
 
 interface ProCardProps {
@@ -10,13 +10,13 @@ interface ProCardProps {
 }
 
 export const ProCard: React.FC<ProCardProps> = ({ pro }) => {
-  const { user } = useUser(); // Access auth state to protect actual contact numbers
+  const { user } = useUser(); // Access auth state to protect email and numbers
 
   return (
-    <Card className="h-full flex flex-col group hover:border-primary/40 transition-all duration-300">
+    <Card className="h-full flex flex-col group hover:border-primary/40 transition-all duration-300 relative">
       <div className="flex items-start gap-4 mb-5">
         <div className="relative">
-          <div className="w-14 h-14 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl flex-shrink-0 flex items-center justify-center text-secondary border border-gray-100 group-hover:scale-105 transition-transform">
+          <div className="w-14 h-14 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl flex-shrink-0 flex items-center justify-center text-secondary border border-gray-100 group-hover:scale-105 transition-transform duration-300">
             {pro.profile_pic_url ? (
               <img src={pro.profile_pic_url} alt={pro.name} className="w-full h-full rounded-2xl object-cover" />
             ) : (
@@ -24,20 +24,20 @@ export const ProCard: React.FC<ProCardProps> = ({ pro }) => {
             )}
           </div>
           
-          {/* Prominent Verified Badge overlay */}
+          {/* UPDATED: Larger, Stylish, Green Verified Badge overlay */}
           {pro.is_verified && (
-            <div className="absolute -top-1.5 -right-1.5 bg-white rounded-full p-0.5 shadow-md border border-primary/20">
-              <i className="fas fa-check-circle text-primary text-sm" title="HDE Verified Professional"></i>
+            <div className="absolute -top-2.5 -right-2.5 bg-gradient-to-br from-green-400 to-green-600 rounded-full p-1.5 shadow-lg border-2 border-white scale-100 group-hover:scale-110 transition-transform duration-300" title="HDE Verified Professional">
+              <i className="fas fa-check text-white text-[11px] font-bold"></i>
             </div>
           )}
         </div>
 
-        <div className="min-w-0">
-          <h3 className="font-bold text-gray-800 truncate flex items-center gap-1">
+        <div className="min-w-0 flex-grow">
+          <h3 className="font-bold text-gray-800 truncate flex items-center gap-1 leading-tight">
             {pro.name}
           </h3>
           <p className="text-[10px] text-primary font-black uppercase tracking-tighter">{pro.category}</p>
-          <p className="text-xs text-gray-400 flex items-center gap-1 mt-1">
+          <p className="text-xs text-gray-400 flex items-center gap-1 mt-1 truncate">
             <i className="fas fa-location-dot text-[10px]"></i> {pro.city}{pro.area ? `, ${pro.area}` : ""}
           </p>
         </div>
@@ -60,23 +60,29 @@ export const ProCard: React.FC<ProCardProps> = ({ pro }) => {
           </div>
         )}
         
-        {/* Actual Numbers - Only shown to signed-in users for data protection */}
-        <div className="mt-4 pt-4 border-t border-gray-100">
+        {/* Contact Details (Numbers AND Email) - Only shown to signed-in users */}
+        <div className="mt-5 pt-4 border-t border-gray-100">
           {user ? (
-            <div className="space-y-2">
-              <p className="text-xs font-bold text-gray-700 flex items-center gap-2">
-                <i className="fas fa-phone text-primary"></i> {pro.contact_number}
+            <div className="space-y-2.5">
+              {/* Added Email display - Protected from public scraping */}
+              <p className="text-xs font-bold text-gray-700 flex items-center gap-2 truncate" title={pro.email}>
+                <i className="fas fa-envelope text-primary w-4 text-center"></i> {pro.email}
               </p>
+              
+              <p className="text-xs font-bold text-gray-700 flex items-center gap-2">
+                <i className="fas fa-phone text-primary w-4 text-center"></i> {pro.contact_number}
+              </p>
+              
               {pro.whatsapp_number && (
                 <p className="text-xs font-bold text-gray-700 flex items-center gap-2">
-                  <i className="fab fa-whatsapp text-green-500"></i> {pro.whatsapp_number}
+                  <i className="fab fa-whatsapp text-green-500 w-4 text-center"></i> {pro.whatsapp_number}
                 </p>
               )}
             </div>
           ) : (
-            <div className="bg-amber-50 p-2 rounded-lg border border-amber-100">
-              <Link to="/signin" className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1">
-                <i className="fas fa-lock"></i> Sign in to view actual contact numbers
+            <div className="bg-amber-50 p-2.5 rounded-lg border border-amber-100 text-center">
+              <Link to="/signin" className="text-[10px] font-bold text-primary hover:underline flex items-center justify-center gap-1.5">
+                <i className="fas fa-lock"></i> Sign in to view email and contact numbers
               </Link>
             </div>
           )}
