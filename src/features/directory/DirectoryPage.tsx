@@ -52,7 +52,7 @@ const DirectoryPage = () => {
       
       <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
         <div className="text-center md:text-left max-w-2xl">
-          <h1 className="text-4xl font-extrabold text-secondary mb-2">Find Verified Professionals</h1>
+          <h1 className="text-4xl font-extrabold text-secondary mb-2 mt-6">Find Verified Professionals</h1>
           <p className="text-gray-600">Connect with the best experts in your city to build your dream home.</p>
         </div>
         <Link 

@@ -7,7 +7,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 
 export const Input: React.FC<InputProps> = ({ label, icon, className = "", ...props }) => {
   return (
-    <div className="relative mb-6 group">
+    <div className="relative mb-0 group">
       {/* Icon Wrapper */}
       {icon && (
         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10 text-gray-400 group-focus-within:text-primary transition-colors">
