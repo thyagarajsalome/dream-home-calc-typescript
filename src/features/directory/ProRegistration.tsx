@@ -63,11 +63,14 @@ export const ProRegistration = () => {
   };
 
   const handleDelete = async () => {
-    const isConfirmed = window.confirm("Are you sure you want to delete your professional profile? This action cannot be undone.");
+    // UPDATED ALERT MESSAGE
+    const isConfirmed = window.confirm("Are you sure you want to delete your professional profile? records will be removed! This action cannot be undone.");
+    
     if (!isConfirmed || !user) return;
 
     setLoading(true);
     try {
+      // Deletes the record from the database for the current user
       const { error } = await supabase.from('professionals').delete().eq('user_id', user.id);
       if (error) throw error;
       
