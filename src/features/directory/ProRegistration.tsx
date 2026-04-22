@@ -9,7 +9,6 @@ import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 
 const CATEGORIES = ["House Contractor", "Architect", "Plumber", "Electrician", "Floor Layman", "Painter", "Interior Designer", "Draftsman"];
-
 const INDIAN_CITIES = ["Mumbai", "Delhi", "Bengaluru", "Chennai", "Hyderabad", "Kolkata", "Pune", "Ahmedabad", "Surat", "Jaipur", "Lucknow", "Kanpur", "Nagpur", "Indore", "Thane", "Bhopal", "Visakhapatnam", "Patna", "Vadodara", "Ghaziabad", "Ludhiana", "Agra", "Nashik", "Faridabad", "Meerut", "Rajkot", "Varanasi", "Srinagar", "Aurangabad", "Dhanbad", "Amritsar", "Navi Mumbai", "Allahabad", "Ranchi", "Howrah", "Jabalpur", "Gwalior", "Vijayawada", "Jodhpur", "Madurai", "Raipur", "Kota", "Guwahati", "Chandigarh", "Solapur", "Hubli-Dharwad", "Mysore", "Gurgaon", "Aligarh", "Jalandhar", "Bhubaneswar", "Noida", "Kochi"].sort();
 
 export const ProRegistration = () => {
@@ -19,9 +18,18 @@ export const ProRegistration = () => {
   const [loading, setLoading] = useState(false);
   const [isExisting, setIsExisting] = useState(false);
   
+  const BIO_LIMIT = 300; // Character restriction
+
   const [formData, setFormData] = useState({
-    name: "", category: "House Contractor", years_of_experience: 0, 
-    city: "", area: "", contact_number: "", whatsapp_number: "", bio: ""
+    name: "", 
+    email: "", // Added email field
+    category: "House Contractor", 
+    years_of_experience: 0, 
+    city: "", 
+    area: "", 
+    contact_number: "", 
+    whatsapp_number: "", 
+    bio: ""
   });
 
   useEffect(() => {
@@ -70,14 +78,21 @@ export const ProRegistration = () => {
 
     setLoading(true);
     try {
-      // Deletes the record from the database for the current user
       const { error } = await supabase.from('professionals').delete().eq('user_id', user.id);
       if (error) throw error;
       
-      showToast("Listing deleted successfully.", "success");
+      showToast("Listing deleted and records removed from database.", "success");
+      
+      // Reset local state
+      setIsExisting(false);
+      setFormData({
+        name: "", email: "", category: "House Contractor", years_of_experience: 0, 
+        city: "", area: "", contact_number: "", whatsapp_number: "", bio: ""
+      });
+
       navigate("/directory");
     } catch (err: any) {
-      showToast(err.message, "error");
+      showToast("Delete failed: " + err.message, "error");
     } finally {
       setLoading(false);
     }
@@ -95,8 +110,8 @@ export const ProRegistration = () => {
         {isExisting && (
           <div className="mb-8 p-4 bg-red-50 border border-red-100 rounded-xl flex items-center justify-between shadow-sm">
             <div>
-              <p className="text-xs font-bold text-red-800 uppercase tracking-tight">Close Public Listing</p>
-              <p className="text-[10px] text-red-600 mt-0.5">This will permanently remove your profile from the directory.</p>
+              <p className="text-xs font-bold text-red-800 uppercase tracking-tight">Remove Public Listing</p>
+              <p className="text-[10px] text-red-600 mt-0.5">This will permanently delete your records from our database.</p>
             </div>
             <button 
               type="button" 
@@ -104,13 +119,16 @@ export const ProRegistration = () => {
               disabled={loading}
               className="px-4 py-2 bg-white border border-red-200 text-red-500 text-xs font-bold rounded-lg hover:bg-red-500 hover:text-white transition-all shadow-sm"
             >
-              {loading ? "Removing..." : "Delete Profile"}
+              {loading ? "Deleting..." : "Delete Profile"}
             </button>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <Input label="Full Name / Business Name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+             <Input label="Full Name / Business Name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required />
+             <Input label="Business Email" type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required placeholder="For Admin Verification" />
+          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
@@ -141,10 +159,19 @@ export const ProRegistration = () => {
           </div>
 
           <div>
-            <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase ml-1">Professional Bio & Services</label>
-            <textarea className="w-full p-4 border-2 border-gray-100 rounded-xl h-32 text-sm focus:border-primary outline-none resize-none bg-gray-50/30 focus:bg-white transition-all" 
-              placeholder="Describe your specializations and major projects..." 
-              value={formData.bio} onChange={e => setFormData({...formData, bio: e.target.value})} />
+            <div className="flex justify-between items-center mb-1 ml-1">
+              <label className="text-[10px] font-bold text-gray-400 uppercase">Professional Bio & Services</label>
+              <span className={`text-[10px] font-bold ${formData.bio.length >= BIO_LIMIT ? 'text-red-500' : 'text-gray-400'}`}>
+                {formData.bio.length}/{BIO_LIMIT}
+              </span>
+            </div>
+            <textarea 
+              className="w-full p-4 border-2 border-gray-100 rounded-xl h-32 text-sm focus:border-primary outline-none resize-none bg-gray-50/30 focus:bg-white transition-all" 
+              placeholder="Describe your specializations (e.g., 2BHK specialist, Modular kitchens)..." 
+              maxLength={BIO_LIMIT}
+              value={formData.bio} 
+              onChange={e => setFormData({...formData, bio: e.target.value})} 
+            />
           </div>
 
           <Button type="submit" isLoading={loading} className="w-full py-4 text-lg shadow-xl shadow-primary/20">
@@ -152,7 +179,7 @@ export const ProRegistration = () => {
           </Button>
           
           <p className="text-[10px] text-center text-gray-400">
-            * Verified badge is awarded after our team validates your contact details and experience.
+            * By submitting, you consent to an Admin contacting you to verify your identity and credentials.
           </p>
         </form>
       </Card>
