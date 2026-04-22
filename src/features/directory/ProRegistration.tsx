@@ -8,7 +8,6 @@ import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 
-// Alphabetized and Grouped Categories matching HDE website content
 const GROUPED_CATEGORIES: Record<string, string[]> = {
   "Design & Planning": ["3D Designer / Visualizer", "Architect", "Draftsman", "Structural Engineer"],
   "Construction & Structure": ["Borewell Contractor", "Fabricator (Grill/Gate)", "House Contractor", "Material Vendor", "Waterproofing Specialist"],
@@ -24,25 +23,19 @@ export const ProRegistration = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [isExisting, setIsExisting] = useState(false);
+  const [agreed, setAgreed] = useState(false);
   
-  const BIO_LIMIT = 300; // Character restriction
+  const BIO_LIMIT = 300;
 
   const [formData, setFormData] = useState({
-    name: "", 
-    email: "", // Business email for verification
-    category: "House Contractor", 
-    years_of_experience: 0, 
-    city: "", 
-    area: "", 
-    contact_number: "", 
-    whatsapp_number: "", 
-    bio: ""
+    name: "", email: "", category: "House Contractor", years_of_experience: 0, 
+    city: "", area: "", contact_number: "", whatsapp_number: "", bio: ""
   });
 
   useEffect(() => {
     const loadProfile = async () => {
       if (!user) return;
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('professionals')
         .select('*')
         .eq('user_id', user.id)
@@ -51,6 +44,7 @@ export const ProRegistration = () => {
       if (data) {
         setFormData(data);
         setIsExisting(true);
+        setAgreed(true); // Auto-agree for existing profiles
       }
     };
     if (!authLoading) loadProfile();
@@ -59,8 +53,11 @@ export const ProRegistration = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return showToast("Session expired. Please sign in again.", "error");
+    if (!agreed) return showToast("Please agree to the disclaimer to proceed.", "error");
     
     setLoading(true);
+    showToast("Connecting to database...", "info"); // Feedback for the "delay"
+
     try {
       const payload = { ...formData, user_id: user.id };
       const { error } = isExisting 
@@ -68,7 +65,7 @@ export const ProRegistration = () => {
         : await supabase.from('professionals').insert(payload);
 
       if (error) throw error;
-      showToast(isExisting ? "Profile updated!" : "Profile submitted for verification!", "success");
+      showToast(isExisting ? "Profile updated successfully!" : "Profile submitted for verification!", "success");
       setIsExisting(true);
     } catch (err: any) {
       showToast(err.message, "error");
@@ -78,26 +75,14 @@ export const ProRegistration = () => {
   };
 
   const handleDelete = async () => {
-    // Specific alert message as requested
     const isConfirmed = window.confirm("Are you sure you want to delete your professional profile? records will be removed! This action cannot be undone.");
-    
     if (!isConfirmed || !user) return;
 
     setLoading(true);
     try {
-      // Direct deletion from Supabase ensures record is removed
       const { error } = await supabase.from('professionals').delete().eq('user_id', user.id);
       if (error) throw error;
-      
       showToast("Listing deleted and records removed from database.", "success");
-      
-      // Clear state and reset form
-      setIsExisting(false);
-      setFormData({
-        name: "", email: "", category: "House Contractor", years_of_experience: 0, 
-        city: "", area: "", contact_number: "", whatsapp_number: "", bio: ""
-      });
-
       navigate("/directory");
     } catch (err: any) {
       showToast("Delete failed: " + err.message, "error");
@@ -134,16 +119,15 @@ export const ProRegistration = () => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-             <Input label="Full Name / Business Name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required />
-             <Input label="Business Email" type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required placeholder="For Admin Verification" />
+            <Input label="Full Name / Business Name *" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required />
+            <Input label="Business Email *" type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required placeholder="For Verification" />
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase ml-1">Professional Category</label>
-              {/* Organized and grouped select menu */}
+              <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase ml-1">Professional Category *</label>
               <select className="w-full p-3.5 border-2 border-gray-100 rounded-xl bg-gray-50/30 text-sm focus:border-primary outline-none focus:bg-white transition-all" 
-                value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
+                value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} required>
                 {Object.entries(GROUPED_CATEGORIES).map(([group, cats]) => (
                   <optgroup label={group} key={group}>
                     {cats.map(c => <option key={c} value={c}>{c}</option>)}
@@ -151,49 +135,71 @@ export const ProRegistration = () => {
                 ))}
               </select>
             </div>
-            <Input label="Years of Experience" type="number" value={formData.years_of_experience} onChange={e => setFormData({...formData, years_of_experience: parseInt(e.target.value) || 0})} />
+            <Input label="Years of Experience (Optional)" type="number" value={formData.years_of_experience} onChange={e => setFormData({...formData, years_of_experience: parseInt(e.target.value) || 0})} />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase ml-1">City</label>
+              <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase ml-1">City *</label>
               <select className="w-full p-3.5 border-2 border-gray-100 rounded-xl bg-gray-50/30 text-sm focus:border-primary outline-none focus:bg-white transition-all" 
                 value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} required>
                 <option value="">Select City</option>
                 {INDIAN_CITIES.map(city => <option key={city} value={city}>{city}</option>)}
               </select>
             </div>
-            <Input label="Area (Locality)" value={formData.area} onChange={e => setFormData({...formData, area: e.target.value})} placeholder="e.g. Whitefield" />
+            <Input label="Area / Locality (Optional)" value={formData.area} onChange={e => setFormData({...formData, area: e.target.value})} placeholder="e.g. Whitefield" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <Input label="Contact Number" icon="fas fa-phone" value={formData.contact_number} onChange={e => setFormData({...formData, contact_number: e.target.value})} required />
-            <Input label="WhatsApp Number" icon="fab fa-whatsapp" value={formData.whatsapp_number} onChange={e => setFormData({...formData, whatsapp_number: e.target.value})} />
+            <Input label="Contact Number *" icon="fas fa-phone" value={formData.contact_number} onChange={e => setFormData({...formData, contact_number: e.target.value})} required />
+            <Input label="WhatsApp Number (Optional)" icon="fab fa-whatsapp" value={formData.whatsapp_number} onChange={e => setFormData({...formData, whatsapp_number: e.target.value})} />
           </div>
 
           <div>
             <div className="flex justify-between items-center mb-1 ml-1">
-              <label className="text-[10px] font-bold text-gray-400 uppercase">Professional Bio & Services</label>
-              {/* Dynamic character counter */}
+              <label className="text-[10px] font-bold text-gray-400 uppercase">Professional Bio & Services (Optional)</label>
               <span className={`text-[10px] font-bold ${formData.bio.length >= BIO_LIMIT ? 'text-red-500' : 'text-gray-400'}`}>
                 {formData.bio.length}/{BIO_LIMIT}
               </span>
             </div>
             <textarea 
               className="w-full p-4 border-2 border-gray-100 rounded-xl h-32 text-sm focus:border-primary outline-none resize-none bg-gray-50/30 focus:bg-white transition-all" 
-              placeholder="Describe your specializations (e.g., 2BHK specialist, Modular kitchens)..." 
+              placeholder="Describe your specializations..." 
               maxLength={BIO_LIMIT}
               value={formData.bio} 
               onChange={e => setFormData({...formData, bio: e.target.value})} 
             />
           </div>
 
-          <Button type="submit" isLoading={loading} className="w-full py-4 text-lg shadow-xl shadow-primary/20">
-            {isExisting ? "Update Profile Details" : "Submit Profile for Verification"}
+          {/* Disclaimer & Checklist */}
+          <div className="p-4 bg-gray-50 rounded-xl border-2 border-gray-100 space-y-3">
+            <div className="flex items-start gap-3">
+              <input 
+                type="checkbox" 
+                id="disclaimer" 
+                checked={agreed} 
+                onChange={(e) => setAgreed(e.target.checked)}
+                className="mt-1 w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+              />
+              <label htmlFor="disclaimer" className="text-[11px] text-gray-600 leading-relaxed cursor-pointer font-medium">
+                I agree to the HDE terms and conditions. I understand that HDE is strictly a platform for connectivity; 
+                I am an individual professional providing services based on my own experience and am not legally 
+                partnered with or related to HDE.
+              </label>
+            </div>
+          </div>
+
+          <Button 
+            type="submit" 
+            isLoading={loading} 
+            disabled={!agreed}
+            className="w-full py-4 text-lg shadow-xl shadow-primary/20"
+          >
+            {loading ? "Processing Submission..." : isExisting ? "Update Profile Details" : "Submit Profile for Verification"}
           </Button>
           
           <p className="text-[10px] text-center text-gray-400">
-            * By submitting, you consent to an Admin contacting you to verify your identity and credentials.
+            * Once submitted, an Admin may contact you to verify your credentials before the verified badge is awarded.
           </p>
         </form>
       </Card>
