@@ -8,7 +8,14 @@ import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 
-const CATEGORIES = ["House Contractor", "Architect", "Plumber", "Electrician", "Floor Layman", "Painter", "Interior Designer", "Draftsman"];
+// Alphabetized and Grouped Categories matching HDE website content
+const GROUPED_CATEGORIES: Record<string, string[]> = {
+  "Design & Planning": ["3D Designer / Visualizer", "Architect", "Draftsman", "Structural Engineer"],
+  "Construction & Structure": ["Borewell Contractor", "Fabricator (Grill/Gate)", "House Contractor", "Material Vendor", "Waterproofing Specialist"],
+  "Essential Services": ["Electrician", "Plumber", "Solar / UPS Vendor"],
+  "Finishing & Interiors": ["Carpenter", "Floor Layman", "Interior Designer", "Painter", "Windows & Door Contractor"]
+};
+
 const INDIAN_CITIES = ["Mumbai", "Delhi", "Bengaluru", "Chennai", "Hyderabad", "Kolkata", "Pune", "Ahmedabad", "Surat", "Jaipur", "Lucknow", "Kanpur", "Nagpur", "Indore", "Thane", "Bhopal", "Visakhapatnam", "Patna", "Vadodara", "Ghaziabad", "Ludhiana", "Agra", "Nashik", "Faridabad", "Meerut", "Rajkot", "Varanasi", "Srinagar", "Aurangabad", "Dhanbad", "Amritsar", "Navi Mumbai", "Allahabad", "Ranchi", "Howrah", "Jabalpur", "Gwalior", "Vijayawada", "Jodhpur", "Madurai", "Raipur", "Kota", "Guwahati", "Chandigarh", "Solapur", "Hubli-Dharwad", "Mysore", "Gurgaon", "Aligarh", "Jalandhar", "Bhubaneswar", "Noida", "Kochi"].sort();
 
 export const ProRegistration = () => {
@@ -22,7 +29,7 @@ export const ProRegistration = () => {
 
   const [formData, setFormData] = useState({
     name: "", 
-    email: "", // Added email field
+    email: "", // Business email for verification
     category: "House Contractor", 
     years_of_experience: 0, 
     city: "", 
@@ -71,19 +78,20 @@ export const ProRegistration = () => {
   };
 
   const handleDelete = async () => {
-    // UPDATED ALERT MESSAGE
+    // Specific alert message as requested
     const isConfirmed = window.confirm("Are you sure you want to delete your professional profile? records will be removed! This action cannot be undone.");
     
     if (!isConfirmed || !user) return;
 
     setLoading(true);
     try {
+      // Direct deletion from Supabase ensures record is removed
       const { error } = await supabase.from('professionals').delete().eq('user_id', user.id);
       if (error) throw error;
       
       showToast("Listing deleted and records removed from database.", "success");
       
-      // Reset local state
+      // Clear state and reset form
       setIsExisting(false);
       setFormData({
         name: "", email: "", category: "House Contractor", years_of_experience: 0, 
@@ -133,9 +141,14 @@ export const ProRegistration = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
               <label className="text-[10px] font-bold text-gray-400 mb-1 block uppercase ml-1">Professional Category</label>
+              {/* Organized and grouped select menu */}
               <select className="w-full p-3.5 border-2 border-gray-100 rounded-xl bg-gray-50/30 text-sm focus:border-primary outline-none focus:bg-white transition-all" 
                 value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
-                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                {Object.entries(GROUPED_CATEGORIES).map(([group, cats]) => (
+                  <optgroup label={group} key={group}>
+                    {cats.map(c => <option key={c} value={c}>{c}</option>)}
+                  </optgroup>
+                ))}
               </select>
             </div>
             <Input label="Years of Experience" type="number" value={formData.years_of_experience} onChange={e => setFormData({...formData, years_of_experience: parseInt(e.target.value) || 0})} />
@@ -161,6 +174,7 @@ export const ProRegistration = () => {
           <div>
             <div className="flex justify-between items-center mb-1 ml-1">
               <label className="text-[10px] font-bold text-gray-400 uppercase">Professional Bio & Services</label>
+              {/* Dynamic character counter */}
               <span className={`text-[10px] font-bold ${formData.bio.length >= BIO_LIMIT ? 'text-red-500' : 'text-gray-400'}`}>
                 {formData.bio.length}/{BIO_LIMIT}
               </span>
