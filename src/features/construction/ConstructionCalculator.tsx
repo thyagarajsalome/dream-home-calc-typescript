@@ -334,9 +334,9 @@ export const ConstructionCalculator = () => {
 
             {/* Breakdown Table */}
             <Card title="Cost Breakdown">
-              <div className="overflow-hidden rounded-xl border border-gray-100 mb-5">
+              <div className="">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50 text-xs text-gray-500 uppercase font-bold">
+                  <thead className="overflow-x-auto rounded-xl border border-gray-100 mb-5">
                     <tr>
                       <th className="px-4 py-3 text-left">Item</th>
                       <th className="px-4 py-3 text-right">Cost</th>
