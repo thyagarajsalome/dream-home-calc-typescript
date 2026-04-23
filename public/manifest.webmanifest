@@ -1,6 +1,6 @@
 {
   "name": "Dream Home Cost Calculator",
-  "short_name": "DreamHomeCalc",
+  "short_name": "HDE",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#f8f9fa",
