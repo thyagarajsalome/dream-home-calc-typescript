@@ -1,12 +1,11 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { HelmetProvider } from "react-helmet-async";
-// Changed to BrowserRouter for Firebase
 import { BrowserRouter as Router } from "react-router-dom"; 
 import App from "./App";
 import "./styles/global.css";
 
-// Force unregister any stuck service workers
+// Force unregister any stuck service workers from previous deployments
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.getRegistrations().then((registrations) => {
     for (let registration of registrations) {
@@ -22,6 +21,7 @@ if (!rootElement) throw new Error("Failed to find the root element");
 createRoot(rootElement).render(
   <React.StrictMode>
     <HelmetProvider>
+      {/* Standard Router used for clean URLs on Firebase Hosting */}
       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}> 
         <App />
       </Router>
