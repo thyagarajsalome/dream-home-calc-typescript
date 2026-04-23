@@ -6,6 +6,7 @@ export type PlanTier = 'free' | 'basic' | 'standard' | 'pro';
 
 interface UserContextType {
   user: User | null;
+  role: string; // Added role field
   hasPaid: boolean; // Kept for backward compatibility
   planTier: PlanTier;
   tierValue: number;
@@ -21,6 +22,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [role, setRole] = useState<string>('user'); // Added role state
   const [hasPaid, setHasPaid] = useState(false);
   const [planTier, setPlanTier] = useState<PlanTier>('free');
   const [loading, setLoading] = useState(true);
@@ -43,7 +45,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('has_paid, plan_tier')
+        .select('has_paid, plan_tier, role') // Added role to the select query
         .eq('id', userId)
         .maybeSingle(); 
       
@@ -52,10 +54,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setHasPaid(data?.has_paid || false);
       // Fallback to 'pro' if they paid previously before we added tiers
       setPlanTier(data?.plan_tier || (data?.has_paid ? 'pro' : 'free'));
+      setRole(data?.role || 'user'); // Set the user role
     } catch (err) {
       console.error("Unexpected error fetching profile:", err);
       setHasPaid(false);
       setPlanTier('free');
+      setRole('user');
     }
   };
 
@@ -73,6 +77,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         setHasPaid(false);
         setPlanTier('free');
+        setRole('user');
       }
       setLoading(false);
     });
@@ -82,7 +87,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <UserContext.Provider value={{ 
-      user, hasPaid, planTier, tierValue, setHasPaid, loading, installPrompt, markup, setMarkup, 
+      user, role, hasPaid, planTier, tierValue, setHasPaid, loading, installPrompt, markup, setMarkup, 
       refreshProfile: () => user ? fetchProfile(user.id) : Promise.resolve() 
     }}>
       {children}

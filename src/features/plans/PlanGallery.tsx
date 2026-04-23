@@ -8,7 +8,6 @@ import { Button } from "../../components/ui/Button";
 import { PlanUploader } from "./PlanUploader";
 
 const PLANS_PER_PAGE = 12;
-const ADMIN_EMAIL = "thyagaraja1983@gmail.com";
 
 interface HousePlan {
   id: string;
@@ -73,8 +72,8 @@ export const PlanGallery: React.FC = () => {
   const [editData, setEditData] = useState<Partial<HousePlan>>({});
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // NEW: Extracted planTier from useUser
-  const { user, hasPaid, planTier } = useUser();
+  // UPDATED: Destructure 'role' from useUser context
+  const { user, hasPaid, planTier, role } = useUser();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -152,7 +151,6 @@ export const PlanGallery: React.FC = () => {
         description: editData.description
       };
 
-      // UPDATED: Added .select() to catch silent RLS failures
       const { data, error } = await supabase
         .from('house_plans')
         .update(payload)
@@ -161,7 +159,6 @@ export const PlanGallery: React.FC = () => {
 
       if (error) throw error;
 
-      // UPDATED: Check if data is empty (meaning the update was blocked)
       if (!data || data.length === 0) {
         throw new Error("Update blocked by Database RLS Policy. Admin permissions required.");
       }
@@ -181,20 +178,17 @@ export const PlanGallery: React.FC = () => {
   const handleDownload = async (plan: HousePlan) => {
     if (!user) { navigate("/signin"); return; }
     
-    // Determine user's active tier (fallback to 'pro' if they paid before tiers existed)
     const currentTier = planTier || (hasPaid ? 'pro' : 'free');
-    
-    // Define the daily limits per tier
     const limits: Record<string, number> = { basic: 1, standard: 2, pro: 3 };
     const userLimit = limits[currentTier] || 0;
 
-    if (user.email !== ADMIN_EMAIL) {
+    // UPDATED: Check for 'admin' role instead of hardcoded email
+    if (role !== 'admin') {
       if (userLimit === 0) { 
         navigate("/upgrade"); 
         return; 
       }
 
-      // Check current daily usage from DB
       const today = new Date().toISOString().split('T')[0];
       const { count, error: countError } = await supabase
         .from('download_logs')
@@ -233,8 +227,8 @@ export const PlanGallery: React.FC = () => {
       clearInterval(interval);
       
       if (data) {
-        // Log successful download to DB
-        if (user.email !== ADMIN_EMAIL) {
+        // UPDATED: Only log downloads for non-admins
+        if (role !== 'admin') {
           await supabase.from('download_logs').insert({ 
             user_id: user.id, 
             plan_id: plan.id 
@@ -272,23 +266,22 @@ export const PlanGallery: React.FC = () => {
     return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/house-plans/${path.replace(/^\/+/, '')}`;
   };
 
-  // Check if locked (fallback to free if no tier)
   const currentTier = planTier || (hasPaid ? 'pro' : 'free');
-  const isLockedForUser = currentTier === 'free' && user?.email !== ADMIN_EMAIL;
+  // UPDATED: isLocked check uses 'admin' role
+  const isLockedForUser = currentTier === 'free' && role !== 'admin';
 
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in relative">
       
-      {/* Back to Home Button */}
       <div className="mb-6">
         <Link to="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-primary transition-colors font-bold bg-white px-5 py-2.5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md w-fit">
           <i className="fas fa-arrow-left"></i> Back to Calculator
         </Link>
       </div>
 
-      {user?.email === ADMIN_EMAIL && <PlanUploader onUploadSuccess={() => fetchPlans(0)} />}
+      {/* UPDATED: Check for 'admin' role */}
+      {role === 'admin' && <PlanUploader onUploadSuccess={() => fetchPlans(0)} />}
 
-      {/* Premium Hero Banner */}
       <div className="relative bg-gradient-to-br from-secondary to-gray-900 rounded-3xl p-8 md:p-12 mb-10 overflow-hidden shadow-2xl">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none"></div>
@@ -309,12 +302,12 @@ export const PlanGallery: React.FC = () => {
         </div>
       </div>
 
-      {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
         {plans.map((plan) => (
           <div key={plan.id} className="bg-white rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 border border-gray-100 overflow-hidden flex flex-col relative transition-all duration-300">
             
-            {user?.email === ADMIN_EMAIL && (
+            {/* UPDATED: Check for 'admin' role */}
+            {role === 'admin' && (
               <button onClick={() => handleDelete(plan)} className="absolute top-2 right-2 z-20 bg-red-500/90 hover:bg-red-600 text-white w-8 h-8 rounded-lg flex items-center justify-center shadow-md">
                 <i className="fas fa-trash-alt text-sm"></i>
               </button>
@@ -370,12 +363,10 @@ export const PlanGallery: React.FC = () => {
         </div>
       )}
 
-      {/* QUICK VIEW MODAL (WITH INLINE EDITING) */}
       {selectedPlan && (
         <div className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" onClick={() => { if(!isEditing) setSelectedPlan(null) }}>
           <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row shadow-2xl" onClick={e => e.stopPropagation()}>
             
-            {/* Image Side with Watermark */}
             <div className="md:w-1/2 bg-gray-100 relative h-64 md:h-auto overflow-hidden flex-shrink-0">
                <img src={getImageUrl(selectedPlan.file_url)} className="w-full h-full object-contain" alt={selectedPlan.title} />
                
@@ -393,10 +384,8 @@ export const PlanGallery: React.FC = () => {
                )}
             </div>
 
-            {/* Details Side */}
             <div className="md:w-1/2 p-6 md:p-8 flex flex-col h-[50vh] md:h-auto overflow-y-auto relative">
               
-              {/* Title & Close */}
               <div className="flex justify-between items-start mb-4">
                 {isEditing ? (
                   <input 
@@ -411,7 +400,6 @@ export const PlanGallery: React.FC = () => {
                 <button onClick={() => { setSelectedPlan(null); setIsEditing(false); }} className="text-gray-400 hover:text-gray-800 text-3xl leading-none transition-colors">&times;</button>
               </div>
 
-              {/* Area, Facing, Dimensions */}
               <div className="flex flex-wrap gap-2 mb-6">
                 {isEditing ? (
                   <>
@@ -437,10 +425,10 @@ export const PlanGallery: React.FC = () => {
                 )}
               </div>
 
-              {/* Specs Header with Edit Button */}
               <div className="flex justify-between items-center border-b border-gray-100 pb-2 mb-4">
                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Key Specifications</h4>
-                {user?.email === ADMIN_EMAIL && (
+                {/* UPDATED: Check for 'admin' role */}
+                {role === 'admin' && (
                   <button 
                     onClick={() => {
                       if (isEditing) handleUpdatePlan();
@@ -454,7 +442,6 @@ export const PlanGallery: React.FC = () => {
                 )}
               </div>
 
-              {/* 4 Key Specs */}
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center border border-blue-100"><i className="fas fa-bed"></i></div>
@@ -486,7 +473,6 @@ export const PlanGallery: React.FC = () => {
                 </div>
               </div>
 
-              {/* Description */}
               {(selectedPlan.description || isEditing) && (
                 <>
                   <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 pb-2 mb-3">Detailed Description</h4>
