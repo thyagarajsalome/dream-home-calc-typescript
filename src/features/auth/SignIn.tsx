@@ -47,7 +47,7 @@ const SignIn = () => {
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         <Link to="/" className="text-3xl font-extrabold text-secondary flex justify-center items-center gap-2">
           <i className="fas fa-home text-primary"></i> 
-          <span>DreamHomeCalc</span>
+          <span>HDE</span>
         </Link>
       </div>
 
