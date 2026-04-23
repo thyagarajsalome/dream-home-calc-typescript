@@ -39,8 +39,9 @@ const Contact        = lazy(() => import("./pages/Contact"));
 const Disclaimer     = lazy(() => import("./pages/Disclaimer"));
 
 const Loading = () => (
-  <div className="flex justify-center items-center min-h-[50vh] bg-gray-50">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  <div className="flex flex-col justify-center items-center min-h-[600px] bg-gray-50 rounded-2xl border border-gray-100 animate-pulse">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+    <p className="text-gray-400 font-medium text-sm">Loading HDE Tools...</p>
   </div>
 );
 
