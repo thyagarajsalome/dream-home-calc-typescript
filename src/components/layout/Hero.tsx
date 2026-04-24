@@ -7,7 +7,7 @@ export default function Hero() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // Apply parallax effect to the container and button wrapper
+  // Parallax effect for the container and content
   useGSAPHeroParallax("#home", ".hero-content");
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export default function Hero() {
     loadBanners();
   }, []);
 
-  // Auto-slide every 5 seconds
+  // Auto-slide logic: changes image every 5 seconds
   useEffect(() => {
     if (banners.length < 2) return;
     const timer = setInterval(() => {
@@ -39,6 +39,7 @@ export default function Hero() {
   };
 
   if (loading || banners.length === 0) {
+    // Responsive skeleton loader height
     return <div className="h-[45vh] md:h-[55vh] lg:h-[65vh] bg-gray-200 animate-pulse"></div>;
   }
 
@@ -61,12 +62,12 @@ export default function Hero() {
             transitionProperty: "opacity, transform",
           }}
         >
-          {/* Light overlay to make UI elements pop */}
-          <div className="absolute inset-0 bg-black/15"></div>
+          {/* Subtle overlay for better visibility of the button */}
+          <div className="absolute inset-0 bg-black/20"></div>
         </div>
       ))}
 
-      {/* Centered Button Overlay */}
+      {/* Button Content - Centered and Responsive */}
       <div className="hero-content relative z-10 container mx-auto px-4 text-center">
         <button
           onClick={scrollToTools}
@@ -80,8 +81,8 @@ export default function Hero() {
         </button>
       </div>
 
-      {/* Navigation Indicators (Dots) */}
-      <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2 md:gap-3">
+      {/* Slider Indicators (The 5 Dots) - Responsive spacing and size */}
+      <div className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2 md:gap-3">
         {banners.map((_, i) => (
           <button
             key={i}
