@@ -290,12 +290,12 @@ export const PlanGallery: React.FC = () => {
               {/* Play Button for Shorts Embedding */}
               {videoId && (
                 <button 
-                  onClick={(e) => { e.stopPropagation(); setActiveVideo(videoId); }}
-                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-11 h-11 bg-white/20 backdrop-blur-sm text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all group/play"
-                  title="Watch Video Tour"
-                >
-                  <i className="fas fa-play text-xs ml-0.5"></i>
-                </button>
+    onClick={(e) => { e.stopPropagation(); setActiveVideo(videoId); }}
+    className="absolute top-[65%] left-1/2 -translate-x-1/2 -translate-y-2/6 z-20 w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all"
+    title="Watch Video Tour"
+  >
+    <i className="fas fa-play text-xs ml-0.5"></i>
+  </button>
               )}
 
               {role === 'admin' && (
