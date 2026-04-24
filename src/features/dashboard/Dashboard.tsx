@@ -1,3 +1,4 @@
+import { HeroManager } from "./HeroManager";
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
@@ -16,7 +17,8 @@ const CALCULATOR_META: Record<string, { label: string; icon: string; color: stri
 };
 
 const Dashboard = () => {
-  const { user, hasPaid, loading } = useUser();
+  // 1. Added 'role' to the destructuring here
+  const { user, hasPaid, role, loading } = useUser(); 
   const { showToast } = useToast();
   const navigate = useNavigate();
   const [projects, setProjects] = useState<any[]>([]);
@@ -52,7 +54,6 @@ const Dashboard = () => {
   };
 
   const handleOpenProject = (project: any) => {
-    // Navigate to home with the calculator type and pre-filled project data
     navigate("/", {
       state: {
         openCalculator: project.type,
@@ -130,7 +131,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Right: Stats & Projects */}
+        {/* Right: Stats, Projects & Admin Controls */}
         <div className="md:col-span-2 space-y-6">
           {/* Stats */}
           <div className="grid grid-cols-2 gap-4">
@@ -182,7 +183,6 @@ const Dashboard = () => {
                                  transition-all duration-200 bg-gray-50"
                     >
                       <div className="flex items-center justify-between gap-3">
-                        {/* Icon + Info */}
                         <div className="flex items-center gap-3 min-w-0">
                           <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${meta.color}`}>
                             <i className={`${meta.icon} text-sm`}></i>
@@ -205,7 +205,6 @@ const Dashboard = () => {
                           </div>
                         </div>
 
-                        {/* Cost + Actions */}
                         <div className="flex items-center gap-3 flex-shrink-0">
                           <div className="text-right">
                             <p className="text-base font-extrabold text-secondary">
@@ -215,14 +214,8 @@ const Dashboard = () => {
                             </p>
                           </div>
 
-                          {/* Action Buttons */}
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <div
-                              className="flex items-center gap-1 text-xs font-bold text-primary
-                                         bg-primary/10 hover:bg-primary/20 px-2.5 py-1.5 rounded-lg
-                                         transition-colors"
-                              title="Open in calculator"
-                            >
+                            <div className="flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 px-2.5 py-1.5 rounded-lg transition-colors">
                               <i className="fas fa-pen-to-square text-xs"></i>
                               <span className="hidden sm:inline">Edit</span>
                             </div>
@@ -230,17 +223,12 @@ const Dashboard = () => {
 
                           <button
                             onClick={(e) => handleDelete(e, project.id)}
-                            className="flex items-center justify-center w-7 h-7 rounded-lg
-                                       text-gray-300 hover:text-red-500 hover:bg-red-50
-                                       transition-colors flex-shrink-0"
-                            title="Delete project"
+                            className="flex items-center justify-center w-7 h-7 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0"
                           >
                             <i className="fas fa-trash-alt text-xs"></i>
                           </button>
                         </div>
                       </div>
-
-                      {/* Hover hint */}
                       <div className="absolute inset-x-0 bottom-0 h-0.5 bg-primary/0 group-hover:bg-primary/30 rounded-b-xl transition-all duration-300"></div>
                     </div>
                   );
@@ -250,15 +238,28 @@ const Dashboard = () => {
               <div className="flex flex-col items-center justify-center h-48 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
                 <i className="fas fa-clipboard-list text-4xl mb-3 text-gray-300"></i>
                 <p className="font-medium">No projects saved yet.</p>
-                <Link
-                  to="/"
-                  className="mt-4 text-primary hover:text-yellow-600 text-sm font-bold bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm transition-all hover:shadow"
-                >
+                <Link to="/" className="mt-4 text-primary hover:text-yellow-600 text-sm font-bold bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm transition-all hover:shadow">
                   Start a new calculation
                 </Link>
               </div>
             )}
           </div>
+
+          {/* 2. Admin Only: Hero Management Section */}
+          {role === 'admin' && (
+            <div className="mt-8 pt-8 border-t border-gray-100">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+                  <i className="fas fa-tools"></i>
+                </div>
+                <h3 className="text-xl font-bold text-gray-800">Admin Controls</h3>
+              </div>
+              <HeroManager />
+              <p className="mt-2 text-xs text-gray-400 italic px-1">
+                This section is only visible to you (Admin).
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

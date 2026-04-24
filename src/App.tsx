@@ -19,6 +19,7 @@ import SEO from "./components/layout/SEO";
 import CalculatorTabs from "./features/construction/CalculatorTabs";
 import { useGSAPTabSwitch } from "./hooks/useGSAP";
 
+
 // Lazy-loaded calculators
 const ConstructionCalculator     = lazy(() => import("./features/construction/ConstructionCalculator"));
 const FlooringCalculator         = lazy(() => import("./features/construction/FlooringCalculator"));
