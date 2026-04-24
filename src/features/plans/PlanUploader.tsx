@@ -25,6 +25,7 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({ onUploadSuccess }) =
   const [bathrooms, setBathrooms] = useState("2");
   const [parking, setParking] = useState("1 Car");
   const [description, setDescription] = useState("");
+  const [youtubeUrl, setYoutubeUrl] = useState(""); // NEW: Added state for YouTube Shorts
   
   const [fullFile, setFullFile] = useState<File | null>(null);
 
@@ -51,7 +52,7 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({ onUploadSuccess }) =
       if (fullError) throw fullError;
       setUploadProgress(90);
 
-      // Save to Database with ALL new fields
+      // Save to Database with ALL fields including the YouTube URL
       const { error: dbError } = await supabase.from('house_plans').insert({
         title,
         area_sqft: parseInt(area) || 0,
@@ -62,7 +63,8 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({ onUploadSuccess }) =
         bathrooms: parseInt(bathrooms) || 0,
         parking,
         description,
-        file_url: fullPath
+        file_url: fullPath,
+        youtube_url: youtubeUrl // NEW: Provision for embedded video
       });
       if (dbError) throw dbError;
 
@@ -70,8 +72,9 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({ onUploadSuccess }) =
       clearInterval(progressInterval);
       showToast("Plan uploaded successfully!", "success");
       
-      // Reset
+      // Reset Form
       setTitle(""); setArea(""); setDimensions(""); setDescription("");
+      setYoutubeUrl(""); // NEW: Reset youtube state
       setFullFile(null);
       
       setTimeout(() => {
@@ -121,6 +124,19 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({ onUploadSuccess }) =
           <Input label="Bedrooms" type="number" value={bedrooms} onChange={e => setBedrooms(e.target.value)} disabled={isUploading} className="mb-0" />
           <Input label="Bathrooms" type="number" value={bathrooms} onChange={e => setBathrooms(e.target.value)} disabled={isUploading} className="mb-0" />
           <Input label="Parking" value={parking} onChange={e => setParking(e.target.value)} disabled={isUploading} className="mb-0" />
+        </div>
+
+        {/* NEW: YouTube provision for Admins */}
+        <div className="grid grid-cols-1 gap-4">
+          <Input 
+            label="YouTube Shorts Link (Optional)" 
+            placeholder="https://youtube.com/shorts/..." 
+            value={youtubeUrl} 
+            onChange={e => setYoutubeUrl(e.target.value)} 
+            icon="fab fa-youtube"
+            disabled={isUploading} 
+            className="mb-0"
+          />
         </div>
 
         {/* Detailed Description */}
