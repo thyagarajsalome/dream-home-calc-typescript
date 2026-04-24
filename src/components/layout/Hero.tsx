@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { HeroService, HeroBanner } from "../../services/heroService";
 import { useGSAPHeroParallax } from "../../hooks/useGSAP";
-import { gsap } from "gsap";
 
 export default function Hero() {
   const [banners, setBanners] = useState<HeroBanner[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // Parallax effect for the container and content
+  // Apply parallax effect to the container and button wrapper
   useGSAPHeroParallax("#home", ".hero-content");
 
   useEffect(() => {
@@ -25,7 +24,7 @@ export default function Hero() {
     loadBanners();
   }, []);
 
-  // Auto-slide logic: changes image every 5 seconds
+  // Auto-slide every 5 seconds
   useEffect(() => {
     if (banners.length < 2) return;
     const timer = setInterval(() => {
@@ -40,8 +39,7 @@ export default function Hero() {
   };
 
   if (loading || banners.length === 0) {
-    // Responsive skeleton loader height
-    return <div className="h-[40vh] md:h-[50vh] lg:h-[60vh] bg-gray-200 animate-pulse"></div>;
+    return <div className="h-[45vh] md:h-[55vh] lg:h-[65vh] bg-gray-200 animate-pulse"></div>;
   }
 
   return (
@@ -63,27 +61,27 @@ export default function Hero() {
             transitionProperty: "opacity, transform",
           }}
         >
-          {/* Subtle overlay for better visibility of the button */}
-          <div className="absolute inset-0 bg-black/25"></div>
+          {/* Light overlay to make UI elements pop */}
+          <div className="absolute inset-0 bg-black/15"></div>
         </div>
       ))}
 
-      {/* Button Content - Centered and Responsive */}
+      {/* Centered Button Overlay */}
       <div className="hero-content relative z-10 container mx-auto px-4 text-center">
         <button
           onClick={scrollToTools}
           className="inline-flex items-center gap-2 md:gap-3 bg-primary hover:bg-yellow-600 text-white font-bold 
-                     py-3 px-7 text-base 
+                     py-3 px-8 text-base 
                      md:py-4 md:px-10 md:text-lg 
                      rounded-full shadow-2xl transform hover:-translate-y-1 transition-all duration-300"
         >
           Start Calculating
-          <i className="fas fa-arrow-down text-sm md:text-base"></i>
+          <i className="fas fa-arrow-down text-sm"></i>
         </button>
       </div>
 
-      {/* Slider Indicators (The 5 Dots) - Responsive spacing and size */}
-      <div className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2 md:gap-3">
+      {/* Navigation Indicators (Dots) */}
+      <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2 md:gap-3">
         {banners.map((_, i) => (
           <button
             key={i}
@@ -91,7 +89,7 @@ export default function Hero() {
             className={`transition-all duration-300 rounded-full ${
               i === currentIndex 
                 ? "w-6 md:w-8 h-1.5 md:h-2 bg-primary" 
-                : "w-1.5 md:w-2 h-1.5 md:h-2 bg-white/50 hover:bg-white"
+                : "w-1.5 md:w-2 h-1.5 md:h-2 bg-white/40 hover:bg-white"
             }`}
             aria-label={`Go to slide ${i + 1}`}
           />
