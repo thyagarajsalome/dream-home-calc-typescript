@@ -129,7 +129,7 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({ onUploadSuccess }) =
         {/* NEW: YouTube provision for Admins */}
         <div className="grid grid-cols-1 gap-4">
           <Input 
-            label="YouTube Shorts Link (Optional)" 
+            label="YouTube Shorts Link" 
             placeholder="https://youtube.com/shorts/..." 
             value={youtubeUrl} 
             onChange={e => setYoutubeUrl(e.target.value)} 

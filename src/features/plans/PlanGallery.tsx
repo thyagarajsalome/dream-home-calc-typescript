@@ -1,3 +1,4 @@
+// src/features/plans/PlanGallery.tsx
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../../config/supabaseClient";
@@ -21,6 +22,8 @@ interface HousePlan {
   parking: string;
   description: string;
   youtube_url?: string;
+  kitchen_info?: string; // New: Added for kitchen details
+  living_hall_info?: string; // New: Added for living hall details
 }
 
 // Helper to extract the YouTube ID for standard, mobile, and Shorts links
@@ -156,7 +159,9 @@ export const PlanGallery: React.FC = () => {
         floors: editData.floors,
         parking: editData.parking,
         description: editData.description,
-        youtube_url: editData.youtube_url
+        youtube_url: editData.youtube_url,
+        kitchen_info: editData.kitchen_info,
+        living_hall_info: editData.living_hall_info
       };
 
       const { data, error } = await supabase
@@ -236,6 +241,10 @@ export const PlanGallery: React.FC = () => {
     }
   };
 
+  const handleImageClick = (plan: HousePlan) => {
+    handleDownload(plan);
+  };
+
   const getImageUrl = (path: string) => {
     if (path.startsWith('http')) return path;
     return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/house-plans/${path.replace(/^\/+/, '')}`;
@@ -263,7 +272,7 @@ export const PlanGallery: React.FC = () => {
             </span>
             <h1 className="text-3xl md:text-5xl font-extrabold text-white mb-4 tracking-tight">Architectural House Plans</h1>
             <p className="text-gray-300 text-base md:text-lg max-w-2xl leading-relaxed">
-              Explore our curated gallery of modern designs. Inspect layouts and unlock high-resolution blueprints with complete video tours.
+              Explore modern, compliant designs with full video tours and locked high-res blueprints.
             </p>
           </div>
           <div className="hidden md:flex flex-shrink-0 w-32 h-32 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 items-center justify-center transform rotate-3 hover:rotate-0 transition-transform duration-500 shadow-xl">
@@ -282,7 +291,7 @@ export const PlanGallery: React.FC = () => {
               {videoId && (
                 <button 
                   onClick={(e) => { e.stopPropagation(); setActiveVideo(videoId); }}
-                  className="absolute bottom-3 right-3 z-20 w-11 h-11 bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all"
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-11 h-11 bg-white/20 backdrop-blur-sm text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all group/play"
                   title="Watch Video Tour"
                 >
                   <i className="fas fa-play text-xs ml-0.5"></i>
@@ -306,11 +315,18 @@ export const PlanGallery: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center text-[10px] text-gray-500 border-t border-gray-100 pt-3 px-1">
-                  <span title="Bedrooms" className="flex items-center gap-1"><i className="fas fa-bed text-gray-400"></i>{plan.bedrooms}</span>
-                  <span title="Bathrooms" className="flex items-center gap-1"><i className="fas fa-bath text-gray-400"></i>{plan.bathrooms}</span>
-                  <span title="Floors" className="flex items-center gap-1"><i className="fas fa-layer-group text-gray-400"></i>{plan.floors}</span>
-                  <span title="Parking" className="flex items-center gap-1"><i className="fas fa-car text-gray-400"></i>{plan.parking?.split(' ')[0] || '1'}</span>
+                {/* Updated: Two rows with grouped icons for clean presentation */}
+                <div className="flex flex-col gap-1.5 text-[10px] text-gray-500 border-t border-gray-100 pt-3 px-1">
+                  <div className="flex justify-between items-center">
+                    <span title="Bedrooms" className="flex items-center gap-1"><i className="fas fa-bed text-gray-400"></i>{plan.bedrooms}</span>
+                    <span title="Bathrooms" className="flex items-center gap-1"><i className="fas fa-bath text-gray-400"></i>{plan.bathrooms}</span>
+                    <span title="Living Hall" className="flex items-center gap-1"><i className="fas fa-couch text-gray-400"></i>{plan.living_hall_info || '1'}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span title="Kitchen" className="flex items-center gap-1"><i className="fas fa-kitchen-set text-gray-400"></i>{plan.kitchen_info || '1'}</span>
+                    <span title="Floors" className="flex items-center gap-1"><i className="fas fa-layer-group text-gray-400"></i>{plan.floors}</span>
+                    <span title="Car Parking" className="flex items-center gap-1"><i className="fas fa-car text-gray-400"></i>{plan.parking?.split(' ')[0] || '1'}</span>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-2 mt-2">
@@ -336,7 +352,7 @@ export const PlanGallery: React.FC = () => {
 
       {/* Responsive YouTube Shorts Modal */}
       {activeVideo && (
-        <div className="fixed inset-0 z-[10000] bg-black/95 flex items-center justify-center p-4 backdrop-blur-md animate-fade-in" onClick={() => setActiveVideo(null)}>
+        <div className="fixed inset-0 z-[10000] bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" onClick={() => setActiveVideo(null)}>
           <div className="relative w-full max-w-[420px] aspect-[9/16] bg-black rounded-3xl overflow-hidden shadow-2xl border border-white/10" onClick={e => e.stopPropagation()}>
             <button onClick={() => setActiveVideo(null)} className="absolute top-4 right-4 z-50 w-10 h-10 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center transition-colors">
               <i className="fas fa-times"></i>
@@ -344,7 +360,7 @@ export const PlanGallery: React.FC = () => {
             <iframe
               className="w-full h-full"
               src={`https://www.youtube.com/embed/${activeVideo}?autoplay=1&rel=0`}
-              title="YouTube Tour"
+              title="YouTube video player"
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
@@ -393,12 +409,12 @@ export const PlanGallery: React.FC = () => {
 
               {isEditing && (
                 <div className="mb-6">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Video Tour Link</label>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">YouTube Shorts Link</label>
                   <div className="relative">
                     <i className="fab fa-youtube absolute left-3 top-2.5 text-red-600"></i>
                     <input 
                       type="text" 
-                      placeholder="Paste YouTube Shorts or Video URL" 
+                      placeholder="Paste Shorts URL here..." 
                       value={editData.youtube_url || ""} 
                       onChange={e => setEditData({...editData, youtube_url: e.target.value})} 
                       className="w-full pl-10 p-2 text-xs border rounded-lg outline-none focus:border-primary" 
@@ -410,8 +426,8 @@ export const PlanGallery: React.FC = () => {
               <div className="flex flex-wrap gap-2 mb-6">
                 {isEditing ? (
                   <>
-                    <input type="number" value={editData.area_sqft} onChange={e => setEditData({...editData, area_sqft: parseInt(e.target.value)||0})} className="w-20 border rounded px-2 py-1 text-xs font-bold outline-none bg-gray-50" />
-                    <input type="text" value={editData.facing} onChange={e => setEditData({...editData, facing: e.target.value})} className="w-20 border rounded px-2 py-1 text-xs font-bold outline-none bg-gray-50" />
+                    <input type="number" value={editData.area_sqft} onChange={e => setEditData({...editData, area_sqft: parseInt(e.target.value)||0})} className="w-20 border rounded px-2 py-1 text-xs font-bold text-primary outline-none bg-gray-50" />
+                    <input type="text" value={editData.facing} onChange={e => setEditData({...editData, facing: e.target.value})} className="w-20 border rounded px-2 py-1 text-xs font-bold text-gray-700 outline-none bg-gray-50" />
                   </>
                 ) : (
                   <>
@@ -443,6 +459,34 @@ export const PlanGallery: React.FC = () => {
                   <div>
                     <p className="text-[10px] text-gray-500 font-bold uppercase">Bathrooms</p>
                     {isEditing ? <input type="number" value={editData.bathrooms} onChange={e=>setEditData({...editData, bathrooms: parseInt(e.target.value)||0})} className="w-16 border rounded text-sm" /> : <p className="font-bold text-gray-800">{selectedPlan.bathrooms}</p>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center border border-purple-100"><i className="fas fa-layer-group"></i></div>
+                  <div>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase">Floors</p>
+                    {isEditing ? <input type="text" value={editData.floors} onChange={e=>setEditData({...editData, floors: e.target.value})} className="w-16 border rounded text-sm" /> : <p className="font-bold text-gray-800">{selectedPlan.floors}</p>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-green-50 text-green-500 flex items-center justify-center border border-green-100"><i className="fas fa-car"></i></div>
+                  <div>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase">Parking</p>
+                    {isEditing ? <input type="text" value={editData.parking} onChange={e=>setEditData({...editData, parking: e.target.value})} className="w-24 border rounded text-sm" /> : <p className="font-bold text-gray-800">{selectedPlan.parking}</p>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center border border-amber-100"><i className="fas fa-kitchen-set"></i></div>
+                  <div>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase">Kitchen</p>
+                    {isEditing ? <input type="text" value={editData.kitchen_info} onChange={e=>setEditData({...editData, kitchen_info: e.target.value})} className="w-24 border rounded text-sm" /> : <p className="font-bold text-gray-800">{selectedPlan.kitchen_info || '1'}</p>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-pink-50 text-pink-500 flex items-center justify-center border border-pink-100"><i className="fas fa-couch"></i></div>
+                  <div>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase">Living Hall</p>
+                    {isEditing ? <input type="text" value={editData.living_hall_info} onChange={e=>setEditData({...editData, living_hall_info: e.target.value})} className="w-24 border rounded text-sm" /> : <p className="font-bold text-gray-800">{selectedPlan.living_hall_info || '1'}</p>}
                   </div>
                 </div>
               </div>
