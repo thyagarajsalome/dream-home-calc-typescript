@@ -1,3 +1,4 @@
+// src/features/dashboard/Dashboard.tsx
 import { HeroManager } from "./HeroManager";
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -17,7 +18,6 @@ const CALCULATOR_META: Record<string, { label: string; icon: string; color: stri
 };
 
 const Dashboard = () => {
-  // Destructured 'credits' alongside existing user data
   const { user, hasPaid, role, credits, loading } = useUser(); 
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -87,17 +87,57 @@ const Dashboard = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl animate-fade-in">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">My Dashboard</h1>
-        <p className="text-gray-600 mt-1">
-          Welcome back, <span className="font-semibold text-primary">{user.email}</span>
-        </p>
+      <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">My Dashboard</h1>
+          <p className="text-gray-600 mt-1">
+            Welcome back, <span className="font-semibold text-primary">{user.email}</span>
+          </p>
+        </div>
+        <Link to="/upgrade" className="text-sm font-bold text-primary hover:underline flex items-center gap-2">
+           <i className="fas fa-plus-circle"></i> Add More Credits
+        </Link>
       </div>
+
+      {/* --- NOTIFICATION BANNERS --- */}
+      {!loading && credits === 0 && (
+        <div className="mb-8 bg-red-50 border-2 border-red-100 p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 animate-fade-in shadow-sm">
+          <div className="flex items-center gap-4 text-center md:text-left">
+            <div className="bg-red-500 text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-lg shrink-0">
+              <i className="fas fa-exclamation-circle text-xl"></i>
+            </div>
+            <div>
+              <h4 className="text-red-900 font-bold text-lg leading-tight">Credits Exhausted</h4>
+              <p className="text-red-700 text-sm">You have used all your project credits. Buy more to design new homes.</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => navigate('/upgrade')}
+            className="bg-red-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-red-700 transition-all shadow-md hover:shadow-lg active:scale-95"
+          >
+            Buy Credits Now
+          </button>
+        </div>
+      )}
+
+      {!loading && credits > 0 && credits <= 2 && (
+        <div className="mb-8 bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-center justify-between animate-fade-in">
+          <div className="flex items-center gap-3">
+            <i className="fas fa-bolt text-amber-500"></i>
+            <p className="text-amber-800 text-sm font-medium">
+              You're running low! Only <strong>{credits} credits</strong> remaining.
+            </p>
+          </div>
+          <Link to="/upgrade" className="text-xs font-black uppercase text-amber-900 underline hover:no-underline">
+            Top Up
+          </Link>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Left: Account Status */}
         <div className="md:col-span-1">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden sticky top-24">
             <div className="bg-secondary p-4 text-center">
               <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto text-white text-2xl font-bold">
                 {user.email?.charAt(0).toUpperCase()}
@@ -133,16 +173,21 @@ const Dashboard = () => {
 
         {/* Right: Stats, Projects & Admin Controls */}
         <div className="md:col-span-2 space-y-6">
-          {/* Stats Grid Updated for Credits */}
+          {/* Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* NEW: Credits Stat Card */}
-            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4 transition-transform hover:-translate-y-1">
-              <div className="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center text-amber-600">
+            <div className={`p-5 rounded-xl shadow-sm border flex items-center gap-4 transition-transform hover:-translate-y-1 ${
+              credits === 0 ? "bg-red-50 border-red-100" : "bg-white border-gray-100"
+            }`}>
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                credits === 0 ? "bg-red-100 text-red-600" : "bg-amber-50 text-amber-600"
+              }`}>
                 <i className="fas fa-coins text-xl"></i>
               </div>
               <div>
-                <p className="text-gray-500 text-sm font-medium">Available Credits</p>
-                <p className="text-2xl font-bold text-gray-800">{loading ? "-" : credits}</p>
+                <p className="text-gray-500 text-sm font-medium">Credits</p>
+                <p className={`text-2xl font-bold ${credits === 0 ? "text-red-600" : "text-gray-800"}`}>
+                  {loading ? "-" : credits}
+                </p>
               </div>
             </div>
 
@@ -151,7 +196,7 @@ const Dashboard = () => {
                 <i className="fas fa-folder-open text-xl"></i>
               </div>
               <div>
-                <p className="text-gray-500 text-sm font-medium">Saved Projects</p>
+                <p className="text-gray-500 text-sm font-medium">Projects</p>
                 <p className="text-2xl font-bold text-gray-800">{loadingProjects ? "-" : projects.length}</p>
               </div>
             </div>
@@ -161,7 +206,7 @@ const Dashboard = () => {
                 <i className="fas fa-file-pdf text-xl"></i>
               </div>
               <div>
-                <p className="text-gray-500 text-sm font-medium">Reports Generated</p>
+                <p className="text-gray-500 text-sm font-medium">Reports</p>
                 <p className="text-2xl font-bold text-gray-800">{loadingProjects ? "-" : projects.length}</p>
               </div>
             </div>
@@ -225,14 +270,6 @@ const Dashboard = () => {
                                 : "—"}
                             </p>
                           </div>
-
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <div className="flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 px-2.5 py-1.5 rounded-lg transition-colors">
-                              <i className="fas fa-pen-to-square text-xs"></i>
-                              <span className="hidden sm:inline">Edit</span>
-                            </div>
-                          </div>
-
                           <button
                             onClick={(e) => handleDelete(e, project.id)}
                             className="flex items-center justify-center w-7 h-7 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0"
@@ -241,7 +278,6 @@ const Dashboard = () => {
                           </button>
                         </div>
                       </div>
-                      <div className="absolute inset-x-0 bottom-0 h-0.5 bg-primary/0 group-hover:bg-primary/30 rounded-b-xl transition-all duration-300"></div>
                     </div>
                   );
                 })}
@@ -257,7 +293,7 @@ const Dashboard = () => {
             )}
           </div>
 
-          {/* Admin Controls Section */}
+          {/* Admin Controls */}
           {role === 'admin' && (
             <div className="mt-8 pt-8 border-t border-gray-100">
               <div className="flex items-center gap-2 mb-4">
@@ -267,9 +303,6 @@ const Dashboard = () => {
                 <h3 className="text-xl font-bold text-gray-800">Admin Controls</h3>
               </div>
               <HeroManager />
-              <p className="mt-2 text-xs text-gray-400 italic px-1">
-                This section is only visible to you (Admin).
-              </p>
             </div>
           )}
         </div>
