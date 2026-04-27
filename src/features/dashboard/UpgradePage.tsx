@@ -8,46 +8,57 @@ const plans = {
   credits5: {
     id: "5_credits",
     name: "Starter Bundle",
-    discountPrice: 199, // Matches 19900 in create-order/index.ts
-    actualPrice: 249, 
-    description: "Ideal for individual room planning.",
+    price: 199,
+    originalPrice: 249,
+    description: "Perfect for quick room makeovers and interior planning.",
+    credits: "5 Project Credits",
+    useCase: "Best for: 1-2 room renovations (Kitchen, Bedroom, etc.)",
     features: [
-      "5 Project Credits",
       "Unlock Interiors, Flooring & Painting",
-      "Save up to 5 projects to dashboard"
+      "Interactive 3D Visualizer Access",
+      "Save up to 5 unique projects",
+      "Standard PDF Cost Reports"
     ],
-    color: "border-blue-200",
-    btnColor: "bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200"
+    color: "blue",
+    icon: "fa-paint-roller"
   },
   credits10: {
     id: "10_credits",
     name: "Architect Bundle",
-    discountPrice: 349, // Matches 34900 in create-order/index.ts
-    actualPrice: 499,
-    description: "Best for complete home construction planning.",
-    badge: "Best Value",
+    price: 349,
+    originalPrice: 499,
+    description: "Complete toolkit for building a house from the ground up.",
+    credits: "10 Project Credits",
+    useCase: "Best for: Self-builders planning a full home construction.",
+    badge: "Most Popular",
     features: [
-      "10 Project Credits",
-      "Unlock Plumbing, Electrical & Doors",
-      "Detailed PDF Exports enabled"
+      "Everything in Starter",
+      "Unlock Plumbing & Electrical Layouts",
+      "Doors & Windows Schedule Tools",
+      "Save up to 10 unique projects",
+      "Detailed Technical PDF Exports"
     ],
-    color: "border-primary",
-    btnColor: "bg-primary text-white hover:bg-yellow-500 shadow-float"
+    color: "amber",
+    icon: "fa-drafting-compass"
   },
   pro: {
     id: "pro_monthly",
     name: "Builder Pro",
-    discountPrice: 999, // Matches 99900 in create-order/index.ts
-    actualPrice: 1427,
-    description: "Unlimited professional toolkit for builders.",
+    price: 999,
+    originalPrice: 1427,
+    description: "The ultimate power-user tool for contractors and engineers.",
+    credits: "Unlimited Credits",
+    useCase: "Best for: Professionals managing multiple client sites.",
     features: [
-      "Unlimited Monthly Credits",
-      "Materials BOQ & Profit Margin Tool",
-      "Bonus: All House Plans Unlocked",
-      "Priority Email Support"
+      "Everything in Architect",
+      "Material BOQ (Bill of Quantities)",
+      "Profit Margin & Estimation Tool",
+      "Unlimited Project Saves",
+      "All House Plans Unlocked",
+      "Priority Support"
     ],
-    color: "border-gray-800",
-    btnColor: "bg-secondary text-white hover:bg-gray-800 shadow-float"
+    color: "gray",
+    icon: "fa-hard-hat"
   },
 };
 
@@ -57,7 +68,6 @@ const UpgradePage = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // Load Razorpay script
   useEffect(() => {
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
@@ -68,104 +78,144 @@ const UpgradePage = () => {
   const handlePayment = async (planId: string) => {
     setLoadingPlan(planId);
     setError("");
-
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error("User not authenticated.");
+      if (!session) throw new Error("Please sign in to continue.");
 
-      // Create Razorpay order via edge function
       const { data: order, error: orderError } = await supabase.functions.invoke('create-order', {
         body: { planId } 
       });
 
-      if (orderError || !order || order.error) {
-        throw new Error(order?.error || "Failed to create payment order.");
-      }
+      if (orderError || !order || order.error) throw new Error(order?.error || "Failed to create order.");
 
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: order.amount,
         currency: order.currency,
         name: "HDE Premium",
-        description: "Purchase " + planId.replace('_', ' '),
+        description: `Unlocking ${planId.replace('_', ' ')}`,
         order_id: order.id,
         handler: async (response: any) => {
-          try {
-            // Verify payment signature in the backend
-            const { data: result, error: verifyError } = await supabase.functions.invoke('verify-payment', {
-              body: {
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                planId // Pass planId to backend to determine credit count
-              }
-            });
-
-            if (verifyError || result?.status !== "success") {
-              throw new Error("Payment verification failed.");
-            }
-            
-            alert("Payment Successful! Your credits have been added.");
-            await refreshProfile(); // Refresh context to show new credits
+          const { data: result } = await supabase.functions.invoke('verify-payment', {
+            body: { ...response, planId }
+          });
+          if (result?.status === "success") {
+            await refreshProfile();
             navigate("/dashboard");
-          } catch (err) {
-            setError("Payment verification failed. Please contact support.");
+          } else {
+            setError("Verification failed. Please contact support.");
           }
         },
         prefill: { email: user?.email },
         theme: { color: "#d9a443" },
       };
-
-      const paymentObject = new (window as any).Razorpay(options);
-      paymentObject.open();
+      new (window as any).Razorpay(options).open();
     } catch (err: any) {
-      console.error("Payment Error:", err);
-      setError(err.message || "Error creating payment order.");
+      setError(err.message);
     } finally {
       setLoadingPlan(null);
     }
   };
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-6xl animate-fade-in">
-      <div className="text-center max-w-3xl mx-auto mb-12">
-        <h2 className="text-4xl font-extrabold text-gray-900 mb-4">Project Credits & Plans</h2>
-        <p className="text-lg text-gray-600">Choose a bundle or subscribe for unlimited professional tools.</p>
-        {error && <div className="mt-4 p-3 bg-red-50 text-red-600 rounded-lg border border-red-100 font-bold">{error}</div>}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-        {Object.entries(plans).map(([key, plan]) => (
-          <div key={key} className={`bg-white rounded-2xl shadow-lg border-2 ${plan.color} p-6 flex flex-col relative`}>
-            {plan.badge && <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full">{plan.badge}</div>}
-            <h3 className="text-xl font-bold text-gray-800 mb-2">{plan.name}</h3>
-            
-            <div className="mb-4">
-              <span className="text-gray-400 line-through text-sm">₹{plan.actualPrice}</span>
-              <div className="flex items-baseline">
-                <span className="text-4xl font-extrabold text-gray-900">₹{plan.discountPrice}</span>
-                {key === 'pro' && <span className="text-gray-500 ml-1 text-sm">/ month</span>}
-              </div>
-              {key === 'pro' && <p className="text-xs text-primary font-bold">Billed annually</p>}
+    <div className="min-h-screen bg-gray-50 py-12 px-4">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-black text-gray-900 mb-4 uppercase tracking-tight">
+            Upgrade Your Planning
+          </h1>
+          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+            Get the precision tools you need to build with confidence and save on material costs.
+          </p>
+          
+          {/* Simple Explanation of Credits */}
+          <div className="mt-8 inline-flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+            <div className="bg-primary/10 p-3 rounded-xl">
+              <i className="fas fa-info-circle text-primary text-xl"></i>
             </div>
-
-            <ul className="space-y-3 mb-8 flex-grow">
-              {plan.features.map((feature, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                  <i className="fas fa-check-circle text-green-500 mt-1"></i> {feature}
-                </li>
-              ))}
-            </ul>
-
-            <button 
-              onClick={() => handlePayment(plan.id)} 
-              disabled={loadingPlan !== null} 
-              className={`w-full py-3 rounded-xl font-bold transition-all ${plan.btnColor} disabled:opacity-50`}
-            >
-              {loadingPlan === plan.id ? "Processing..." : key === 'pro' ? "Subscribe" : "Buy Bundle"}
-            </button>
+            <div className="text-left">
+              <p className="font-bold text-gray-800">What is a credit?</p>
+              <p className="text-sm text-gray-500">1 Credit = 1 Unique Project. Use it to design, calculate, and save a full room or building plan.</p>
+            </div>
           </div>
-        ))}
+        </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl mb-8 text-center font-medium">
+            {error}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+          {Object.entries(plans).map(([key, plan]) => {
+            const isBestValue = plan.badge;
+            return (
+              <div 
+                key={key} 
+                className={`relative bg-white rounded-3xl p-8 transition-all hover:shadow-2xl border-2 ${
+                  isBestValue ? 'border-primary shadow-xl scale-105' : 'border-transparent shadow-md'
+                }`}
+              >
+                {isBestValue && (
+                  <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-black px-4 py-1 rounded-full uppercase tracking-widest shadow-lg">
+                    {plan.badge}
+                  </span>
+                )}
+
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900">{plan.name}</h3>
+                    <p className="text-sm text-gray-500 mt-1">{plan.description}</p>
+                  </div>
+                  <div className={`p-3 rounded-2xl bg-${plan.color}-50 text-${plan.color}-600`}>
+                    <i className={`fas ${plan.icon} text-xl`}></i>
+                  </div>
+                </div>
+
+                <div className="mb-6">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-400 line-through text-lg">₹{plan.originalPrice}</span>
+                    <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded">Save 30%</span>
+                  </div>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-5xl font-black text-gray-900">₹{plan.price}</span>
+                    <span className="text-gray-500 font-medium">/{key === 'pro' ? 'mo' : 'once'}</span>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-2xl mb-6">
+                  <p className="text-primary font-bold text-lg mb-1">{plan.credits}</p>
+                  <p className="text-xs text-gray-500 leading-relaxed">{plan.useCase}</p>
+                </div>
+
+                <ul className="space-y-4 mb-8">
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="flex items-start gap-3 text-sm text-gray-700 font-medium">
+                      <i className="fas fa-check-circle text-green-500 mt-0.5"></i>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  onClick={() => handlePayment(plan.id)}
+                  disabled={loadingPlan !== null}
+                  className={`w-full py-4 rounded-2xl font-black text-lg transition-all transform active:scale-95 disabled:opacity-50 ${
+                    isBestValue 
+                    ? 'bg-primary text-white hover:bg-amber-500 shadow-lg' 
+                    : 'bg-gray-900 text-white hover:bg-black'
+                  }`}
+                >
+                  {loadingPlan === plan.id ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <i className="fas fa-spinner fa-spin"></i> Processing
+                    </span>
+                  ) : key === 'pro' ? 'Start Subscription' : 'Buy Credits Now'}
+                </button>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
