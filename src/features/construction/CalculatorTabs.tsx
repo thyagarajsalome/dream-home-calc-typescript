@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 
@@ -22,16 +22,57 @@ const CALCULATORS: { id: CalculatorType; name: string; icon: string; reqTier: nu
 
 const CalculatorTabs: React.FC<CalculatorTabsProps> = ({ activeCalculator, setActiveCalculator }) => {
   const navigate = useNavigate();
-  const { tierValue } = useUser(); // Fetch tier dynamically
+  const { tierValue } = useUser();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const currentCalc = CALCULATORS.find(c => c.id === activeCalculator) || CALCULATORS[0];
 
   const handleTabClick = (id: CalculatorType, reqTier: number) => {
-    if (tierValue < reqTier) navigate("/upgrade");
-    else setActiveCalculator(id);
+    if (tierValue < reqTier) {
+      navigate("/upgrade");
+    } else {
+      setActiveCalculator(id);
+      setIsDropdownOpen(false);
+    }
   };
 
   return (
-    <div className="w-full overflow-x-auto pt-2 pb-4 -mx-4 px-4 md:mx-0 md:px-1 scrollbar-hide">
-      <div className="flex gap-3 min-w-max">
+    <div className="w-full pt-2 pb-4">
+      {/* MOBILE DROPDOWN (Visible only on <768px) */}
+      <div className="md:hidden relative">
+        <button
+          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          className="w-full flex items-center justify-between px-4 py-4 bg-white border-2 border-gray-100 rounded-2xl shadow-sm text-secondary font-bold"
+        >
+          <div className="flex items-center gap-3">
+            <i className={`${currentCalc.icon} text-primary`}></i>
+            <span>{currentCalc.name}</span>
+          </div>
+          <i className={`fas fa-chevron-${isDropdownOpen ? 'up' : 'down'} text-gray-400`}></i>
+        </button>
+
+        {isDropdownOpen && (
+          <div className="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden">
+            {CALCULATORS.map((calc) => (
+              <button
+                key={calc.id}
+                onClick={() => handleTabClick(calc.id, calc.reqTier)}
+                className={`w-full flex items-center justify-between px-5 py-4 border-b border-gray-50 last:border-none hover:bg-gray-50 transition-colors
+                  ${activeCalculator === calc.id ? "bg-amber-50/50" : ""}`}
+              >
+                <div className="flex items-center gap-3">
+                  <i className={`${calc.icon} ${activeCalculator === calc.id ? 'text-primary' : 'text-gray-400'}`}></i>
+                  <span className={`text-sm ${activeCalculator === calc.id ? 'font-bold text-secondary' : 'text-gray-600'}`}>{calc.name}</span>
+                </div>
+                {tierValue < calc.reqTier && <i className="fas fa-lock text-xs text-gray-300"></i>}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* TABLET & DESKTOP GRID (Visible on >=768px - No sliding, all visible) */}
+      <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-3">
         {CALCULATORS.map(({ id, name, icon, reqTier }) => {
           const isActive = activeCalculator === id;
           const isLocked = tierValue < reqTier;
@@ -40,13 +81,13 @@ const CalculatorTabs: React.FC<CalculatorTabsProps> = ({ activeCalculator, setAc
             <button
               key={id}
               onClick={() => handleTabClick(id, reqTier)}
-              className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 border flex-shrink-0 select-none
-                ${isActive ? "bg-secondary text-white border-secondary shadow-md transform scale-[1.02]" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300 hover:text-secondary"}
-                ${isLocked ? "opacity-75" : ""}`}
+              className={`flex items-center justify-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all duration-200 border
+                ${isActive ? "bg-secondary text-white border-secondary shadow-lg scale-[1.02]" : "bg-white text-gray-600 border-gray-100 hover:border-primary/30 hover:bg-amber-50/20"}
+                ${isLocked ? "opacity-80" : ""}`}
             >
-              <i className={`${icon} ${isActive ? "text-primary" : "text-gray-400"}`}></i>
+              <i className={`${icon} ${isActive ? "text-primary" : "text-gray-300"}`}></i>
               <span className="whitespace-nowrap">{name}</span>
-              {isLocked && <i className="fas fa-lock text-xs ml-1 text-gray-400"></i>}
+              {isLocked && <i className="fas fa-lock text-[10px] ml-1 opacity-40"></i>}
             </button>
           );
         })}
