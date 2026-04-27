@@ -106,12 +106,19 @@ export function useGSAPReveal(options: RevealOptions = {}) {
   return { revealRef };
 }
 
-// ── 3. Hero Parallax ─────────────────────────────────────────────────────────
+// ── 3. Hero Parallax (FIXED) ──────────────────────────────────────────────────
 export function useGSAPHeroParallax(
   sectionSelector = "#home",
   contentSelector = ".hero-content"
 ) {
   useEffect(() => {
+    // Select the elements to check for their existence
+    const section = document.querySelector(sectionSelector);
+    const content = document.querySelector(contentSelector);
+
+    // Only run animations if both elements exist in the DOM
+    if (!section || !content) return;
+
     const ctx = gsap.context(() => {
       // Parallax background effect
       gsap.to(sectionSelector, {
