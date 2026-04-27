@@ -16,9 +16,11 @@ const plans = {
     useCase: "Best for: Quick room makeovers and interior planning.",
     features: [
       "Unlock Interiors, Flooring & Painting",
-      "Interactive 3D Visualizer Access",
-      "Save up to 5 unique projects",
-      "Standard PDF Cost Reports"
+        "Save up to 5 unique projects",
+      "Standard PDF Cost Reports",
+      "Download House plans",
+      "Find local suppliers and contractors",
+      "Register as Provider to get hired for projects"
     ],
     color: "blue",
     icon: "fa-paint-roller"
@@ -38,32 +40,37 @@ const plans = {
       "Unlock Plumbing & Electrical Layouts",
       "Doors & Windows Schedule Tools",
       "Save up to 10 unique projects",
-      "Detailed Technical PDF Exports"
+      "Detailed Technical PDF Exports",
+      "Download House plans",
+      "Find local suppliers and contractors",
+      "Register as Provider to get hired for projects"
     ],
     color: "amber",
     icon: "fa-drafting-compass"
   },
-  pro: {
-    id: "pro",
-    name: "Pro",
-    tier: "pro",
-    price: 999,
-    originalPrice: 1427,
-    description: "Built for professional contractors, builders, and interior designers who need constant access.",
-    credits: "Unlimited Credits",
-    useCase: "Best for: Professionals managing multiple client sites.",
-    features: [
-      "Everything in Standard",
-      "Material BOQ (Bill of Quantities)",
-      "Profit Margin & Estimation Tool",
-      "Unlimited Project Saves",
-      "All House Plans Unlocked",
-      "Priority Support"
-    ],
-    color: "gray",
-    icon: "fa-hard-hat"
-  },
-};
+  // Inside the plans object in UpgradePage.tsx
+pro: {
+  id: "pro",
+  name: "Pro",
+  tier: "pro",
+  price: 999,
+  originalPrice: 1427,
+  description: "Built for professional contractors and builders who need high-volume access.",
+  credits: "High-Volume Usage", // Changed from "Unlimited"
+  useCase: "Limits: 100 projects/month and 10 saves per day.", // Explicit limit info
+  features: [
+    "100 Monthly Project Saves",
+    "10 Daily Save Limit (Anti-Bot Protection)",
+    "Everything in Standard",
+    "Material BOQ (Bill of Quantities)",
+    "Priority Support",
+    "Download House plans",
+      "Find local suppliers and contractors",
+      "Register as Provider to get hired for projects"
+  ],
+  color: "gray",
+  icon: "fa-hard-hat"
+},
 
 const UpgradePage = () => {
   const { user, refreshProfile, planTier } = useUser();
@@ -234,5 +241,5 @@ const UpgradePage = () => {
     </div>
   );
 };
-
+}
 export default UpgradePage;
