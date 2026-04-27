@@ -3,13 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { supabase } from '../config/supabaseClient'; // Added for direct profile updates
+import { supabase } from '../config/supabaseClient';
 import { useUser } from '../context/UserContext';
 import { ProjectService } from '../services/projectService';
 import { useToast } from '../context/ToastContext';
 
 export const useProjectActions = (projectType: string) => {
-  // Destructure credits, planTier, and refreshProfile from context
   const { user, credits, planTier, refreshProfile } = useUser();
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -24,7 +23,7 @@ export const useProjectActions = (projectType: string) => {
       return;
     }
 
-    // Check credit eligibility: Pro tier has unlimited credits
+    // Pre-check: Don't even start if credits are 0 and user isn't Pro
     const isPro = planTier === 'pro';
     if (!isPro && credits <= 0) {
       showToast("No credits remaining. Please upgrade your plan.", "error");
@@ -37,7 +36,7 @@ export const useProjectActions = (projectType: string) => {
 
     setIsSaving(true);
     try {
-      // Step 1: Save project data to the 'projects' table
+      // Step 1: Save project data
       await ProjectService.save({
         user_id: user.id,
         name,
@@ -46,22 +45,22 @@ export const useProjectActions = (projectType: string) => {
         date: new Date().toISOString(),
       });
 
-      // Step 2: Deduct 1 credit from the 'profiles' table if not a Pro user
+      // Step 2: Deduct 1 credit using the server-side RPC function
+      // This is the fix for the "Ghost Deduction" issue.
       if (!isPro) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({ credits: credits - 1 })
-          .eq('id', user.id);
+        const { error: rpcError } = await supabase.rpc('deduct_project_credit', {
+          user_uuid: user.id
+        });
 
-        if (profileError) throw profileError;
+        if (rpcError) throw rpcError;
       }
 
-      // Step 3: Refresh the local user state to update the Dashboard counters
+      // Step 3: Refresh the local profile to pull the latest credit count from DB
       await refreshProfile();
       
       showToast(isPro ? "Project saved successfully!" : "Project saved and 1 credit deducted!", "success");
     } catch (error: any) {
-      console.error(error);
+      console.error("Save error:", error);
       showToast(error.message || "Failed to save project.", "error");
     } finally {
       setIsSaving(false);
@@ -105,7 +104,6 @@ export const useProjectActions = (projectType: string) => {
     try {
       const doc = new jsPDF();
 
-      // Header Text (Black and White)
       doc.setFontSize(18);
       doc.setTextColor(0, 0, 0); 
       doc.text(`Project Estimate: ${projectName}`, 14, 20);
