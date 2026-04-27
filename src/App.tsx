@@ -4,6 +4,7 @@ import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import { UserProvider, useUser } from "./context/UserContext";
 import { ToastProvider } from "./context/ToastContext";
 
+
 // Lazy-loaded pages
 const PlanGallery = lazy(() => import("./features/plans/PlanGallery"));
 const DirectoryPage = lazy(() => import("./features/directory/DirectoryPage"));

@@ -39,35 +39,35 @@ export default function Hero() {
   };
 
   if (loading || banners.length === 0) {
-    // Responsive skeleton loader height
-    return <div className="h-[45vh] md:h-[55vh] lg:h-[65vh] bg-gray-200 animate-pulse"></div>;
+    return <div className="h-[30vh] lg:h-[65vh] bg-gray-200 animate-pulse"></div>;
   }
 
   return (
     <section 
       id="home" 
-      className="relative w-full h-[45vh] sm:h-[50vh] md:h-[55vh] lg:h-[65vh] overflow-hidden flex items-center justify-center bg-secondary"
+      className="relative w-full h-[30vh] lg:h-[65vh] overflow-hidden flex items-center justify-center bg-secondary"
     >
-      {/* Image Slider Layer */}
-      {banners.map((banner, index) => (
-        <div
-          key={banner.id}
-          className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-            index === currentIndex ? "opacity-100 scale-105" : "opacity-0 scale-100"
-          }`}
-          style={{
-            backgroundImage: `url(${banner.image_url})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            transitionProperty: "opacity, transform",
-          }}
-        >
-          {/* Subtle overlay for better visibility of the button */}
-          <div className="absolute inset-0 bg-black/20"></div>
-        </div>
-      ))}
+      {/* IMAGES HIDDEN ON MOBILE/TABLET: Added 'hidden lg:block' wrapper */}
+      <div className="hidden lg:block">
+        {banners.map((banner, index) => (
+          <div
+            key={banner.id}
+            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+              index === currentIndex ? "opacity-100 scale-105" : "opacity-0 scale-100"
+            }`}
+            style={{
+              backgroundImage: `url(${banner.image_url})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              transitionProperty: "opacity, transform",
+            }}
+          >
+            <div className="absolute inset-0 bg-black/20"></div>
+          </div>
+        ))}
+      </div>
 
-      {/* Button Content - Centered and Responsive */}
+      {/* Button Content - Centered and visible on all devices */}
       <div className="hero-content relative z-10 container mx-auto px-4 text-center">
         <button
           onClick={scrollToTools}
@@ -81,16 +81,14 @@ export default function Hero() {
         </button>
       </div>
 
-      {/* Slider Indicators (The 5 Dots) - Responsive spacing and size */}
-      <div className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2 md:gap-3">
+      {/* Indicators hidden on mobile/tablet */}
+      <div className="hidden lg:flex absolute bottom-8 left-1/2 -translate-x-1/2 z-20 gap-3">
         {banners.map((_, i) => (
           <button
             key={i}
             onClick={() => setCurrentIndex(i)}
             className={`transition-all duration-300 rounded-full ${
-              i === currentIndex 
-                ? "w-6 md:w-8 h-1.5 md:h-2 bg-primary" 
-                : "w-1.5 md:w-2 h-1.5 md:h-2 bg-white/40 hover:bg-white"
+              i === currentIndex ? "w-8 h-2 bg-primary" : "w-2 h-2 bg-white/40 hover:bg-white"
             }`}
             aria-label={`Go to slide ${i + 1}`}
           />
