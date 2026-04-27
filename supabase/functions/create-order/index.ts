@@ -6,11 +6,11 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-// Replace the old PLANS dictionary with this:
+// Replace the old PLANS dictionary with this credit-based one:
 const PLANS: Record<string, number> = {
-  basic: 9900,      // ₹99
-  standard: 29900,  // ₹299
-  pro: 99900        // ₹999
+  "5_credits": 19900,   // ₹199 for 5 credits
+  "10_credits": 34900,  // ₹349 for 10 credits
+  "pro_monthly": 99900  // ₹999 for Builder Pro (Subscription)
 };
 // Everything else remains exactly the same
 Deno.serve(async (req) => {
