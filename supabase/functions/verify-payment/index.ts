@@ -35,7 +35,6 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) throw new Error('Missing Authorization header');
 
-    // Extract the JWT token
     const token = authHeader.replace('Bearer ', '');
 
     const supabaseClient = createClient(
@@ -44,11 +43,9 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    // Pass the token explicitly here!
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
     if (authError || !user) throw new Error('Unauthorized');
 
-    // NEW: Added planId to the destructured JSON payload
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, planId } = await req.json();
     
     const secret = Deno.env.get('RAZORPAY_KEY_SECRET') || '';
@@ -62,25 +59,51 @@ Deno.serve(async (req) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       );
 
-      // NEW: Determine which tier string to save to the database
+      // --- NEW CREDIT & TIER LOGIC ---
+      let creditsToAdd = 0;
       let plan_tier = 'free';
-      if (planId === 'basic') plan_tier = 'basic';
-      else if (planId === 'standard') plan_tier = 'standard';
-      else if (planId === 'pro') plan_tier = 'pro';
 
-      // NEW: Included plan_tier in the upsert
+      // Assign credits based on the bundle purchased
+      if (planId === '5_credits') {
+        creditsToAdd = 5;
+        plan_tier = 'basic';
+      } else if (planId === '10_credits') {
+        creditsToAdd = 10;
+        plan_tier = 'standard';
+      } else if (planId === 'pro_monthly' || planId === 'pro') {
+        plan_tier = 'pro';
+        // For Pro, you could optionally grant a large starting balance (e.g., 100) 
+        // or handle it as unlimited in the frontend logic.
+      } else if (planId === 'basic') {
+        plan_tier = 'basic';
+      } else if (planId === 'standard') {
+        plan_tier = 'standard';
+      }
+
+      // Fetch current profile to get existing credits for accurate increment
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('credits')
+        .eq('id', user.id)
+        .single();
+
+      const currentCredits = profile?.credits || 0;
+
+      // Update the profile with new total credits and plan tier
       const { error: dbError } = await supabaseAdmin
         .from('profiles')
-        .upsert({ 
-          id: user.id, 
-          has_paid: true, // Kept for backward compatibility
+        .update({ 
+          has_paid: true, 
           plan_tier: plan_tier, 
+          credits: currentCredits + creditsToAdd,
           updated_at: new Date().toISOString() 
-        });
+        })
+        .eq('id', user.id);
+      // -------------------------------
 
       if (dbError) throw dbError;
 
-      return new Response(JSON.stringify({ status: "success", message: "Payment verified." }), {
+      return new Response(JSON.stringify({ status: "success", message: "Payment verified and credits added." }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       });

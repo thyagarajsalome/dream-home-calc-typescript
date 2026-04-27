@@ -17,8 +17,8 @@ const CALCULATOR_META: Record<string, { label: string; icon: string; color: stri
 };
 
 const Dashboard = () => {
-  // 1. Added 'role' to the destructuring here
-  const { user, hasPaid, role, loading } = useUser(); 
+  // Destructured 'credits' alongside existing user data
+  const { user, hasPaid, role, credits, loading } = useUser(); 
   const { showToast } = useToast();
   const navigate = useNavigate();
   const [projects, setProjects] = useState<any[]>([]);
@@ -41,7 +41,7 @@ const Dashboard = () => {
   };
 
   const handleDelete = async (e: React.MouseEvent, projectId: string) => {
-    e.stopPropagation(); // prevent card click
+    e.stopPropagation(); 
     const isConfirmed = window.confirm("Are you sure you want to delete this project?");
     if (!isConfirmed) return;
     try {
@@ -133,8 +133,19 @@ const Dashboard = () => {
 
         {/* Right: Stats, Projects & Admin Controls */}
         <div className="md:col-span-2 space-y-6">
-          {/* Stats */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Stats Grid Updated for Credits */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* NEW: Credits Stat Card */}
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4 transition-transform hover:-translate-y-1">
+              <div className="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center text-amber-600">
+                <i className="fas fa-coins text-xl"></i>
+              </div>
+              <div>
+                <p className="text-gray-500 text-sm font-medium">Available Credits</p>
+                <p className="text-2xl font-bold text-gray-800">{loading ? "-" : credits}</p>
+              </div>
+            </div>
+
             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4 transition-transform hover:-translate-y-1">
               <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-500">
                 <i className="fas fa-folder-open text-xl"></i>
@@ -144,6 +155,7 @@ const Dashboard = () => {
                 <p className="text-2xl font-bold text-gray-800">{loadingProjects ? "-" : projects.length}</p>
               </div>
             </div>
+
             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4 transition-transform hover:-translate-y-1">
               <div className="w-12 h-12 bg-purple-50 rounded-full flex items-center justify-center text-purple-500">
                 <i className="fas fa-file-pdf text-xl"></i>
@@ -245,7 +257,7 @@ const Dashboard = () => {
             )}
           </div>
 
-          {/* 2. Admin Only: Hero Management Section */}
+          {/* Admin Controls Section */}
           {role === 'admin' && (
             <div className="mt-8 pt-8 border-t border-gray-100">
               <div className="flex items-center gap-2 mb-4">

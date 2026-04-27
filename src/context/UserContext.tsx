@@ -6,10 +6,11 @@ export type PlanTier = 'free' | 'basic' | 'standard' | 'pro';
 
 interface UserContextType {
   user: User | null;
-  role: string; // Added role field
-  hasPaid: boolean; // Kept for backward compatibility
+  role: string;
+  hasPaid: boolean; 
   planTier: PlanTier;
   tierValue: number;
+  credits: number; // Added credits field
   setHasPaid: (status: boolean) => void;
   loading: boolean;
   installPrompt: any;
@@ -22,14 +23,14 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [role, setRole] = useState<string>('user'); // Added role state
+  const [role, setRole] = useState<string>('user');
   const [hasPaid, setHasPaid] = useState(false);
   const [planTier, setPlanTier] = useState<PlanTier>('free');
+  const [credits, setCredits] = useState<number>(0); // Added credits state
   const [loading, setLoading] = useState(true);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [markup, setMarkup] = useState(0);
 
-  // Helper to easily check hierarchy: free=0, basic=1, standard=2, pro=3
   const tierValue = { free: 0, basic: 1, standard: 2, pro: 3 }[planTier];
 
   useEffect(() => {
@@ -45,21 +46,22 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('has_paid, plan_tier, role') // Added role to the select query
+        .select('has_paid, plan_tier, role, credits') // Added credits to selection
         .eq('id', userId)
         .maybeSingle(); 
       
       if (error) console.error("Error fetching profile:", error);
       
       setHasPaid(data?.has_paid || false);
-      // Fallback to 'pro' if they paid previously before we added tiers
       setPlanTier(data?.plan_tier || (data?.has_paid ? 'pro' : 'free'));
-      setRole(data?.role || 'user'); // Set the user role
+      setRole(data?.role || 'user');
+      setCredits(data?.credits || 0); // Set the credit count from DB
     } catch (err) {
       console.error("Unexpected error fetching profile:", err);
       setHasPaid(false);
       setPlanTier('free');
       setRole('user');
+      setCredits(0); // Reset credits on error
     }
   };
 
@@ -78,6 +80,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setHasPaid(false);
         setPlanTier('free');
         setRole('user');
+        setCredits(0); // Reset credits on logout
       }
       setLoading(false);
     });
@@ -87,7 +90,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <UserContext.Provider value={{ 
-      user, role, hasPaid, planTier, tierValue, setHasPaid, loading, installPrompt, markup, setMarkup, 
+      user, role, hasPaid, planTier, tierValue, credits, // Exposed credits to the app
+      setHasPaid, loading, installPrompt, markup, setMarkup, 
       refreshProfile: () => user ? fetchProfile(user.id) : Promise.resolve() 
     }}>
       {children}
