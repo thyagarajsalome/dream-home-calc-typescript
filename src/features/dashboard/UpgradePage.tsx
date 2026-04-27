@@ -16,11 +16,11 @@ const plans = {
     useCase: "Best for: Quick room makeovers and interior planning.",
     features: [
       "Unlock Interiors, Flooring & Painting",
-        "Save up to 5 unique projects",
-      "Standard PDF Cost Reports",
-      "Download House plans",
-      "Find local suppliers and contractors",
-      "Register as Provider to get hired for projects"
+     "House plan downloads"
+     "Find local contractors and suppliers",
+     "Register as a supplier or contractor to get leads",
+      "Save up to 5 unique projects",
+      "Standard PDF Cost Reports"
     ],
     color: "blue",
     icon: "fa-paint-roller"
@@ -41,36 +41,36 @@ const plans = {
       "Doors & Windows Schedule Tools",
       "Save up to 10 unique projects",
       "Detailed Technical PDF Exports",
-      "Download House plans",
-      "Find local suppliers and contractors",
-      "Register as Provider to get hired for projects"
+      "House plan downloads"
+     "Find local contractors and suppliers",
+     "Register as a supplier or contractor to get leads",
     ],
     color: "amber",
     icon: "fa-drafting-compass"
   },
-  // Inside the plans object in UpgradePage.tsx
-pro: {
-  id: "pro",
-  name: "Pro",
-  tier: "pro",
-  price: 999,
-  originalPrice: 1427,
-  description: "Built for professional contractors and builders who need high-volume access.",
-  credits: "High-Volume Usage", // Changed from "Unlimited"
-  useCase: "Limits: 100 projects/month and 10 saves per day.", // Explicit limit info
-  features: [
-    "100 Monthly Project Saves",
-    "10 Daily Save Limit (Anti-Bot Protection)",
-    "Everything in Standard",
-    "Material BOQ (Bill of Quantities)",
-    "Priority Support",
-    "Download House plans",
-      "Find local suppliers and contractors",
-      "Register as Provider to get hired for projects"
-  ],
-  color: "gray",
-  icon: "fa-hard-hat"
-},
+  pro: {
+    id: "pro",
+    name: "Pro",
+    tier: "pro",
+    price: 999,
+    originalPrice: 1427,
+    description: "Built for professional contractors and builders who need high-volume access.",
+    credits: "High-Volume Usage",
+    useCase: "Limits: 100 projects/month and 10 saves per day.",
+    features: [
+      "100 Monthly Project Saves",
+      "10 Daily Save Limit (Anti-Bot Protection)",
+      "Everything in Standard",
+      "Material BOQ (Bill of Quantities)",
+      "Priority Support",
+      "House plan downloads"
+     "Find local contractors and suppliers",
+     "Register as a supplier or contractor to get leads",
+    ],
+    color: "gray",
+    icon: "fa-hard-hat"
+  },
+}; // Ensure this closing brace is present!
 
 const UpgradePage = () => {
   const { user, refreshProfile, planTier } = useUser();
@@ -241,5 +241,5 @@ const UpgradePage = () => {
     </div>
   );
 };
-}
+
 export default UpgradePage;
