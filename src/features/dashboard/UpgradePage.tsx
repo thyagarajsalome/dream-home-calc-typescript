@@ -1,50 +1,50 @@
+// src/features/dashboard/UpgradePage.tsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../config/supabaseClient";
 import { useUser } from "../../context/UserContext";
 
 const plans = {
-  basic: {
-    id: "basic",
-    name: "Homeowner Basic",
-    discountPrice: 99,
-    actualPrice: 142, 
-    description: "Essential toolkit for minor home improvements.",
+  credits5: {
+    id: "5_credits",
+    name: "Starter Bundle",
+    discountPrice: 199, // Matches 19900 in create-order/index.ts
+    actualPrice: 249, 
+    description: "Ideal for individual room planning.",
     features: [
-      "Interiors, Flooring & Painting",
-      "Bonus: 1 House Plan download / day",
-      "Save up to 3 projects"
+      "5 Project Credits",
+      "Unlock Interiors, Flooring & Painting",
+      "Save up to 5 projects to dashboard"
     ],
     color: "border-blue-200",
     btnColor: "bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200"
   },
-  standard: {
-    id: "standard",
-    name: "Self-Builder Standard",
-    discountPrice: 299,
-    actualPrice: 427,
-    description: "Complete set for building your dream home.",
+  credits10: {
+    id: "10_credits",
+    name: "Architect Bundle",
+    discountPrice: 349, // Matches 34900 in create-order/index.ts
+    actualPrice: 499,
+    description: "Best for complete home construction planning.",
     badge: "Best Value",
     features: [
-      "Everything in Basic",
-      "Plumbing, Electrical & Doors",
-      "Bonus: 2 House Plan downloads / day",
-      "Detailed PDF Exports"
+      "10 Project Credits",
+      "Unlock Plumbing, Electrical & Doors",
+      "Detailed PDF Exports enabled"
     ],
     color: "border-primary",
     btnColor: "bg-primary text-white hover:bg-yellow-500 shadow-float"
   },
   pro: {
-    id: "pro",
+    id: "pro_monthly",
     name: "Builder Pro",
-    discountPrice: 999,
+    discountPrice: 999, // Matches 99900 in create-order/index.ts
     actualPrice: 1427,
-    description: "Professional tools for contractors & engineers.",
+    description: "Unlimited professional toolkit for builders.",
     features: [
-      "Everything in Standard",
+      "Unlimited Monthly Credits",
       "Materials BOQ & Profit Margin Tool",
-      "Bonus: 3 House Plan downloads / day",
-      "Unlimited Projects"
+      "Bonus: All House Plans Unlocked",
+      "Priority Email Support"
     ],
     color: "border-gray-800",
     btnColor: "bg-secondary text-white hover:bg-gray-800 shadow-float"
@@ -78,24 +78,26 @@ const UpgradePage = () => {
         body: { planId } 
       });
 
-      if (orderError || !order) throw new Error("Failed to create payment order.");
+      if (orderError || !order || order.error) {
+        throw new Error(order?.error || "Failed to create payment order.");
+      }
 
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: order.amount,
         currency: order.currency,
-        name: "Dream Home Calculator",
-        description: plans[planId as keyof typeof plans].name + " Access",
+        name: "HDE Premium",
+        description: "Purchase " + planId.replace('_', ' '),
         order_id: order.id,
         handler: async (response: any) => {
           try {
-            // Verify payment signature
+            // Verify payment signature in the backend
             const { data: result, error: verifyError } = await supabase.functions.invoke('verify-payment', {
               body: {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
-                planId
+                planId // Pass planId to backend to determine credit count
               }
             });
 
@@ -103,8 +105,8 @@ const UpgradePage = () => {
               throw new Error("Payment verification failed.");
             }
             
-            alert("Payment Successful! Access Unlocked.");
-            await refreshProfile(); // Refresh context to apply new tier
+            alert("Payment Successful! Your credits have been added.");
+            await refreshProfile(); // Refresh context to show new credits
             navigate("/dashboard");
           } catch (err) {
             setError("Payment verification failed. Please contact support.");
@@ -127,9 +129,9 @@ const UpgradePage = () => {
   return (
     <div className="container mx-auto px-4 py-12 max-w-6xl animate-fade-in">
       <div className="text-center max-w-3xl mx-auto mb-12">
-        <h2 className="text-4xl font-extrabold text-gray-900 mb-4">Pricing Plans</h2>
-        <p className="text-lg text-gray-600">Save 30% today on all monthly subscriptions.</p>
-        {error && <p className="text-red-500 font-bold mt-4">{error}</p>}
+        <h2 className="text-4xl font-extrabold text-gray-900 mb-4">Project Credits & Plans</h2>
+        <p className="text-lg text-gray-600">Choose a bundle or subscribe for unlimited professional tools.</p>
+        {error && <div className="mt-4 p-3 bg-red-50 text-red-600 rounded-lg border border-red-100 font-bold">{error}</div>}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
@@ -142,9 +144,9 @@ const UpgradePage = () => {
               <span className="text-gray-400 line-through text-sm">₹{plan.actualPrice}</span>
               <div className="flex items-baseline">
                 <span className="text-4xl font-extrabold text-gray-900">₹{plan.discountPrice}</span>
-                <span className="text-gray-500 ml-1 text-sm">/ month</span>
+                {key === 'pro' && <span className="text-gray-500 ml-1 text-sm">/ month</span>}
               </div>
-              <p className="text-xs text-primary font-bold">₹{plan.discountPrice * 12} billed annually</p>
+              {key === 'pro' && <p className="text-xs text-primary font-bold">Billed annually</p>}
             </div>
 
             <ul className="space-y-3 mb-8 flex-grow">
@@ -153,17 +155,14 @@ const UpgradePage = () => {
                   <i className="fas fa-check-circle text-green-500 mt-1"></i> {feature}
                 </li>
               ))}
-              <li className="bg-amber-50 p-2 rounded-lg text-[10px] font-bold text-amber-800 border border-amber-100">
-                <i className="fas fa-gift mr-1"></i> BONUS HOUSE PLANS DOWNLOAD OPTION ENABLED
-              </li>
             </ul>
 
             <button 
-              onClick={() => handlePayment(key)} 
+              onClick={() => handlePayment(plan.id)} 
               disabled={loadingPlan !== null} 
               className={`w-full py-3 rounded-xl font-bold transition-all ${plan.btnColor} disabled:opacity-50`}
             >
-              {loadingPlan === key ? "Processing..." : "Subscribe Now"}
+              {loadingPlan === plan.id ? "Processing..." : key === 'pro' ? "Subscribe" : "Buy Bundle"}
             </button>
           </div>
         ))}
