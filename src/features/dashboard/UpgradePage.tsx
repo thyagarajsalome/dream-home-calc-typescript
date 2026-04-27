@@ -16,9 +16,7 @@ const plans = {
     useCase: "Best for: Quick room makeovers and interior planning.",
     features: [
       "Unlock Interiors, Flooring & Painting",
-     "House plan downloads"
-     "Find local contractors and suppliers",
-     "Register as a supplier or contractor to get leads",
+      "Interactive 3D Visualizer Access",
       "Save up to 5 unique projects",
       "Standard PDF Cost Reports"
     ],
@@ -40,10 +38,7 @@ const plans = {
       "Unlock Plumbing & Electrical Layouts",
       "Doors & Windows Schedule Tools",
       "Save up to 10 unique projects",
-      "Detailed Technical PDF Exports",
-      "House plan downloads"
-     "Find local contractors and suppliers",
-     "Register as a supplier or contractor to get leads",
+      "Detailed Technical PDF Exports"
     ],
     color: "amber",
     icon: "fa-drafting-compass"
@@ -62,10 +57,7 @@ const plans = {
       "10 Daily Save Limit (Anti-Bot Protection)",
       "Everything in Standard",
       "Material BOQ (Bill of Quantities)",
-      "Priority Support",
-      "House plan downloads"
-     "Find local contractors and suppliers",
-     "Register as a supplier or contractor to get leads",
+      "Priority Support"
     ],
     color: "gray",
     icon: "fa-hard-hat"
