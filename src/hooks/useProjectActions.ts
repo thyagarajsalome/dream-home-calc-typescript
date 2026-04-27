@@ -2,13 +2,15 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable'; // <-- Make sure you ran: npm install jspdf-autotable
+import autoTable from 'jspdf-autotable';
+import { supabase } from '../config/supabaseClient'; // Added for direct profile updates
 import { useUser } from '../context/UserContext';
 import { ProjectService } from '../services/projectService';
 import { useToast } from '../context/ToastContext';
 
 export const useProjectActions = (projectType: string) => {
-  const { user } = useUser();
+  // Destructure credits, planTier, and refreshProfile from context
+  const { user, credits, planTier, refreshProfile } = useUser();
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
@@ -21,11 +23,21 @@ export const useProjectActions = (projectType: string) => {
       navigate('/signin');
       return;
     }
+
+    // Check credit eligibility: Pro tier has unlimited credits
+    const isPro = planTier === 'pro';
+    if (!isPro && credits <= 0) {
+      showToast("No credits remaining. Please upgrade your plan.", "error");
+      navigate('/upgrade');
+      return;
+    }
+
     const name = prompt("Enter a name for this project:");
     if (!name) return;
 
     setIsSaving(true);
     try {
+      // Step 1: Save project data to the 'projects' table
       await ProjectService.save({
         user_id: user.id,
         name,
@@ -33,10 +45,24 @@ export const useProjectActions = (projectType: string) => {
         data: { ...data, totalCost },
         date: new Date().toISOString(),
       });
-      showToast("Project saved successfully!", "success");
-    } catch (error) {
+
+      // Step 2: Deduct 1 credit from the 'profiles' table if not a Pro user
+      if (!isPro) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ credits: credits - 1 })
+          .eq('id', user.id);
+
+        if (profileError) throw profileError;
+      }
+
+      // Step 3: Refresh the local user state to update the Dashboard counters
+      await refreshProfile();
+      
+      showToast(isPro ? "Project saved successfully!" : "Project saved and 1 credit deducted!", "success");
+    } catch (error: any) {
       console.error(error);
-      showToast("Failed to save project.", "error");
+      showToast(error.message || "Failed to save project.", "error");
     } finally {
       setIsSaving(false);
     }
@@ -81,14 +107,13 @@ export const useProjectActions = (projectType: string) => {
 
       // Header Text (Black and White)
       doc.setFontSize(18);
-      doc.setTextColor(0, 0, 0); // Pure Black
+      doc.setTextColor(0, 0, 0); 
       doc.text(`Project Estimate: ${projectName}`, 14, 20);
       
       doc.setFontSize(11);
       doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 28);
       doc.text(`Category: ${projectType.toUpperCase()}`, 14, 34);
 
-      // Create the footer array dynamically based on the number of columns
       let footData = undefined;
       if (footerLabel && footerValue !== undefined) {
         const footRow = Array(headers.length).fill('');
@@ -97,7 +122,6 @@ export const useProjectActions = (projectType: string) => {
         footData = [footRow];
       }
 
-      // Generate the Excel-style Table
       autoTable(doc, {
         startY: 45,
         head: [headers],
@@ -134,6 +158,5 @@ export const useProjectActions = (projectType: string) => {
     }
   };
 
-  // Return ALL functions so components don't break
   return { saveProject, downloadPDF, downloadSpreadsheetPDF, isSaving, isDownloading };
 };
