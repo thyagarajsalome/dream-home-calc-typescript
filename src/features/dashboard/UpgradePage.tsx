@@ -5,14 +5,15 @@ import { supabase } from "../../config/supabaseClient";
 import { useUser } from "../../context/UserContext";
 
 const plans = {
-  credits5: {
+  basic: {
     id: "5_credits",
-    name: "Starter Bundle",
+    name: "Basic",
+    tier: "basic",
     price: 199,
     originalPrice: 249,
-    description: "Perfect for quick room makeovers and interior planning.",
+    description: "Ideal for individuals starting a single home renovation or a small DIY project.",
     credits: "5 Project Credits",
-    useCase: "Best for: 1-2 room renovations (Kitchen, Bedroom, etc.)",
+    useCase: "Best for: Quick room makeovers and interior planning.",
     features: [
       "Unlock Interiors, Flooring & Painting",
       "Interactive 3D Visualizer Access",
@@ -22,17 +23,18 @@ const plans = {
     color: "blue",
     icon: "fa-paint-roller"
   },
-  credits10: {
+  standard: {
     id: "10_credits",
-    name: "Architect Bundle",
+    name: "Standard",
+    tier: "standard",
     price: 349,
     originalPrice: 499,
-    description: "Complete toolkit for building a house from the ground up.",
+    description: "Perfect for homeowners or independent designers managing multiple layouts simultaneously.",
     credits: "10 Project Credits",
     useCase: "Best for: Self-builders planning a full home construction.",
     badge: "Most Popular",
     features: [
-      "Everything in Starter",
+      "Everything in Basic",
       "Unlock Plumbing & Electrical Layouts",
       "Doors & Windows Schedule Tools",
       "Save up to 10 unique projects",
@@ -42,15 +44,16 @@ const plans = {
     icon: "fa-drafting-compass"
   },
   pro: {
-    id: "pro_monthly",
-    name: "Builder Pro",
+    id: "pro",
+    name: "Pro",
+    tier: "pro",
     price: 999,
     originalPrice: 1427,
-    description: "The ultimate power-user tool for contractors and engineers.",
+    description: "Built for professional contractors, builders, and interior designers who need constant access.",
     credits: "Unlimited Credits",
     useCase: "Best for: Professionals managing multiple client sites.",
     features: [
-      "Everything in Architect",
+      "Everything in Standard",
       "Material BOQ (Bill of Quantities)",
       "Profit Margin & Estimation Tool",
       "Unlimited Project Saves",
@@ -63,7 +66,7 @@ const plans = {
 };
 
 const UpgradePage = () => {
-  const { user, refreshProfile } = useUser();
+  const { user, refreshProfile, planTier } = useUser();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -122,20 +125,19 @@ const UpgradePage = () => {
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-black text-gray-900 mb-4 uppercase tracking-tight">
-            Upgrade Your Planning
+            Choose Your Plan
           </h1>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">
             Get the precision tools you need to build with confidence and save on material costs.
           </p>
           
-          {/* Simple Explanation of Credits */}
           <div className="mt-8 inline-flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
             <div className="bg-primary/10 p-3 rounded-xl">
               <i className="fas fa-info-circle text-primary text-xl"></i>
             </div>
             <div className="text-left">
               <p className="font-bold text-gray-800">What is a credit?</p>
-              <p className="text-sm text-gray-500">1 Credit = 1 Unique Project. Use it to design, calculate, and save a full room or building plan.</p>
+              <p className="text-sm text-gray-500">1 Credit = 1 Unique Project. Use it to design, calculate, and save a full building plan.</p>
             </div>
           </div>
         </div>
@@ -149,10 +151,12 @@ const UpgradePage = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
           {Object.entries(plans).map(([key, plan]) => {
             const isBestValue = plan.badge;
+            const isCurrentPlan = planTier === plan.tier;
+
             return (
               <div 
                 key={key} 
-                className={`relative bg-white rounded-3xl p-8 transition-all hover:shadow-2xl border-2 ${
+                className={`relative bg-white rounded-3xl p-8 transition-all hover:shadow-2xl border-2 flex flex-col min-h-[600px] ${
                   isBestValue ? 'border-primary shadow-xl scale-105' : 'border-transparent shadow-md'
                 }`}
               >
@@ -163,11 +167,13 @@ const UpgradePage = () => {
                 )}
 
                 <div className="flex justify-between items-start mb-6">
-                  <div>
+                  <div className="pr-2">
                     <h3 className="text-2xl font-bold text-gray-900">{plan.name}</h3>
-                    <p className="text-sm text-gray-500 mt-1">{plan.description}</p>
+                    <p className="text-xs text-gray-500 mt-2 font-medium leading-relaxed">
+                      {plan.description}
+                    </p>
                   </div>
-                  <div className={`p-3 rounded-2xl bg-${plan.color}-50 text-${plan.color}-600`}>
+                  <div className={`p-3 rounded-2xl shrink-0 bg-${plan.color}-50 text-${plan.color}-600`}>
                     <i className={`fas ${plan.icon} text-xl`}></i>
                   </div>
                 </div>
@@ -188,7 +194,7 @@ const UpgradePage = () => {
                   <p className="text-xs text-gray-500 leading-relaxed">{plan.useCase}</p>
                 </div>
 
-                <ul className="space-y-4 mb-8">
+                <ul className="space-y-4 mb-8 flex-grow">
                   {plan.features.map((feature, i) => (
                     <li key={i} className="flex items-start gap-3 text-sm text-gray-700 font-medium">
                       <i className="fas fa-check-circle text-green-500 mt-0.5"></i>
@@ -199,18 +205,26 @@ const UpgradePage = () => {
 
                 <button
                   onClick={() => handlePayment(plan.id)}
-                  disabled={loadingPlan !== null}
+                  disabled={loadingPlan !== null || isCurrentPlan}
                   className={`w-full py-4 rounded-2xl font-black text-lg transition-all transform active:scale-95 disabled:opacity-50 ${
-                    isBestValue 
-                    ? 'bg-primary text-white hover:bg-amber-500 shadow-lg' 
-                    : 'bg-gray-900 text-white hover:bg-black'
+                    isCurrentPlan 
+                    ? 'bg-green-50 text-green-600 cursor-default border border-green-100'
+                    : isBestValue 
+                      ? 'bg-primary text-white hover:bg-amber-500 shadow-lg' 
+                      : 'bg-gray-900 text-white hover:bg-black'
                   }`}
                 >
                   {loadingPlan === plan.id ? (
                     <span className="flex items-center justify-center gap-2">
                       <i className="fas fa-spinner fa-spin"></i> Processing
                     </span>
-                  ) : key === 'pro' ? 'Start Subscription' : 'Buy Credits Now'}
+                  ) : isCurrentPlan ? (
+                    'Current Plan'
+                  ) : key === 'pro' ? (
+                    'Start Subscription'
+                  ) : (
+                    'Buy Credits Now'
+                  )}
                 </button>
               </div>
             );
