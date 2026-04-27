@@ -23,9 +23,8 @@ export const useProjectActions = (projectType: string) => {
       return;
     }
 
-    // Pre-check: Don't even start if credits are 0 and user isn't Pro
-    const isPro = planTier === 'pro';
-    if (!isPro && credits <= 0) {
+    // Client-side quick check for non-Pro users to avoid unnecessary DB calls
+    if (planTier !== 'pro' && credits <= 0) {
       showToast("No credits remaining. Please upgrade your plan.", "error");
       navigate('/upgrade');
       return;
@@ -36,7 +35,28 @@ export const useProjectActions = (projectType: string) => {
 
     setIsSaving(true);
     try {
-      // Step 1: Save project data
+      // Step 1: Call the RPC function FIRST to verify usage limits and deduct credits
+      // This ensures we don't save a project if the user has reached their daily/monthly cap
+      const { error: rpcError } = await supabase.rpc('deduct_project_credit', {
+        user_uuid: user.id
+      });
+
+      if (rpcError) {
+        // Handle specific Pro limit errors from the SQL function
+        if (rpcError.message.includes("limit")) {
+          showToast(rpcError.message, "error");
+          return;
+        }
+        // Handle standard credit exhaustion
+        if (rpcError.message.includes("Insufficient credits")) {
+          showToast("Insufficient credits. Redirecting to upgrade page...", "error");
+          navigate('/upgrade');
+          return;
+        }
+        throw rpcError;
+      }
+
+      // Step 2: Save project data after successful credit validation/deduction
       await ProjectService.save({
         user_id: user.id,
         name,
@@ -45,20 +65,10 @@ export const useProjectActions = (projectType: string) => {
         date: new Date().toISOString(),
       });
 
-      // Step 2: Deduct 1 credit using the server-side RPC function
-      // This is the fix for the "Ghost Deduction" issue.
-      if (!isPro) {
-        const { error: rpcError } = await supabase.rpc('deduct_project_credit', {
-          user_uuid: user.id
-        });
-
-        if (rpcError) throw rpcError;
-      }
-
-      // Step 3: Refresh the local profile to pull the latest credit count from DB
+      // Step 3: Refresh local profile to update the UI counters (credits, usage counts)
       await refreshProfile();
       
-      showToast(isPro ? "Project saved successfully!" : "Project saved and 1 credit deducted!", "success");
+      showToast("Project saved successfully!", "success");
     } catch (error: any) {
       console.error("Save error:", error);
       showToast(error.message || "Failed to save project.", "error");
