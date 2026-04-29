@@ -506,7 +506,27 @@ export const PlanGallery: React.FC = () => {
                   )}
                 </>
               )}
+{/* Professional Disclaimer Block */}
+<div className="bg-amber-50 border border-amber-100 rounded-xl p-3 mb-6">
+  <div className="flex gap-2">
+    <i className="fas fa-info-circle text-amber-500 text-xs mt-0.5"></i>
+    <p className="text-[10px] leading-relaxed text-amber-800">
+      <strong className="uppercase">Note:</strong> These plans serve as conceptual designs to help you visualize and customize your layout. For actual construction and municipal approvals, please consult a <strong>licensed professional architect</strong>.
+    </p>
+  </div>
+</div>
 
+{/* This is your existing button container */}
+<div className="pt-4 border-t border-gray-100 mt-auto">
+  <Button 
+    onClick={() => { setSelectedPlan(null); handleDownload(selectedPlan!); }} 
+    className="w-full py-4 text-sm shadow-md" 
+    icon={!isLockedForUser ? "fas fa-download" : "fas fa-lock"} 
+    disabled={isEditing}
+  >
+    {!isLockedForUser ? "Download High-Res Blueprint" : "Unlock to Download Plan"}
+  </Button>
+</div>
               <div className="pt-4 border-t border-gray-100 mt-auto">
                 <Button onClick={() => { setSelectedPlan(null); handleDownload(selectedPlan!); }} className="w-full py-4 text-sm shadow-md" icon={!isLockedForUser ? "fas fa-download" : "fas fa-lock"} disabled={isEditing}>
                   {!isLockedForUser ? "Download High-Res Blueprint" : "Unlock to Download Plan"}
