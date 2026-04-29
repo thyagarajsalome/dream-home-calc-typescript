@@ -22,11 +22,10 @@ interface HousePlan {
   parking: string;
   description: string;
   youtube_url?: string;
-  kitchen_info?: string; // New: Added for kitchen details
-  living_hall_info?: string; // New: Added for living hall details
+  kitchen_info?: string;
+  living_hall_info?: string;
 }
 
-// Helper to extract the YouTube ID for standard, mobile, and Shorts links
 const getYouTubeID = (url: string) => {
   if (!url) return null;
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
@@ -79,7 +78,6 @@ export const PlanGallery: React.FC = () => {
   const [selectedPlan, setSelectedPlan] = useState<HousePlan | null>(null);
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
   
-  // Edit State
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<Partial<HousePlan>>({});
   const [isUpdating, setIsUpdating] = useState(false);
@@ -131,9 +129,7 @@ export const PlanGallery: React.FC = () => {
         .select();
 
       if (dbError) throw dbError;
-      if (!data || data.length === 0) {
-        throw new Error("Deletion blocked by Database RLS Policy.");
-      }
+      if (!data || data.length === 0) throw new Error("Deletion blocked by Database RLS Policy.");
 
       const getRelativePath = (url: string) => url.includes('/house-plans/') ? url.split('/house-plans/')[1].replace(/^\/+/, '') : url;
       await supabase.storage.from('house-plans').remove([getRelativePath(plan.file_url)]);
@@ -241,10 +237,6 @@ export const PlanGallery: React.FC = () => {
     }
   };
 
-  const handleImageClick = (plan: HousePlan) => {
-    handleDownload(plan);
-  };
-
   const getImageUrl = (path: string) => {
     if (path.startsWith('http')) return path;
     return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/house-plans/${path.replace(/^\/+/, '')}`;
@@ -255,7 +247,6 @@ export const PlanGallery: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in relative">
-      
       <div className="mb-6">
         <Link to="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-primary transition-colors font-bold bg-white px-5 py-2.5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md w-fit">
           <i className="fas fa-arrow-left"></i> Back to Calculator
@@ -286,17 +277,14 @@ export const PlanGallery: React.FC = () => {
           const videoId = getYouTubeID(plan.youtube_url || "");
           return (
             <div key={plan.id} className="bg-white rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 border border-gray-100 overflow-hidden flex flex-col relative transition-all duration-300">
-              
-              {/* Play Button for Shorts Embedding */}
               {videoId && (
-
                <button 
-  onClick={(e) => { e.stopPropagation(); setActiveVideo(videoId); }}
-  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all"
-  title="Watch Video Tour"
->
-  <i className="fas fa-play text-[10px] ml-0.5"></i>
-</button>
+                  onClick={(e) => { e.stopPropagation(); setActiveVideo(videoId); }}
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all"
+                  title="Watch Video Tour"
+                >
+                  <i className="fas fa-play text-[10px] ml-0.5"></i>
+                </button>
               )}
 
               {role === 'admin' && (
@@ -305,7 +293,7 @@ export const PlanGallery: React.FC = () => {
                 </button>
               )}
 
-              <HoverZoomImage src={getImageUrl(plan.file_url)} alt={plan.title} onClick={() => handleImageClick(plan)} isLocked={isLockedForUser} />
+              <HoverZoomImage src={getImageUrl(plan.file_url)} alt={plan.title} onClick={() => handleDownload(plan)} isLocked={isLockedForUser} />
               
               <div className="p-4 flex flex-col gap-3 bg-white">
                 <div>
@@ -316,7 +304,6 @@ export const PlanGallery: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Updated: Two rows with grouped icons for clean presentation */}
                 <div className="flex flex-col gap-1.5 text-[10px] text-gray-500 border-t border-gray-100 pt-3 px-1">
                   <div className="flex justify-between items-center">
                     <span title="Bedrooms" className="flex items-center gap-1"><i className="fas fa-bed text-gray-400"></i>{plan.bedrooms}</span>
@@ -351,7 +338,6 @@ export const PlanGallery: React.FC = () => {
         })}
       </div>
 
-      {/* Responsive YouTube Shorts Modal */}
       {activeVideo && (
         <div className="fixed inset-0 z-[10000] bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" onClick={() => setActiveVideo(null)}>
           <div className="relative w-full max-w-[420px] aspect-[9/16] bg-black rounded-3xl overflow-hidden shadow-2xl border border-white/10" onClick={e => e.stopPropagation()}>
@@ -381,7 +367,6 @@ export const PlanGallery: React.FC = () => {
       {selectedPlan && (
         <div className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" onClick={() => { if(!isEditing) setSelectedPlan(null) }}>
           <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row shadow-2xl" onClick={e => e.stopPropagation()}>
-            
             <div className="md:w-1/2 bg-gray-100 relative h-64 md:h-auto overflow-hidden flex-shrink-0">
                <img src={getImageUrl(selectedPlan.file_url)} className="w-full h-full object-contain" alt={selectedPlan.title} />
                {isLockedForUser && (
@@ -506,29 +491,23 @@ export const PlanGallery: React.FC = () => {
                   )}
                 </>
               )}
-{/* Professional Disclaimer Block */}
-<div className="bg-amber-50 border border-amber-100 rounded-xl p-3 mb-6">
-  <div className="flex gap-2">
-    <i className="fas fa-info-circle text-amber-500 text-xs mt-0.5"></i>
-    <p className="text-[10px] leading-relaxed text-amber-800">
-      <strong className="uppercase">Note:</strong> These plans serve as conceptual designs to help you visualize and customize your layout. For actual construction and municipal approvals, please consult a <strong>licensed professional architect</strong>.
-    </p>
-  </div>
-</div>
 
-{/* This is your existing button container */}
-<div className="pt-4 border-t border-gray-100 mt-auto">
-  <Button 
-    onClick={() => { setSelectedPlan(null); handleDownload(selectedPlan!); }} 
-    className="w-full py-4 text-sm shadow-md" 
-    icon={!isLockedForUser ? "fas fa-download" : "fas fa-lock"} 
-    disabled={isEditing}
-  >
-    {!isLockedForUser ? "Download High-Res Blueprint" : "Unlock to Download Plan"}
-  </Button>
-</div>
+              <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 mb-6">
+                <div className="flex gap-2">
+                  <i className="fas fa-info-circle text-amber-500 text-xs mt-0.5"></i>
+                  <p className="text-[10px] leading-relaxed text-amber-800">
+                    <strong className="uppercase">Note:</strong> These plans serve as conceptual designs to help you visualize and customize your layout. For actual construction and municipal approvals, please consult a <strong>licensed professional architect</strong>.
+                  </p>
+                </div>
+              </div>
+
               <div className="pt-4 border-t border-gray-100 mt-auto">
-                <Button onClick={() => { setSelectedPlan(null); handleDownload(selectedPlan!); }} className="w-full py-4 text-sm shadow-md" icon={!isLockedForUser ? "fas fa-download" : "fas fa-lock"} disabled={isEditing}>
+                <Button 
+                  onClick={() => { handleDownload(selectedPlan!); setSelectedPlan(null); }} 
+                  className="w-full py-4 text-sm shadow-md" 
+                  icon={!isLockedForUser ? "fas fa-download" : "fas fa-lock"} 
+                  disabled={isEditing}
+                >
                   {!isLockedForUser ? "Download High-Res Blueprint" : "Unlock to Download Plan"}
                 </Button>
               </div>
