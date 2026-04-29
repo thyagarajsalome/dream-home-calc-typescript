@@ -11,6 +11,10 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Define the plan being purchased here (matches your create-order/index.ts)
+  const SELECTED_PLAN = "pro"; 
+  const DISPLAY_PRICE = "999";
+
   useEffect(() => {
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
@@ -26,26 +30,31 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("User not authenticated.");
 
+      // 1. Create Order - passing the correct 'pro' planId
       const { data: order, error: orderError } = await supabase.functions.invoke('create-order', {
-        body: { planId: "monthly" } 
+        body: { planId: SELECTED_PLAN } 
       });
 
-      if (orderError || !order) throw new Error("Failed to create payment order.");
+      if (orderError || !order || order.error) {
+        throw new Error(order?.error || "Failed to create payment order.");
+      }
 
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: order.amount,
         currency: order.currency,
-        name: "Dream Home Calculator",
-        description: "Premium Access",
+        name: "HDE Premium",
+        description: "Full Access Unlock",
         order_id: order.id,
         handler: async (response: any) => {
           try {
+            // 2. Verify Payment - Now including planId so backend knows which tier to grant
             const { data: result, error: verifyError } = await supabase.functions.invoke('verify-payment', {
               body: {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
+                planId: SELECTED_PLAN // Essential for credit allocation
               }
             });
 
@@ -53,8 +62,9 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
               throw new Error("Payment verification failed.");
             }
             
-            alert("Payment Successful! Access Unlocked.");
+            alert("Payment Successful! All Pro features are now unlocked.");
             setHasPaid(true);
+            window.location.reload(); // Refresh to update UI/Context
           } catch (err) {
             setError("Payment verification failed. Please contact support.");
           }
@@ -75,17 +85,30 @@ const Payment: React.FC<PaymentProps> = ({ user, setHasPaid }) => {
 
   return (
     <div className="card" style={{ textAlign: "center", padding: "2rem" }}>
-      <h2>Unlock All Calculators</h2>
-      <p style={{ margin: "1rem 0" }}>Get lifetime access to all premium features and detailed reports for just ₹99.</p>
+      <div className="pro-badge" style={{ marginBottom: '1rem' }}>PREMIUM ACCESS</div>
+      <h2>Unlock All Professional Tools</h2>
+      <p style={{ margin: "1rem 0", color: "#666" }}>
+        Get unlimited access to specialized calculators, Material BOQ, and professional PDF reports.
+      </p>
+      <div style={{ margin: "1.5rem 0" }}>
+        <span style={{ fontSize: "2rem", fontWeight: "800", color: "var(--secondary-color)" }}>
+          ₹{DISPLAY_PRICE}
+        </span>
+        <span style={{ color: "#888", marginLeft: "5px" }}>/ monthly</span>
+      </div>
       <button 
         onClick={handlePayment} 
         className="btn" 
         disabled={loading}
-        style={{ fontSize: "1.1rem", padding: "10px 20px" }}
+        style={{ fontSize: "1.1rem", padding: "12px 30px", width: '100%' }}
       >
-        {loading ? "Processing..." : "Pay ₹99 Now"}
+        {loading ? "Processing..." : `Upgrade to Pro Now`}
       </button>
-      {error && <p style={{ color: "red", marginTop: "1rem" }}>{error}</p>}
+      {error && (
+        <div style={{ color: "#e74c3c", marginTop: "1rem", fontSize: "0.9rem", fontWeight: "600" }}>
+          <i className="fas fa-exclamation-triangle"></i> {error}
+        </div>
+      )}
     </div>
   );
 };
