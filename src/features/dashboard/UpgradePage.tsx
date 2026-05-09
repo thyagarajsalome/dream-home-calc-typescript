@@ -4,7 +4,24 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../../config/supabaseClient";
 import { useUser } from "../../context/UserContext";
 
-const plans = {
+// 1. Define the strict TypeScript interface for your plans
+type PlanType = {
+  id: string;
+  name: string;
+  tier: string;
+  price: number;
+  originalPrice: number;
+  description: string;
+  credits: string;
+  useCase: string;
+  features: string[];
+  color: string;
+  icon: string;
+  badge?: string; // Optional property prevents the TS error!
+};
+
+// 2. Apply the interface to the plans object
+const plans: Record<string, PlanType> = {
   basic: {
     id: "5_credits",
     name: "Basic",
@@ -62,7 +79,7 @@ const plans = {
     color: "gray",
     icon: "fa-hard-hat"
   },
-}; // Ensure this closing brace is present!
+};
 
 const UpgradePage = () => {
   const { user, refreshProfile, planTier } = useUser();

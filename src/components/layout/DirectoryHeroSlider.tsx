@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, Navigation } from 'swiper/modules';
-import { fetchHeroSlides } from '../../services/heroService';
+import { HeroService } from '../../services/heroService';
+import type { HeroBanner } from '../../services/heroService';
 
 // Import Swiper styles
 import 'swiper/css';
@@ -9,10 +10,14 @@ import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 
 const DirectoryHeroSlider = () => {
-  const [slides, setSlides] = useState<any[]>([]);
+  // Added proper TypeScript typing instead of any[]
+  const [slides, setSlides] = useState<HeroBanner[]>([]);
 
   useEffect(() => {
-    fetchHeroSlides('directory').then(setSlides);
+    // Calling the correct service method and handling potential errors
+    HeroService.getBanners()
+      .then(setSlides)
+      .catch((err) => console.error("Failed to load banners:", err));
   }, []);
 
   if (slides.length === 0) return null;
@@ -38,7 +43,8 @@ const DirectoryHeroSlider = () => {
               <div className="absolute inset-0 bg-black/40" />
               <div className="relative z-10 px-12 text-white">
                 <h1 className="text-4xl font-bold mb-2">{slide.title}</h1>
-                <p className="text-lg opacity-90">{slide.description}</p>
+                {/* Updated to use slide.subtitle to match your HeroBanner interface */}
+                <p className="text-lg opacity-90">{slide.subtitle}</p>
               </div>
             </div>
           </SwiperSlide>
