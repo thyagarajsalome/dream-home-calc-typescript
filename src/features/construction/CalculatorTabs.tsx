@@ -6,7 +6,8 @@ type CalculatorType = "construction" | "interior" | "doors-windows" | "flooring"
 
 interface CalculatorTabsProps {
   activeCalculator: CalculatorType;
-  setActiveCalculator: (calculator: CalculatorType) => void;
+  setActiveCalculator: (tab: CalculatorType) => void;
+  hasPaid: boolean;  // Add this line
 }
 
 const CALCULATORS: { id: CalculatorType; name: string; icon: string; reqTier: number }[] = [
@@ -20,7 +21,7 @@ const CALCULATORS: { id: CalculatorType; name: string; icon: string; reqTier: nu
   { id: "materials",     name: "Materials BOQ",  icon: "fas fa-cubes",       reqTier: 3 },
 ];
 
-const CalculatorTabs: React.FC<CalculatorTabsProps> = ({ activeCalculator, setActiveCalculator }) => {
+const CalculatorTabs: React.FC<CalculatorTabsProps> = ({ activeCalculator, setActiveCalculator, hasPaid }) => {
   const navigate = useNavigate();
   const { tierValue } = useUser();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
