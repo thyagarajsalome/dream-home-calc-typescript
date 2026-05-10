@@ -7,6 +7,7 @@ type CalculatorType = "construction" | "interior" | "doors-windows" | "flooring"
 interface CalculatorTabsProps {
   activeCalculator: CalculatorType;
   setActiveCalculator: (calculator: CalculatorType) => void;
+  hasPaid?: boolean; // Add this line
 }
 
 const CALCULATORS: { id: CalculatorType; name: string; icon: string; reqTier: number }[] = [

@@ -128,7 +128,7 @@ const MainLayout = () => {
           <CalculatorTabs
             activeCalculator={activeCalculator}
             setActiveCalculator={handleTabChange}
-            hasPaid={hasPaid}
+         
           />
 
           {hasPaid && (
