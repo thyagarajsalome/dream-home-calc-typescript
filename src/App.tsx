@@ -125,10 +125,10 @@ const MainLayout = () => {
             </div>
           )}
 
-<CalculatorTabs 
-  activeCalculator={activeCalculator} 
-  setActiveCalculator={setActiveCalculator} 
-/>
+<CalculatorTabs
+            activeCalculator={activeCalculator}
+            setActiveCalculator={handleTabChange}
+          />
 
           {hasPaid && (
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gradient-to-r from-gray-900 to-secondary p-4 rounded-xl shadow-lg border border-gray-800 animate-fade-in">

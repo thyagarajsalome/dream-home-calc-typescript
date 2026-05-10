@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, Navigation } from 'swiper/modules';
-import { HeroService } from '../../services/heroService';
-import type { HeroBanner } from '../../services/heroService';
+import { HeroService, HeroBanner } from '../../services/heroService';
 
 // Import Swiper styles
 import 'swiper/css';
@@ -13,9 +12,7 @@ const DirectoryHeroSlider = () => {
   const [slides, setSlides] = useState<HeroBanner[]>([]);
 
   useEffect(() => {
-    HeroService.getBanners()
-      .then(setSlides)
-      .catch((err) => console.error("Failed to load banners:", err));
+    HeroService.getBanners().then(setSlides);
   }, []);
 
   if (slides.length === 0) return null;
