@@ -19,21 +19,6 @@ type PlanType = {
   badge?: string;
 };
 
-type PlanType = {
-  id: string;
-  name: string;
-  tier: string;
-  price: number;
-  originalPrice: number;
-  description: string;
-  credits: string;
-  useCase: string;
-  features: string[];
-  color: string;
-  icon: string;
-  badge?: string; // This tells TS that 'badge' is optional
-};
-
 const plans: Record<string, PlanType> = {
   basic: {
     id: "5_credits",
