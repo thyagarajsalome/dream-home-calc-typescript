@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../../config/supabaseClient";
 import { useUser } from "../../context/UserContext";
 
-// 1. Define the strict TypeScript interface for your plans
 type PlanType = {
   id: string;
   name: string;
@@ -17,23 +16,7 @@ type PlanType = {
   features: string[];
   color: string;
   icon: string;
-  badge?: string; // Optional property prevents the TS error!
-};
-
-// 2. Apply the interface to the plans object
-type PlanType = {
-  id: string;
-  name: string;
-  tier: string;
-  price: number;
-  originalPrice: number;
-  description: string;
-  credits: string;
-  useCase: string;
-  features: string[];
-  color: string;
-  icon: string;
-  badge?: string; // This tells TS that 'badge' is optional
+  badge?: string;
 };
 
 const plans: Record<string, PlanType> = {

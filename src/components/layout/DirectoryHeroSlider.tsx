@@ -1,4 +1,3 @@
-import { HeroService } from '../../services/heroService';
 import React, { useEffect, useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, Navigation } from 'swiper/modules';
@@ -11,13 +10,13 @@ import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 
 const DirectoryHeroSlider = () => {
-  const [slides, setSlides] = useState<any[]>([]);
+  const [slides, setSlides] = useState<HeroBanner[]>([]);
 
- useEffect(() => {
-    HeroService.getBanners().then(setSlides);
+  useEffect(() => {
+    HeroService.getBanners()
+      .then(setSlides)
+      .catch((err) => console.error("Failed to load banners:", err));
   }, []);
-
-
 
   if (slides.length === 0) return null;
 
@@ -38,11 +37,9 @@ const DirectoryHeroSlider = () => {
               className="relative w-full h-full bg-cover bg-center flex items-center"
               style={{ backgroundImage: `url(${slide.image_url})` }}
             >
-              {/* Dark Overlay for Text Readability */}
               <div className="absolute inset-0 bg-black/40" />
               <div className="relative z-10 px-12 text-white">
                 <h1 className="text-4xl font-bold mb-2">{slide.title}</h1>
-                {/* Updated to use slide.subtitle to match your HeroBanner interface */}
                 <p className="text-lg opacity-90">{slide.subtitle}</p>
               </div>
             </div>
