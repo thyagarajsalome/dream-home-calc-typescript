@@ -1,3 +1,4 @@
+import { HeroService } from '../../services/heroService';
 import React, { useEffect, useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, Navigation } from 'swiper/modules';
@@ -10,15 +11,13 @@ import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 
 const DirectoryHeroSlider = () => {
-  // Added proper TypeScript typing instead of any[]
-  const [slides, setSlides] = useState<HeroBanner[]>([]);
+  const [slides, setSlides] = useState<any[]>([]);
 
-  useEffect(() => {
-    // Calling the correct service method and handling potential errors
-    HeroService.getBanners()
-      .then(setSlides)
-      .catch((err) => console.error("Failed to load banners:", err));
+ useEffect(() => {
+    HeroService.getBanners().then(setSlides);
   }, []);
+
+
 
   if (slides.length === 0) return null;
 

@@ -182,51 +182,53 @@ const ElectricalCalculator: React.FC = () => {
             </div>
 
             {activeTab === "result" && (
-              <Card title="Electrical Estimate" className="border-primary/20" ref={resultsRef as any}>
-                <div className="text-center py-4 bg-gray-50 rounded-xl mb-5">
-                  <p className="text-xs font-bold text-gray-400 uppercase">Total Electrical Estimate</p>
-                  <h2 className="text-4xl font-extrabold text-secondary">{formatCurrency(calc.total)}</h2>
-                </div>
-                <div className="overflow-x-auto rounded-xl border border-gray-100 mb-5">
-                  <table className="w-full text-sm min-w-0">
-                    <thead className="bg-gray-50 text-xs text-gray-500 uppercase font-bold">
-                      <tr>
-                        <th className="px-4 py-2 text-left">Component</th>
-                        <th className="px-4 py-2 text-center">Qty</th>
-                        <th className="px-4 py-2 text-right">Cost</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {[
-                        { label: "Lights & Plugs (6A)", qty: `${calc.lCount} pts`, cost: calc.lightCost },
-                        { label: "Fan Points",          qty: `${calc.fCount} pts`, cost: calc.fanCost   },
-                        { label: "Power Sockets (15A)", qty: `${calc.pCount} pts`, cost: calc.powerCost },
-                        { label: "AC Circuits",         qty: `${calc.aCount} pts`, cost: calc.acCost    },
-                        { label: "Geyser Circuits",     qty: `${calc.gCount} pts`, cost: calc.geyserCost},
-                        { label: "Distribution Board",  qty: "1 set",              cost: calc.boardCost  },
-                      ].map((r, i) => (
-                        <tr key={i}><td className="px-4 py-2">{r.label}</td><td className="px-4 py-2 text-center text-gray-500">{r.qty}</td><td className="px-4 py-2 text-right font-semibold">{formatCurrency(r.cost)}</td></tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <div className="h-52 mb-5">
-                  <Chart data={{ "Wiring & Conduit": calc.total * 0.35, "Switches & Sockets": calc.total * 0.30, "Labor": calc.total * 0.25, "DB / MCBs": calc.total * 0.10 }} colors={CHART_COLORS} />
-                </div>
-                <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-700 mb-4">
-                  <i className="fas fa-info-circle mr-1"></i> Estimate covers wiring, conduits, switches, sockets, MCBs and labor. Does not include light fixtures, fans, ACs or heavy appliances.
-                </div>
-                {hasPaid && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <button onClick={handleDownloadPDF} disabled={isDownloading} className="flex items-center justify-center gap-2 py-3 bg-white border-2 border-secondary text-secondary font-bold rounded-xl hover:bg-secondary hover:text-white transition-all">
-                      <i className={`fas ${isDownloading ? "fa-spinner fa-spin" : "fa-file-pdf"}`}></i> PDF
-                    </button>
-                    <button onClick={handleSave} disabled={isSaving} className="flex items-center justify-center gap-2 py-3 bg-primary text-white font-bold rounded-xl hover:bg-yellow-600 transition-all">
-                      <i className={`fas ${isSaving ? "fa-spinner fa-spin" : "fa-save"}`}></i> Save
-                    </button>
+              <div ref={resultsRef}>
+                <Card title="Electrical Estimate" className="border-primary/20">
+                  <div className="text-center py-4 bg-gray-50 rounded-xl mb-5">
+                    <p className="text-xs font-bold text-gray-400 uppercase">Total Electrical Estimate</p>
+                    <h2 className="text-4xl font-extrabold text-secondary">{formatCurrency(calc.total)}</h2>
                   </div>
-                )}
-              </Card>
+                  <div className="overflow-x-auto rounded-xl border border-gray-100 mb-5">
+                    <table className="w-full text-sm min-w-0">
+                      <thead className="bg-gray-50 text-xs text-gray-500 uppercase font-bold">
+                        <tr>
+                          <th className="px-4 py-2 text-left">Component</th>
+                          <th className="px-4 py-2 text-center">Qty</th>
+                          <th className="px-4 py-2 text-right">Cost</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {[
+                          { label: "Lights & Plugs (6A)", qty: `${calc.lCount} pts`, cost: calc.lightCost },
+                          { label: "Fan Points",          qty: `${calc.fCount} pts`, cost: calc.fanCost   },
+                          { label: "Power Sockets (15A)", qty: `${calc.pCount} pts`, cost: calc.powerCost },
+                          { label: "AC Circuits",         qty: `${calc.aCount} pts`, cost: calc.acCost    },
+                          { label: "Geyser Circuits",     qty: `${calc.gCount} pts`, cost: calc.geyserCost},
+                          { label: "Distribution Board",  qty: "1 set",              cost: calc.boardCost  },
+                        ].map((r, i) => (
+                          <tr key={i}><td className="px-4 py-2">{r.label}</td><td className="px-4 py-2 text-center text-gray-500">{r.qty}</td><td className="px-4 py-2 text-right font-semibold">{formatCurrency(r.cost)}</td></tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="h-52 mb-5">
+                    <Chart data={{ "Wiring & Conduit": calc.total * 0.35, "Switches & Sockets": calc.total * 0.30, "Labor": calc.total * 0.25, "DB / MCBs": calc.total * 0.10 }} colors={CHART_COLORS} />
+                  </div>
+                  <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-700 mb-4">
+                    <i className="fas fa-info-circle mr-1"></i> Estimate covers wiring, conduits, switches, sockets, MCBs and labor. Does not include light fixtures, fans, ACs or heavy appliances.
+                  </div>
+                  {hasPaid && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <button onClick={handleDownloadPDF} disabled={isDownloading} className="flex items-center justify-center gap-2 py-3 bg-white border-2 border-secondary text-secondary font-bold rounded-xl hover:bg-secondary hover:text-white transition-all">
+                        <i className={`fas ${isDownloading ? "fa-spinner fa-spin" : "fa-file-pdf"}`}></i> PDF
+                      </button>
+                      <button onClick={handleSave} disabled={isSaving} className="flex items-center justify-center gap-2 py-3 bg-primary text-white font-bold rounded-xl hover:bg-yellow-600 transition-all">
+                        <i className={`fas ${isSaving ? "fa-spinner fa-spin" : "fa-save"}`}></i> Save
+                      </button>
+                    </div>
+                  )}
+                </Card>
+              </div>
             )}
 
             {activeTab === "load" && (
