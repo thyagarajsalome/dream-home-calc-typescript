@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 // removed useNavigate
 import { supabase } from "../../config/supabaseClient";
 import { useUser } from "../../context/UserContext";
+import { useToast } from "../../context/ToastContext";
 
 // 1. Define the strict TypeScript interface for your plans
 type PlanType = {
@@ -85,6 +86,7 @@ const plans = {
 
 const UpgradePage = () => {
   const { user, refreshProfile, planTier } = useUser();
+  const { showToast } = useToast();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [error, setError] = useState("");
 
@@ -135,6 +137,7 @@ const UpgradePage = () => {
       new (window as any).Razorpay(options).open();
     } catch (err: any) {
       setError(err.message);
+      showToast(err.message, "error");
     } finally {
       setLoadingPlan(null);
     }
