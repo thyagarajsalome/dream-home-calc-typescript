@@ -8,6 +8,8 @@ const SignIn = () => {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const navigate = useNavigate();
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -16,7 +18,7 @@ const SignIn = () => {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      window.location.assign("/dashboard");
+      navigate("/dashboard");
     } catch (err: any) {
       console.error("Sign In Error:", err);
       setError(err.message || "Failed to sign in.");

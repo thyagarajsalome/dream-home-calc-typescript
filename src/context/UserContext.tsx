@@ -17,6 +17,7 @@ interface UserContextType {
   markup: number;
   setMarkup: (val: number) => void;
   refreshProfile: () => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -115,21 +116,26 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!active) return;
       
-      const sessionUser = session?.user ?? null;
-      setUser(sessionUser);
+      try {
+        const sessionUser = session?.user ?? null;
+        setUser(sessionUser);
 
-      if (sessionUser) {
-        // Shared promise logic ensures we don't trigger a secondary profile request in parallel
-        await fetchProfile(sessionUser.id);
-      } else {
-        // Reset local states on sign out
-        fetchedUserIdRef.current = null;
-        setHasPaid(false);
-        setPlanTier('free');
-        setRole('user');
-        setCredits(0); // Reset credits on logout
+        if (sessionUser) {
+          // Shared promise logic ensures we don't trigger a secondary profile request in parallel
+          await fetchProfile(sessionUser.id);
+        } else {
+          // Reset local states on sign out
+          fetchedUserIdRef.current = null;
+          setHasPaid(false);
+          setPlanTier('free');
+          setRole('user');
+          setCredits(0); // Reset credits on logout
+        }
+      } catch (err) {
+        console.error("onAuthStateChange error:", err);
+      } finally {
+        if (active) setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => {
@@ -145,11 +151,40 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const handleSignOut = async () => {
+    // 1. Immediately reset React state and clear storage synchronously to make UI responsive
+    setUser(null);
+    setHasPaid(false);
+    setPlanTier('free');
+    setRole('user');
+    setCredits(0);
+    fetchedUserIdRef.current = null;
+
+    try {
+      Object.keys(localStorage)
+        .filter(key => key.startsWith("sb-"))
+        .forEach(key => localStorage.removeItem(key));
+      Object.keys(sessionStorage)
+        .filter(key => key.startsWith("sb-"))
+        .forEach(key => sessionStorage.removeItem(key));
+    } catch (err) {
+      console.error("Error clearing storage on logout:", err);
+    }
+
+    // 2. Perform fire-and-forget Supabase sign out in the background
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error("Error signing out from supabase:", err);
+    }
+  };
+
   return (
     <UserContext.Provider value={{ 
       user, role, hasPaid, planTier, tierValue, credits, // Exposed credits to the app
       setHasPaid, loading, installPrompt, markup, setMarkup, 
-      refreshProfile: handleManualRefresh 
+      refreshProfile: handleManualRefresh,
+      signOut: handleSignOut
     }}>
       {children}
     </UserContext.Provider>

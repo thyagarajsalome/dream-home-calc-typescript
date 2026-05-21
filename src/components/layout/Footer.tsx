@@ -6,13 +6,13 @@ export default function Footer() {
   return (
     <footer className="footer bg-white border-t border-gray-100 pt-12 pb-6">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8 items-start">
           
           {/* Column 1: Brand Info */}
           <div className="text-center md:text-left">
-            <Link to="/" className="flex items-center justify-center md:justify-start gap-2 text-xl font-bold text-secondary mb-4">
+            <Link to="/" className="flex items-center justify-center md:justify-start gap-2 text-xl font-bold text-secondary mb-4 hover:text-primary transition-colors">
               <img src="/bg-logo.png" alt="HDE Logo" className="w-10 h-10 object-contain" />
-              <span className="text-primary uppercase tracking-tighter">HDE</span>
+              <span className="text-primary uppercase tracking-tighter font-extrabold text-2xl">HDE</span>
             </Link>
             <p className="text-gray-500 text-sm max-w-xs mx-auto md:mx-0">
               India's leading platform for construction cost estimation, material BOQ reports, and modern architectural house planning.
@@ -22,7 +22,7 @@ export default function Footer() {
           {/* Column 2: Quick Links */}
           <div className="text-center">
             <h4 className="font-bold text-gray-800 mb-4 uppercase text-xs tracking-widest">Quick Links</h4>
-            <ul className="space-y-2 text-sm">
+            <ul className="space-y-2 text-sm list-none p-0">
               <li><Link to="/contact" className="text-gray-500 hover:text-primary transition-colors">Contact Us</Link></li>
               <li><Link to="/disclaimer" className="text-gray-500 hover:text-primary transition-colors">Disclaimer</Link></li>
               <li><Link to="/privacy" className="text-gray-500 hover:text-primary transition-colors">Privacy Policy</Link></li>
@@ -31,19 +31,19 @@ export default function Footer() {
           </div>
 
           {/* Column 3: Play Store Apps */}
-          <div className="text-center md:text-right flex flex-col items-center md:items-end">
+          <div className="text-center md:text-right flex flex-col items-center md:items-end col-span-1 md:col-span-2">
             <h4 className="font-bold text-gray-800 mb-4 uppercase text-xs tracking-widest">Get Our Mobile Apps</h4>
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap md:flex-col gap-3 justify-center">
               {/* App 1: HDE Construction */}
               <a 
                 href="https://play.google.com/store/apps/details?id=in.toolwebsite.twa" 
                 target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-3 bg-gray-900 text-white px-4 py-2 rounded-xl hover:bg-black transition-all border border-gray-700 w-56"
+                className="flex items-center gap-3 bg-gray-900 text-white px-4 py-2 rounded-xl hover:bg-black hover:scale-[1.02] transition-all border border-gray-700 w-56 text-left"
               >
-                <i className="fab fa-google-play text-2xl text-primary"></i>
-                <div className="text-left">
+                <i className="fab fa-google-play text-2xl text-primary font-bold"></i>
+                <div>
                   <p className="text-[10px] uppercase font-bold text-gray-400 leading-none">Get it on</p>
-                  <p className="text-sm font-bold">HDE Construction</p>
+                  <p className="text-sm font-bold mt-1">HDE Construction</p>
                 </div>
               </a>
               
@@ -51,15 +51,32 @@ export default function Footer() {
               <a 
                 href="https://play.google.com/store/apps/details?id=com.aihomedecorator.twa&pcampaignid=web_share" 
                 target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-3 bg-gray-900 text-white px-4 py-2 rounded-xl hover:bg-black transition-all border border-gray-700 w-56"
+                className="flex items-center gap-3 bg-gray-900 text-white px-4 py-2 rounded-xl hover:bg-black hover:scale-[1.02] transition-all border border-gray-700 w-56 text-left"
               >
-                <i className="fab fa-google-play text-2xl text-green-400"></i>
-                <div className="text-left">
+                <i className="fab fa-google-play text-2xl text-green-400 font-bold"></i>
+                <div>
                   <p className="text-[10px] uppercase font-bold text-gray-400 leading-none">Download Now</p>
-                  <p className="text-sm font-bold">AI Home Decorator</p>
+                  <p className="text-sm font-bold mt-1">AI Home Decorator</p>
                 </div>
               </a>
             </div>
+          </div>
+        </div>
+
+        <div className="border-t border-gray-100 pt-6 mt-6 mb-6">
+          <h4 className="font-bold text-gray-800 mb-4 uppercase text-xs tracking-widest text-center">House Construction Costs By City</h4>
+          <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 text-sm font-medium">
+            <Link to="/cost/construction-in-mumbai" className="text-gray-500 hover:text-primary transition-colors">Mumbai</Link>
+            <span className="hidden md:inline text-gray-300">|</span>
+            <Link to="/cost/construction-in-bengaluru" className="text-gray-500 hover:text-primary transition-colors">Bengaluru</Link>
+            <span className="hidden md:inline text-gray-300">|</span>
+            <Link to="/cost/construction-in-delhi-ncr" className="text-gray-500 hover:text-primary transition-colors">Delhi NCR</Link>
+            <span className="hidden md:inline text-gray-300">|</span>
+            <Link to="/cost/construction-in-chennai" className="text-gray-500 hover:text-primary transition-colors">Chennai</Link>
+            <span className="hidden md:inline text-gray-300">|</span>
+            <Link to="/cost/construction-in-hyderabad" className="text-gray-500 hover:text-primary transition-colors">Hyderabad</Link>
+            <span className="hidden md:inline text-gray-300">|</span>
+            <Link to="/cost/construction-in-pune" className="text-gray-500 hover:text-primary transition-colors">Pune</Link>
           </div>
         </div>
 
@@ -71,4 +88,4 @@ export default function Footer() {
       </div>
     </footer>
   );
-}
+}

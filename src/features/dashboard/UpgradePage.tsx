@@ -1,6 +1,5 @@
-// src/features/dashboard/UpgradePage.tsx
 import React, { useState, useEffect } from "react";
-// removed useNavigate
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../../config/supabaseClient";
 import { useUser } from "../../context/UserContext";
 import { useToast } from "../../context/ToastContext";
@@ -89,6 +88,7 @@ const UpgradePage = () => {
   const { showToast } = useToast();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -103,7 +103,7 @@ const UpgradePage = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        window.location.assign("/signin");
+        navigate("/signin");
         return;
       }
 
@@ -126,7 +126,7 @@ const UpgradePage = () => {
           });
           if (result?.status === "success") {
             await refreshProfile();
-            window.location.assign("/dashboard");
+            navigate("/dashboard");
           } else {
             setError("Verification failed. Please contact support.");
           }
@@ -174,7 +174,8 @@ const UpgradePage = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
           {Object.entries(plans).map(([key, plan]) => {
             const isBestValue = plan.badge;
-            const isCurrentPlan = planTier === plan.tier;
+            const isActiveTier = planTier === plan.tier;
+            const isCurrentPlan = plan.tier === "pro" && planTier === "pro";
 
             return (
               <div 
@@ -191,7 +192,14 @@ const UpgradePage = () => {
 
                 <div className="flex justify-between items-start mb-6">
                   <div className="pr-2">
-                    <h3 className="text-2xl font-bold text-gray-900 dark:text-zinc-100">{plan.name}</h3>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-2xl font-bold text-gray-900 dark:text-zinc-100">{plan.name}</h3>
+                      {isActiveTier && (
+                        <span className="bg-green-100 dark:bg-green-950/30 text-green-700 dark:text-green-400 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                          Active
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-gray-500 dark:text-zinc-400 mt-2 font-medium leading-relaxed">
                       {plan.description}
                     </p>
@@ -243,6 +251,8 @@ const UpgradePage = () => {
                     </span>
                   ) : isCurrentPlan ? (
                     'Current Plan'
+                  ) : isActiveTier ? (
+                    'Buy More Credits'
                   ) : key === 'pro' ? (
                     'Start Subscription'
                   ) : (

@@ -23,4 +23,4 @@ jobs:
       run: npm ci
 
     - name: Lint, Type Check & Build
-      run: npm run lint && npx astro check && npm run build
+      run: npm run lint && npx tsc --noEmit && npm run build

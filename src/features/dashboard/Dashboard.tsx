@@ -1,7 +1,7 @@
 // src/features/dashboard/Dashboard.tsx
 import { HeroManager } from "./HeroManager";
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import { ProjectService } from "../../services/projectService";
 import { useToast } from "../../context/ToastContext";
@@ -20,6 +20,7 @@ const CALCULATOR_META: Record<string, { label: string; icon: string; color: stri
 const Dashboard = () => {
   const { user, hasPaid, role, credits, loading } = useUser(); 
   const { showToast } = useToast();
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<any[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
 
@@ -53,8 +54,13 @@ const Dashboard = () => {
   };
 
   const handleOpenProject = (project: any) => {
-    sessionStorage.setItem("projectData", JSON.stringify(project.data));
-    window.location.assign(`/?openCalculator=${project.type}`);
+    navigate("/", { 
+      state: { 
+        openCalculator: project.type, 
+        projectData: project.data, 
+        projectName: project.name 
+      } 
+    });
   };
 
   if (loading) {
@@ -106,7 +112,7 @@ const Dashboard = () => {
             </div>
           </div>
           <button 
-            onClick={() => window.location.assign('/upgrade')}
+            onClick={() => navigate('/upgrade')}
             className="bg-red-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-red-700 transition-all shadow-md hover:shadow-lg active:scale-95"
           >
             Buy Credits Now

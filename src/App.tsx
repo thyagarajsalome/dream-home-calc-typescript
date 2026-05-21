@@ -1,6 +1,6 @@
 // src/App.tsx
 import React, { Suspense, lazy, startTransition, useEffect } from "react";
-import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, Outlet, useLocation, useParams } from "react-router-dom";
 import { UserProvider, useUser } from "./context/UserContext";
 import { ToastProvider } from "./context/ToastContext";
 
@@ -24,6 +24,7 @@ import Footer from "./components/layout/Footer";
 import Hero from "./components/layout/Hero";
 import FAQ from "./components/layout/FAQ";
 import Testimonials from "./components/layout/Testimonials";
+import CityContent, { CITIES_DATA } from "./components/layout/CityContent";
 
 import CalculatorTabs from "./features/construction/CalculatorTabs";
 import { useGSAPTabSwitch } from "./hooks/useGSAP";
@@ -101,6 +102,7 @@ type CalculatorType =
 const MainLayout = () => {
   const { hasPaid } = useUser();
   const location    = useLocation();
+  const { city }    = useParams<{ city?: string }>();
 
   const routeState = location.state as {
     openCalculator?: CalculatorType;
@@ -144,6 +146,8 @@ const MainLayout = () => {
     }
   };
 
+  const cityData = city ? CITIES_DATA[city.toLowerCase()] : undefined;
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       
@@ -176,6 +180,7 @@ const MainLayout = () => {
           </div>
         </div>
 
+        {cityData && <CityContent cityData={cityData} />}
         <FAQ />
         <Testimonials />
       </main>
@@ -218,23 +223,36 @@ const AppRoutes = () => {
       <Suspense fallback={<Loading />}>
         <Routes>
           <Route path="/signin" element={user ? <Navigate to="/" /> : <SignIn />} />
+          <Route path="/signin/index.html" element={user ? <Navigate to="/" /> : <SignIn />} />
           <Route path="/signup" element={user ? <Navigate to="/" /> : <SignUp />} />
+          <Route path="/signup/index.html" element={user ? <Navigate to="/" /> : <SignUp />} />
 
           <Route element={<InfoLayout />}>
             <Route path="/privacy"    element={<PrivacyPolicy />} />
+            <Route path="/privacy/index.html"    element={<PrivacyPolicy />} />
             <Route path="/terms"      element={<TermsOfService />} />
+            <Route path="/terms/index.html"      element={<TermsOfService />} />
             <Route path="/contact"    element={<Contact />} />
+            <Route path="/contact/index.html"    element={<Contact />} />
             <Route path="/disclaimer" element={<Disclaimer />} />
+            <Route path="/disclaimer/index.html" element={<Disclaimer />} />
             <Route path="/plans"      element={<PlanGallery />} />
+            <Route path="/plans/index.html"      element={<PlanGallery />} />
             <Route path="/directory"  element={<DirectoryPage />} />
+            <Route path="/directory/index.html"  element={<DirectoryPage />} />
             <Route path="/upgrade"    element={<UpgradePage />} />
+            <Route path="/upgrade/index.html"    element={<UpgradePage />} />
           </Route>
 
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/register-pro" element={<ProRegistration />} /> {/* Moved inside ProtectedRoute */}
+            <Route path="/dashboard/index.html" element={<Dashboard />} />
+            <Route path="/register-pro" element={<ProRegistration />} />
+            <Route path="/register-pro/index.html" element={<ProRegistration />} />
           </Route>
 
+          <Route path="/cost/construction-in-:city" element={<MainLayout />} />
+          <Route path="/cost/construction-in-:city/index.html" element={<MainLayout />} />
           <Route path="/"  element={<MainLayout />} />
           <Route path="*"  element={<Navigate to="/" />} />
 
