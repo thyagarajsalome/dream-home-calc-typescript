@@ -1,60 +1,102 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Homepage -->
   <url>
     <loc>https://homedesignenglish.com/</loc>
-    <lastmod>2026-04-23</lastmod>
+    <lastmod>2026-05-21</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 
+  <!-- Architectural & Pro Galleries -->
   <url>
     <loc>https://homedesignenglish.com/plans</loc>
-    <lastmod>2026-04-23</lastmod>
+    <lastmod>2026-05-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
     <loc>https://homedesignenglish.com/directory</loc>
-    <lastmod>2026-04-23</lastmod>
+    <lastmod>2026-05-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
+
+  <!-- City Cost Guides (SEO/AEO Ranking Targets) -->
+  <url>
+    <loc>https://homedesignenglish.com/cost/construction-in-mumbai</loc>
+    <lastmod>2026-05-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://homedesignenglish.com/cost/construction-in-bengaluru</loc>
+    <lastmod>2026-05-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://homedesignenglish.com/cost/construction-in-delhi-ncr</loc>
+    <lastmod>2026-05-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://homedesignenglish.com/cost/construction-in-chennai</loc>
+    <lastmod>2026-05-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://homedesignenglish.com/cost/construction-in-hyderabad</loc>
+    <lastmod>2026-05-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://homedesignenglish.com/cost/construction-in-pune</loc>
+    <lastmod>2026-05-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
   
+  <!-- Accounts & Onboarding -->
   <url>
     <loc>https://homedesignenglish.com/signup</loc>
-    <lastmod>2026-04-23</lastmod>
+    <lastmod>2026-05-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://homedesignenglish.com/signin</loc>
-    <lastmod>2026-04-23</lastmod>
+    <lastmod>2026-05-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
+  <!-- Legal & Support -->
   <url>
     <loc>https://homedesignenglish.com/contact</loc>
-    <lastmod>2026-04-23</lastmod>
+    <lastmod>2026-05-21</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://homedesignenglish.com/privacy</loc>
-    <lastmod>2026-04-23</lastmod>
+    <lastmod>2026-05-21</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://homedesignenglish.com/terms</loc>
-    <lastmod>2026-04-23</lastmod>
+    <lastmod>2026-05-21</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://homedesignenglish.com/disclaimer</loc>
-    <lastmod>2026-04-23</lastmod>
+    <lastmod>2026-05-21</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>

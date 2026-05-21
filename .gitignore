@@ -38,8 +38,11 @@ dist-ssr
 *.sln
 *.sw?
 
+*.tgz
+
 # TypeScript
 *.tsbuildinfo
 
-# Optional: npm pack output
-*.tgz
+# Astro
+.astro
+.astro/

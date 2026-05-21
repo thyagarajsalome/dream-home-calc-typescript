@@ -92,14 +92,14 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({ onUploadSuccess }) =
   };
 
   return (
-    <Card className={`mb-8 border-primary/30 shadow-glow transition-all p-4 md:p-6 ${isUploading ? 'bg-gray-100 opacity-80 pointer-events-none' : 'bg-amber-50/30'}`}>
-      <div className="flex items-center gap-3 mb-6 border-b border-gray-200 pb-4">
-        <div className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center">
+    <Card className={`mb-8 border-primary/30 dark:border-zinc-850 shadow-glow transition-all p-4 md:p-6 ${isUploading ? 'bg-gray-100 dark:bg-zinc-850 opacity-80 pointer-events-none' : 'bg-zinc-55/30 dark:bg-zinc-900/30'}`}>
+      <div className="flex items-center gap-3 mb-6 border-b border-gray-200 dark:border-zinc-800 pb-4">
+        <div className="w-10 h-10 bg-primary text-white dark:text-zinc-950 rounded-full flex items-center justify-center">
           {isUploading ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-cloud-upload-alt"></i>}
         </div>
         <div>
-          <h2 className="text-xl font-bold text-gray-800">Admin Upload Portal</h2>
-          <p className="text-sm text-gray-500">Upload high-res plan and detailed specifications.</p>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-zinc-200">Admin Upload Portal</h2>
+          <p className="text-sm text-gray-500 dark:text-zinc-400">Upload high-res plan and detailed specifications.</p>
         </div>
       </div>
 
@@ -115,8 +115,8 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({ onUploadSuccess }) =
         {/* Specs Row */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div>
-            <label className="block text-[10px] font-bold text-gray-500 mb-1 ml-1 uppercase tracking-wider">Facing</label>
-            <select value={facing} onChange={e => setFacing(e.target.value)} disabled={isUploading} className="w-full p-2 border-2 border-gray-200 rounded-xl text-sm focus:border-primary outline-none">
+            <label className="block text-[10px] font-bold text-gray-500 dark:text-zinc-500 mb-1 ml-1 uppercase tracking-wider">Facing</label>
+            <select value={facing} onChange={e => setFacing(e.target.value)} disabled={isUploading} className="w-full p-2 border-2 border-gray-200 dark:border-zinc-800 rounded-xl text-sm focus:border-primary dark:bg-zinc-950 dark:text-zinc-150 outline-none">
               <option value="East">East</option><option value="West">West</option><option value="North">North</option><option value="South">South</option>
             </select>
           </div>
@@ -140,24 +140,24 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({ onUploadSuccess }) =
         </div>
 
         {/* Detailed Description */}
-        <div>
-           <label className="block text-[10px] font-bold text-gray-500 mb-1 ml-1 uppercase tracking-wider">Detailed Specs (Living Room, Kitchen, Doors, Windows, Flooring, etc.)</label>
-           <textarea 
-             value={description} 
-             onChange={e => setDescription(e.target.value)} 
-             disabled={isUploading} 
-             placeholder="e.g., Large living room (16x16), open kitchen. Vitrified tiles flooring (1200 sqft total). 8 doors, 6 windows..."
-             className="w-full p-3 border-2 border-gray-200 rounded-xl text-sm focus:border-primary outline-none resize-y min-h-[100px]"
-           />
-        </div>
+         <div>
+            <label className="block text-[10px] font-bold text-gray-500 dark:text-zinc-550 mb-1 ml-1 uppercase tracking-wider">Detailed Specs (Living Room, Kitchen, Doors, Windows, Flooring, etc.)</label>
+            <textarea 
+              value={description} 
+              onChange={e => setDescription(e.target.value)} 
+              disabled={isUploading} 
+              placeholder="e.g., Large living room (16x16), open kitchen. Vitrified tiles flooring (1200 sqft total). 8 doors, 6 windows..."
+              className="w-full p-3 border-2 border-gray-200 dark:border-zinc-800 rounded-xl text-sm focus:border-primary dark:bg-zinc-950 dark:text-zinc-150 outline-none resize-y min-h-[100px]"
+            />
+         </div>
 
-        {/* File Upload */}
-        <div className="border-2 border-dashed border-primary/50 p-4 rounded-xl bg-white text-center hover:bg-gray-50 transition-colors">
-          <label className="block text-sm font-bold text-gray-700 mb-2 cursor-pointer">
-            <i className="fas fa-file-image text-primary mr-2"></i>Select High-Res Plan Image*
-          </label>
-          <input type="file" onChange={e => setFullFile(e.target.files?.[0] || null)} required disabled={isUploading} className="text-sm w-full cursor-pointer" />
-        </div>
+         {/* File Upload */}
+         <div className="border-2 border-dashed border-primary/50 dark:border-zinc-800/80 p-4 rounded-xl bg-white dark:bg-zinc-950 text-center hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors">
+           <label className="block text-sm font-bold text-gray-700 dark:text-zinc-300 mb-2 cursor-pointer">
+             <i className="fas fa-file-image text-primary mr-2"></i>Select High-Res Plan Image*
+           </label>
+           <input type="file" onChange={e => setFullFile(e.target.files?.[0] || null)} required disabled={isUploading} className="text-sm w-full cursor-pointer dark:text-zinc-400" />
+         </div>
 
         {uploadProgress > 0 && (
           <div className="mt-2">

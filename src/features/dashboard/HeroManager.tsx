@@ -15,9 +15,16 @@ export const HeroManager = () => {
   // Load current banners on mount
   const loadBanners = async () => {
     try {
-      setLoading(true);
+      const cached = localStorage.getItem("hde_hero_banners_cache");
+      if (cached) {
+        setBanners(JSON.parse(cached));
+        setLoading(false); // Hide spinner immediately if cache is available
+      } else {
+        setLoading(true);
+      }
       const data = await HeroService.getBanners();
       setBanners(data);
+      localStorage.setItem("hde_hero_banners_cache", JSON.stringify(data));
     } catch (err) {
       console.error("Error loading banners:", err);
     } finally {
@@ -109,20 +116,20 @@ export const HeroManager = () => {
   return (
     <div className="space-y-6">
       {/* Current Slides List */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-        <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 p-6 shadow-sm">
+        <h3 className="text-lg font-bold text-gray-800 dark:text-zinc-100 mb-4 flex items-center gap-2">
           <i className="fas fa-images text-primary"></i>
           Active Hero Slides
         </h3>
 
         {loading ? (
-          <div className="flex justify-center py-8"><i className="fas fa-spinner fa-spin text-gray-300 text-2xl"></i></div>
+          <div className="flex justify-center py-8"><i className="fas fa-spinner fa-spin text-gray-300 dark:text-zinc-600 text-2xl"></i></div>
         ) : banners.length === 0 ? (
-          <p className="text-center py-8 text-gray-400 text-sm italic">No slides uploaded yet.</p>
+          <p className="text-center py-8 text-gray-400 dark:text-zinc-500 text-sm italic">No slides uploaded yet.</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {banners.map((banner) => (
-              <div key={banner.id} className="relative group rounded-xl overflow-hidden aspect-video bg-gray-100 border border-gray-100">
+              <div key={banner.id} className="relative group rounded-xl overflow-hidden aspect-video bg-gray-100 dark:bg-zinc-800 border border-gray-100 dark:border-zinc-800">
                 <img src={banner.image_url} alt="Slide Preview" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <button 
@@ -140,8 +147,8 @@ export const HeroManager = () => {
       </div>
 
       {/* Upload Form */}
-      <div className="bg-amber-50/50 rounded-2xl border-2 border-dashed border-amber-200 p-6">
-        <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+      <div className="bg-zinc-50/50 dark:bg-zinc-900/50 rounded-2xl border-2 border-dashed border-zinc-200 dark:border-zinc-800 p-6">
+        <h3 className="font-bold text-gray-800 dark:text-zinc-100 mb-4 flex items-center gap-2">
           <i className="fas fa-cloud-upload-alt text-primary"></i>
           Add New Slide
         </h3>
@@ -153,7 +160,7 @@ export const HeroManager = () => {
               type="file" 
               accept="image/*"
               onChange={(e) => setFile(e.target.files?.[0] || null)} 
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-primary file:text-white hover:file:bg-yellow-600 transition-all cursor-pointer" 
+              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-primary file:text-white dark:file:text-zinc-950 hover:file:bg-primary-hover transition-all cursor-pointer" 
             />
             <Button 
               type="submit" 
@@ -164,7 +171,7 @@ export const HeroManager = () => {
               Upload to Supabase
             </Button>
           </div>
-          <p className="text-[10px] text-gray-400">
+          <p className="text-[10px] text-gray-400 dark:text-zinc-500">
             Recommended size: 1920x800px. JPG, PNG or WEBP formats supported.
           </p>
         </form>

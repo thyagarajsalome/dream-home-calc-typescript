@@ -20,7 +20,7 @@ const PROCESS_TYPES = {
   fresh: { name: "Fresh Painting (Putty + Primer + 2 Coats)", factor: 1.6 },
 };
 
-const CHART_COLORS = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594"];
+const CHART_COLORS = ["#c5a059", "#5c473c", "#dfd0bf"];
 
 const PaintingCalculator: React.FC = () => {
   const { hasPaid } = useUser();
@@ -51,8 +51,19 @@ const PaintingCalculator: React.FC = () => {
         setCarpetArea(data.carpetArea);
         setPaintType(data.paintType);
       }
+    } else {
+      if (typeof window !== "undefined") {
+        const sharedArea = window.localStorage.getItem("hde_shared_area");
+        if (sharedArea && !carpetArea) setCarpetArea(sharedArea);
+      }
     }
   }, [location]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && carpetArea) {
+      window.localStorage.setItem("hde_shared_area", carpetArea);
+    }
+  }, [carpetArea]);
 
   const calculateCost = (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,7 +134,7 @@ const PaintingCalculator: React.FC = () => {
               </select>
             </div>
 
-            <button type="submit" className="w-full py-3 bg-primary text-white font-bold rounded-xl hover:bg-yellow-600 transition-all shadow-md" disabled={isLocked}>Calculate</button>
+            <button type="submit" className="w-full py-3 bg-primary text-white dark:text-zinc-950 font-bold rounded-xl hover:bg-primary-hover transition-all shadow-md" disabled={isLocked}>Calculate</button>
           </form>
         </Card>
       </section>
@@ -131,9 +142,9 @@ const PaintingCalculator: React.FC = () => {
       {totalCost > 0 && (
         <section ref={resultsRef}>
           <Card title="Painting Estimate" className="border-primary/20">
-            <div className="text-center py-6 bg-gray-50 rounded-xl mb-6">
-              <p className="text-gray-500 text-xs font-bold uppercase mb-1">Estimated Cost</p>
-              <h2 className="text-4xl font-extrabold text-secondary">{formatCurrency(totalCost)}</h2>
+            <div className="text-center py-6 bg-zinc-50 dark:bg-zinc-900 rounded-xl mb-6">
+              <p className="text-zinc-500 text-xs font-bold uppercase mb-1">Estimated Cost</p>
+              <h2 className="text-4xl font-extrabold text-secondary dark:text-zinc-100">{formatCurrency(totalCost)}</h2>
             </div>
             
             <div className="h-64 mb-6">
@@ -142,8 +153,8 @@ const PaintingCalculator: React.FC = () => {
 
             {hasPaid && (
               <div className="grid grid-cols-2 gap-4">
-                <button onClick={handleDownloadPDF} disabled={isDownloading} className="py-3 bg-white border-2 border-secondary text-secondary font-bold rounded-xl hover:bg-secondary hover:text-white transition-all">Download PDF</button>
-                <button onClick={handleSave} disabled={isSaving} className="py-3 bg-primary text-white font-bold rounded-xl hover:bg-yellow-600 transition-all">Save Project</button>
+                <button onClick={handleDownloadPDF} disabled={isDownloading} className="py-3 bg-white dark:bg-zinc-900 border-2 border-secondary dark:border-zinc-700 text-secondary dark:text-zinc-100 font-bold rounded-xl hover:bg-secondary dark:hover:bg-zinc-800 hover:text-white transition-all">Download PDF</button>
+                <button onClick={handleSave} disabled={isSaving} className="py-3 bg-primary text-white dark:text-zinc-950 font-bold rounded-xl hover:bg-primary-hover transition-all">Save Project</button>
               </div>
             )}
           </Card>

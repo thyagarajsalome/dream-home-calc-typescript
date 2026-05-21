@@ -1,5 +1,5 @@
 // src/features/construction/MaterialQuantityCalculator.tsx
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useUser } from "../../context/UserContext";
 import { useProjectActions } from "../../hooks/useProjectActions";
 import { Card } from "../../components/ui/Card";
@@ -128,7 +128,7 @@ function computeBOQ(
 
   const phases: PhaseResult[] = [
     {
-      phase: "Foundation & Substructure", icon: "fas fa-mountain", color: "bg-stone-100 text-stone-700",
+      phase: "Foundation & Substructure", icon: "fas fa-mountain", color: "bg-stone-100 dark:bg-stone-900 text-stone-700 dark:text-stone-400 border border-stone-200 dark:border-stone-800",
       rows: [
         { item: "Cement (OPC 53 Grade)", unit: "Bags (50kg)", qty: foundCement, rate: r(RATES.cement), cost: foundCement * r(RATES.cement), brand: "UltraTech / Ambuja", spec: "IS 8112, Grade 53", wastage: "5%" },
         { item: "TMT Steel Bars",        unit: "kg",          qty: foundSteel,  rate: r(RATES.steel),  cost: foundSteel  * r(RATES.steel),  brand: "TATA Tiscon / SAIL", spec: "Fe500D, IS 1786", wastage: "3-5%" },
@@ -138,7 +138,7 @@ function computeBOQ(
       subtotal: 0,
     },
     {
-      phase: "RCC Structural Work", icon: "fas fa-layer-group", color: "bg-blue-100 text-blue-700",
+      phase: "RCC Structural Work", icon: "fas fa-layer-group", color: "bg-blue-100 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400",
       rows: [
         { item: "Cement (OPC 53 Grade)", unit: "Bags (50kg)", qty: rccCement, rate: r(RATES.cement), cost: rccCement * r(RATES.cement), brand: "UltraTech / ACC", spec: "IS 8112, M20 mix", wastage: "5%" },
         { item: "TMT Steel (Columns/Beams)", unit: "kg",      qty: rccSteel,  rate: r(RATES.steel),  cost: rccSteel  * r(RATES.steel),  brand: "TATA Tiscon", spec: "Fe500D — 12mm, 16mm, 20mm dia", wastage: "3%" },
@@ -149,7 +149,7 @@ function computeBOQ(
       subtotal: 0,
     },
     {
-      phase: "Masonry & Brickwork", icon: "fas fa-border-all", color: "bg-orange-100 text-orange-700",
+      phase: "Masonry & Brickwork", icon: "fas fa-border-all", color: "bg-orange-100 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400",
       rows: [
         { item: wt.name,                  unit: "Nos",         qty: brickCount, rate: wallType === "redBrick" ? r(RATES.brick) : wallType === "flyAsh" ? r(RATES.flyash) : wallType === "aac" ? r(RATES.aac) : r(RATES.ccb), cost: brickCount * (wallType === "redBrick" ? r(RATES.brick) : wallType === "flyAsh" ? r(RATES.flyash) : wallType === "aac" ? r(RATES.aac) : r(RATES.ccb)), brand: "Local / Wienerberger", spec: wt.desc, wastage: "5-8%" },
         { item: "Cement (PPC Grade)",     unit: "Bags (50kg)", qty: msnCement, rate: r(RATES.cement * 0.95), cost: msnCement * r(RATES.cement * 0.95), brand: "UltraTech PPC", spec: "IS 1489, 1:5 mortar mix", wastage: "5%" },
@@ -158,7 +158,7 @@ function computeBOQ(
       subtotal: 0,
     },
     {
-      phase: "Plastering", icon: "fas fa-brush", color: "bg-yellow-100 text-yellow-700",
+      phase: "Plastering", icon: "fas fa-brush", color: "bg-yellow-100 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400",
       rows: [
         { item: "Cement (PPC)",           unit: "Bags (50kg)", qty: plsCement, rate: r(RATES.cement * 0.95), cost: plsCement * r(RATES.cement * 0.95), brand: "Coromandel / Dalmia", spec: "1:4 mix for internal, 1:6 external", wastage: "5%" },
         { item: "Fine Sand",              unit: "cft",         qty: plsSand,   rate: RATES.sand,             cost: plsSand * RATES.sand, brand: "Zone-III River Sand", spec: "Sieved, FM < 2.0", wastage: "8%" },
@@ -166,7 +166,7 @@ function computeBOQ(
       subtotal: 0,
     },
     {
-      phase: "Flooring & Tiling", icon: "fas fa-th", color: "bg-teal-100 text-teal-700",
+      phase: "Flooring & Tiling", icon: "fas fa-th", color: "bg-teal-100 dark:bg-teal-950/30 text-teal-700 dark:text-teal-400",
       rows: [
         { item: "Vitrified Tiles (600×600)", unit: "sqft", qty: tileArea,  rate: r(RATES.tiles),  cost: tileArea  * r(RATES.tiles),  brand: "Kajaria / Somany / Johnson", spec: "600×600 GVT, 8–10mm thick, <0.5% absorption", wastage: "10%" },
         { item: "Tile Adhesive Cement",      unit: "Bags", qty: tileCement,rate: r(RATES.cement * 0.90), cost: tileCement * r(RATES.cement * 0.90), brand: "Kerakoll / Pidilite", spec: "IS 12269, polymer modified", wastage: "5%" },
@@ -176,7 +176,7 @@ function computeBOQ(
       subtotal: 0,
     },
     {
-      phase: "Painting & Finishing", icon: "fas fa-paint-roller", color: "bg-pink-100 text-pink-700",
+      phase: "Painting & Finishing", icon: "fas fa-paint-roller", color: "bg-pink-100 dark:bg-pink-950/30 text-pink-700 dark:text-pink-400",
       rows: [
         { item: "Wall Putty",         unit: "kg",    qty: puttyKg,   rate: r(RATES.putty),  cost: puttyKg   * r(RATES.putty),  brand: "Birla White / Asian Paints", spec: "Polymer-modified, IS 15477", wastage: "3%" },
         { item: "Primer (Wall)",      unit: "Litres",qty: primerLtr, rate: r(RATES.primer), cost: primerLtr * r(RATES.primer), brand: "Asian Paints / Berger", spec: "Alkali-resistant primer", wastage: "5%" },
@@ -185,7 +185,7 @@ function computeBOQ(
       subtotal: 0,
     },
     {
-      phase: "Waterproofing", icon: "fas fa-tint", color: "bg-cyan-100 text-cyan-700",
+      phase: "Waterproofing", icon: "fas fa-tint", color: "bg-cyan-100 dark:bg-cyan-950/30 text-cyan-700 dark:text-cyan-400",
       rows: [
         { item: "Crystalline Waterproofing", unit: "Litres", qty: wpLtr, rate: r(RATES.waterproof), cost: wpLtr * r(RATES.waterproof), brand: "Dr Fixit / Fosroc Brushbond", spec: "Brush-applied 2 coats, terrace + wet areas", wastage: "5%" },
       ],
@@ -213,6 +213,28 @@ const MaterialQuantityCalculator: React.FC = () => {
   const [quality, setQuality] = useState<keyof typeof QUALITY_PRESETS>("standard");
   const [showBOQ, setShowBOQ] = useState(false);
   const [openPhase, setOpenPhase] = useState<number | null>(0);
+
+  // Sync to/from localStorage for builder funnel connection
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const sharedArea = window.localStorage.getItem("hde_shared_area");
+      const sharedQuality = window.localStorage.getItem("hde_shared_quality");
+      if (sharedArea && !area) {
+        setArea(sharedArea);
+        setShowBOQ(true); // Automatically show BOQ if area was shared
+      }
+      if (sharedQuality) {
+        setQuality(sharedQuality as any);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (area) window.localStorage.setItem("hde_shared_area", area);
+      if (quality) window.localStorage.setItem("hde_shared_quality", quality);
+    }
+  }, [area, quality]);
 
   // Calculate Builder Markup Multiplier
   const mFactor = hasPaid ? (1 + markup / 100) : 1;
@@ -280,11 +302,11 @@ const MaterialQuantityCalculator: React.FC = () => {
       {/* ── Input Card ── */}
       <Card title="📐 Material BOQ Estimator">
         {isLocked && (
-          <div className="mb-5 flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
-            <i className="fas fa-lock text-amber-500 text-lg"></i>
+          <div className="mb-5 flex items-center gap-3 p-4 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl">
+            <i className="fas fa-lock text-zinc-500 dark:text-zinc-400 text-lg"></i>
             <div>
-              <p className="font-bold text-amber-800 text-sm">Pro Feature — Upgrade to unlock</p>
-              <p className="text-amber-700 text-xs">Get a detailed phase-wise Bill of Quantities with brand recommendations</p>
+              <p className="font-bold text-zinc-800 dark:text-zinc-200 text-sm">Pro Feature — Upgrade to unlock</p>
+              <p className="text-zinc-600 dark:text-zinc-400 text-xs">Get a detailed phase-wise Bill of Quantities with brand recommendations</p>
             </div>
           </div>
         )}
@@ -298,11 +320,11 @@ const MaterialQuantityCalculator: React.FC = () => {
 
           {/* Floors */}
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Number of Floors</label>
+            <label className="block text-sm font-bold text-gray-700 dark:text-zinc-300 mb-2">Number of Floors</label>
             <div className="flex gap-2">
               {FLOORS.map(n => (
                 <button key={n} onClick={() => setFloors(n)} disabled={isLocked}
-                  className={`flex-1 py-3 rounded-xl border-2 font-bold text-sm transition-all ${floors === n ? "border-primary bg-primary/10 text-primary" : "border-gray-200 text-gray-500 bg-white hover:border-gray-300"}`}>
+                  className={`flex-1 py-3 rounded-xl border-2 font-bold text-sm transition-all ${floors === n ? "border-primary bg-primary/10 text-primary dark:text-primary-hover" : "border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-zinc-400 bg-white dark:bg-zinc-950 hover:border-gray-300 dark:hover:border-zinc-700"}`}>
                   {n}G{n > 1 ? `+${n-1}` : ""}
                 </button>
               ))}
@@ -311,24 +333,24 @@ const MaterialQuantityCalculator: React.FC = () => {
 
           {/* Wall Type */}
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Wall Material</label>
+            <label className="block text-sm font-bold text-gray-700 dark:text-zinc-300 mb-2">Wall Material</label>
             <select value={wallType} onChange={e => setWallType(e.target.value as any)} disabled={isLocked}
-              className="w-full p-3 border-2 border-gray-200 rounded-xl bg-white text-sm focus:border-primary outline-none">
-              {Object.entries(WALL_TYPES).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}
+              className="w-full p-3 border-2 border-gray-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-950 text-gray-800 dark:text-zinc-100 text-sm focus:border-primary outline-none">
+              {Object.entries(WALL_TYPES).map(([k, v]) => <option key={k} value={k} className="dark:bg-zinc-950">{v.name}</option>)}
             </select>
-            <p className="text-xs text-gray-400 mt-1">{WALL_TYPES[wallType].desc}</p>
+            <p className="text-xs text-gray-400 dark:text-zinc-500 mt-1">{WALL_TYPES[wallType].desc}</p>
           </div>
 
           {/* Quality */}
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Material Quality</label>
+            <label className="block text-sm font-bold text-gray-700 dark:text-zinc-300 mb-2">Material Quality</label>
             <div className="space-y-1.5">
               {Object.entries(QUALITY_PRESETS).map(([k, v]) => (
-                <label key={k} className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-all ${quality === k ? "border-primary bg-primary/5" : "border-gray-200 hover:border-gray-300"}`}>
+                <label key={k} className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-all ${quality === k ? "border-primary bg-primary/5 dark:bg-zinc-900" : "border-gray-200 dark:border-zinc-800 hover:border-gray-300 dark:hover:border-zinc-700"}`}>
                   <input type="radio" name="quality" value={k} checked={quality === k} onChange={() => setQuality(k as any)} disabled={isLocked} className="text-primary" />
                   <div>
-                    <span className="text-sm font-bold text-gray-800">{v.label}</span>
-                    <span className="text-xs text-gray-400 block">{v.desc}</span>
+                    <span className="text-sm font-bold text-gray-800 dark:text-zinc-100">{v.label}</span>
+                    <span className="text-xs text-gray-400 dark:text-zinc-500 block">{v.desc}</span>
                   </div>
                 </label>
               ))}
@@ -337,7 +359,7 @@ const MaterialQuantityCalculator: React.FC = () => {
         </div>
 
         <button onClick={handleCalculate} disabled={isLocked || !area}
-          className="mt-6 w-full py-4 bg-primary text-white font-bold text-base rounded-xl shadow-md hover:bg-yellow-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+          className="mt-6 w-full py-4 bg-primary text-white dark:text-zinc-950 font-bold text-base rounded-xl shadow-md hover:bg-primary-hover transition-all disabled:opacity-50 flex items-center justify-center gap-2">
           <i className="fas fa-calculator"></i> Generate Full BOQ
         </button>
       </Card>
@@ -347,15 +369,15 @@ const MaterialQuantityCalculator: React.FC = () => {
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: "Total Material Cost",  value: formatCurrency(grandTotal), icon: "fas fa-rupee-sign",  color: "text-green-600",  bg: "bg-green-50" },
-              { label: "Cement Required",       value: `${totalBags} Bags`,        icon: "fas fa-box",         color: "text-blue-600",   bg: "bg-blue-50"  },
-              { label: "Steel Required",        value: `${totalSteel} kg`,          icon: "fas fa-ruler",       color: "text-orange-600", bg: "bg-orange-50"},
-              { label: "Phases Covered",        value: `${phases.length} phases`,   icon: "fas fa-list-check",  color: "text-purple-600", bg: "bg-purple-50"},
+              { label: "Total Material Cost",  value: formatCurrency(grandTotal), icon: "fas fa-rupee-sign",  color: "text-green-600 dark:text-green-400",  bg: "bg-green-50 dark:bg-green-950/20" },
+              { label: "Cement Required",       value: `${totalBags} Bags`,        icon: "fas fa-box",         color: "text-blue-600 dark:text-blue-400",   bg: "bg-blue-50 dark:bg-blue-950/20"  },
+              { label: "Steel Required",        value: `${totalSteel} kg`,          icon: "fas fa-ruler",       color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-50 dark:bg-orange-950/20"},
+              { label: "Phases Covered",        value: `${phases.length} phases`,   icon: "fas fa-list-check",  color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-50 dark:bg-purple-950/20"},
             ].map((kpi, i) => (
-              <div key={i} className={`${kpi.bg} rounded-xl p-4 border border-white shadow-sm`}>
+              <div key={i} className={`${kpi.bg} rounded-xl p-4 border border-white dark:border-zinc-800 shadow-sm`}>
                 <div className={`${kpi.color} text-xl mb-1`}><i className={kpi.icon}></i></div>
                 <div className={`text-lg font-extrabold ${kpi.color}`}>{kpi.value}</div>
-                <div className="text-xs text-gray-500 font-medium">{kpi.label}</div>
+                <div className="text-xs text-gray-500 dark:text-zinc-400 font-medium">{kpi.label}</div>
               </div>
             ))}
           </div>
@@ -363,31 +385,31 @@ const MaterialQuantityCalculator: React.FC = () => {
           {/* ── Phase Accordion ── */}
           <div className="space-y-3">
             {phases.map((ph, idx) => (
-              <div key={idx} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div key={idx} className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden">
                 {/* Phase Header */}
                 <button
                   onClick={() => setOpenPhase(openPhase === idx ? null : idx)}
-                  className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
+                  className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
                   <div className="flex items-center gap-3">
                     <span className={`inline-flex items-center justify-center w-9 h-9 rounded-xl text-sm ${ph.color}`}>
                       <i className={ph.icon}></i>
                     </span>
                     <div className="text-left">
-                      <span className="font-bold text-gray-800 text-sm">{ph.phase}</span>
-                      <span className="block text-xs text-gray-400">{ph.rows.length} materials</span>
+                      <span className="font-bold text-gray-800 dark:text-zinc-100 text-sm">{ph.phase}</span>
+                      <span className="block text-xs text-gray-400 dark:text-zinc-500">{ph.rows.length} materials</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="font-extrabold text-secondary text-sm">{formatCurrency(ph.subtotal)}</span>
+                    <span className="font-extrabold text-secondary dark:text-zinc-100 text-sm">{formatCurrency(ph.subtotal)}</span>
                     <i className={`fas fa-chevron-${openPhase === idx ? "up" : "down"} text-gray-400 text-xs`}></i>
                   </div>
                 </button>
 
                 {/* Phase Table */}
                 {openPhase === idx && (
-                  <div className="overflow-x-auto border-t border-gray-100">
+                  <div className="overflow-x-auto border-t border-gray-100 dark:border-zinc-800">
                     <table className="w-full text-sm">
-                      <thead className="bg-gray-50 text-xs text-gray-500 uppercase font-bold">
+                      <thead className="bg-gray-50 dark:bg-zinc-800/40 text-xs text-gray-500 dark:text-zinc-400 uppercase font-bold">
                         <tr>
                           <th className="px-4 py-3 text-left">Material</th>
                           <th className="px-4 py-3 text-center">Quantity</th>
@@ -397,30 +419,30 @@ const MaterialQuantityCalculator: React.FC = () => {
                           <th className="px-4 py-3 text-right">Amount</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-50">
+                      <tbody className="divide-y divide-gray-50 dark:divide-zinc-850">
                         {ph.rows.map((row, ri) => (
-                          <tr key={ri} className="hover:bg-gray-50 transition-colors">
-                            <td className="px-4 py-3 font-medium text-gray-800">{row.item}</td>
+                          <tr key={ri} className="hover:bg-gray-50 dark:hover:bg-zinc-800/30 transition-colors">
+                            <td className="px-4 py-3 font-medium text-gray-800 dark:text-zinc-100">{row.item}</td>
                             <td className="px-4 py-3 text-center">
-                              <span className="bg-primary/10 text-primary font-bold px-2 py-1 rounded-lg text-xs">
+                              <span className="bg-primary/10 text-primary dark:text-zinc-100 font-bold px-2 py-1 rounded-lg text-xs">
                                 {row.qty.toLocaleString()} {row.unit}
                               </span>
                             </td>
-                            <td className="px-4 py-3 text-gray-500 text-xs hidden md:table-cell">{row.spec}</td>
+                            <td className="px-4 py-3 text-gray-500 dark:text-zinc-400 text-xs hidden md:table-cell">{row.spec}</td>
                             <td className="px-4 py-3 hidden lg:table-cell">
-                              <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium">{row.brand}</span>
+                              <span className="text-xs bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-full font-medium">{row.brand}</span>
                             </td>
                             <td className="px-4 py-3 text-center hidden sm:table-cell">
-                              <span className="text-xs text-gray-400">{row.wastage}</span>
+                              <span className="text-xs text-gray-400 dark:text-zinc-500">{row.wastage}</span>
                             </td>
-                            <td className="px-4 py-3 text-right font-bold text-gray-800">{formatCurrency(row.cost)}</td>
+                            <td className="px-4 py-3 text-right font-bold text-gray-800 dark:text-zinc-100">{formatCurrency(row.cost)}</td>
                           </tr>
                         ))}
                       </tbody>
-                      <tfoot className="bg-gray-50">
+                      <tfoot className="bg-gray-50 dark:bg-zinc-800/40">
                         <tr>
-                          <td colSpan={5} className="px-4 py-3 text-right font-bold text-gray-600 text-sm">Phase Subtotal</td>
-                          <td className="px-4 py-3 text-right font-extrabold text-secondary">{formatCurrency(ph.subtotal)}</td>
+                          <td colSpan={5} className="px-4 py-3 text-right font-bold text-gray-600 dark:text-zinc-400 text-sm">Phase Subtotal</td>
+                          <td className="px-4 py-3 text-right font-extrabold text-secondary dark:text-zinc-100">{formatCurrency(ph.subtotal)}</td>
                         </tr>
                       </tfoot>
                     </table>
@@ -431,21 +453,21 @@ const MaterialQuantityCalculator: React.FC = () => {
           </div>
 
           {/* ── Grand Total Card ── */}
-          <div className="bg-secondary rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg">
+          <div className="bg-secondary dark:bg-zinc-900 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg border dark:border-zinc-800">
             <div>
-              <p className="text-gray-300 text-sm uppercase font-bold tracking-wider">Total Estimated Material Cost</p>
+              <p className="text-gray-300 dark:text-zinc-400 text-sm uppercase font-bold tracking-wider">Total Estimated Material Cost</p>
               <p className="text-4xl font-extrabold text-primary">{formatCurrency(grandTotal)}</p>
-              <p className="text-gray-400 text-xs mt-1">* Excludes labour. Add 35–45% for complete construction cost.</p>
+              <p className="text-gray-400 dark:text-zinc-500 text-xs mt-1">* Excludes labour. Add 35–45% for complete construction cost.</p>
             </div>
             {hasPaid && (
               <div className="flex gap-3 flex-wrap">
                 <button onClick={handleDownloadPDF} disabled={isDownloading}
-                  className="flex items-center gap-2 px-5 py-3 bg-white text-secondary font-bold rounded-xl hover:bg-gray-100 transition-all text-sm">
+                  className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-zinc-850 text-secondary dark:text-zinc-100 font-bold rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all text-sm">
                   <i className={`fas ${isDownloading ? "fa-spinner fa-spin" : "fa-file-pdf"}`}></i>
                   Download BOQ PDF
                 </button>
                 <button onClick={handleSave} disabled={isSaving}
-                  className="flex items-center gap-2 px-5 py-3 bg-primary text-white font-bold rounded-xl hover:bg-yellow-500 transition-all text-sm shadow-float">
+                  className="flex items-center gap-2 px-5 py-3 bg-primary text-white dark:text-zinc-950 font-bold rounded-xl hover:bg-primary-hover transition-all text-sm shadow-float">
                   <i className={`fas ${isSaving ? "fa-spinner fa-spin" : "fa-save"}`}></i>
                   Save Project
                 </button>
@@ -464,11 +486,11 @@ const MaterialQuantityCalculator: React.FC = () => {
                 { icon: "fas fa-shield-alt", color: "text-green-500", title: "Waterproofing — Don't Compromise", body: "Use crystalline coating (Dr Fixit 101) for terraces + bathrooms. Apply 2 coats. Test with ponding test (48 hrs) before tiling." },
                 { icon: "fas fa-truck", color: "text-purple-500", title: "Bulk Buying — Save 8–12%", body: "Negotiate bulk rates for cement, steel and aggregates. Order complete lot together to avoid price fluctuation. Validate weights on delivery." },
               ].map((tip, i) => (
-                <div key={i} className="flex gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                <div key={i} className="flex gap-3 p-3 bg-gray-50 dark:bg-zinc-900/50 rounded-xl border border-gray-100 dark:border-zinc-800/50">
                   <i className={`${tip.icon} ${tip.color} mt-0.5 text-base flex-shrink-0`}></i>
                   <div>
-                    <p className="font-bold text-gray-800 text-xs mb-1">{tip.title}</p>
-                    <p className="text-gray-500 text-xs leading-relaxed">{tip.body}</p>
+                    <p className="font-bold text-gray-800 dark:text-zinc-100 text-xs mb-1">{tip.title}</p>
+                    <p className="text-gray-500 dark:text-zinc-400 text-xs leading-relaxed">{tip.body}</p>
                   </div>
                 </div>
               ))}

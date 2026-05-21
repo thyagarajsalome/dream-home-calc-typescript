@@ -46,6 +46,17 @@ const DoorsWindowsCalculator: React.FC<DoorsWindowsCalculatorProps> = ({ hasPaid
         setWindowWidth(data.windowWidth || "5");
         setWindowHeight(data.windowHeight || "4");
       }
+    } else {
+      if (typeof window !== "undefined") {
+        const sharedArea = window.localStorage.getItem("hde_shared_area");
+        if (sharedArea) {
+          const areaNum = parseFloat(sharedArea) || 0;
+          if (areaNum > 0) {
+            setDoorCount(Math.max(3, Math.round(areaNum / 200)).toString());
+            setWindowCount(Math.max(3, Math.round(areaNum / 250)).toString());
+          }
+        }
+      }
     }
   }, [location]);
 

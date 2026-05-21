@@ -1,0 +1,35 @@
+---
+import Layout from '../layouts/Layout.astro';
+import HomeApp from '../layouts/HomeApp';
+import FAQ from '../components/layout/FAQ.astro';
+import Testimonials from '../components/layout/Testimonials.astro';
+import Footer from '../components/layout/Footer.astro';
+
+const schema = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "HDE - Dream Home Construction & Interior Cost Calculator",
+  "description": "Calculate your dream home construction, materials BOQ, interior design, flooring, and MEP utility costs in India accurately with builder mode controls.",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "All",
+  "browserRequirements": "Requires JavaScript. Requires HTML5.",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "INR"
+  }
+});
+---
+
+<Layout 
+  title="HDE - Dream Home Construction & Interior Cost Calculator"
+  description="Calculate your dream home construction, materials BOQ, interior design, flooring, and MEP utility costs in India accurately with builder mode controls."
+>
+  <h1 class="sr-only">Dream Home Construction & Interior Cost Calculator</h1>
+  <HomeApp client:only="react" />
+  <FAQ />
+  <Testimonials />
+  <Footer />
+
+  <script type="application/ld+json" is:inline set:html={schema}></script>
+</Layout>

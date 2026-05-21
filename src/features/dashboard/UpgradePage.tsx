@@ -4,6 +4,23 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../../config/supabaseClient";
 import { useUser } from "../../context/UserContext";
 
+// 1. Define the strict TypeScript interface for your plans
+type PlanType = {
+  id: string;
+  name: string;
+  tier: string;
+  price: number;
+  originalPrice: number;
+  description: string;
+  credits: string;
+  useCase: string;
+  features: string[];
+  color: string;
+  icon: string;
+  badge?: string; // Optional property prevents the TS error!
+};
+
+// 2. Apply the interface to the plans object
 const plans = {
   basic: {
     id: "5_credits",
@@ -14,9 +31,10 @@ const plans = {
     description: "Ideal for individuals starting a single home renovation or a small DIY project.",
     credits: "5 Project Credits",
     useCase: "Best for: Quick room makeovers and interior planning.",
+    badge: undefined, // Add this line
     features: [
       "Unlock Interiors, Flooring & Painting",
-      "Interactive 3D Visualizer Access",
+      "House Plan Access",
       "Save up to 5 unique projects",
       "Standard PDF Cost Reports"
     ],
@@ -52,6 +70,7 @@ const plans = {
     description: "Built for professional contractors and builders who need high-volume access.",
     credits: "High-Volume Usage",
     useCase: "Limits: 100 projects/month and 10 saves per day.",
+    badge: undefined, // Add this line
     features: [
       "100 Monthly Project Saves",
       "10 Daily Save Limit (Anti-Bot Protection)",
@@ -62,7 +81,7 @@ const plans = {
     color: "gray",
     icon: "fa-hard-hat"
   },
-}; // Ensure this closing brace is present!
+};
 
 const UpgradePage = () => {
   const { user, refreshProfile, planTier } = useUser();
@@ -120,29 +139,29 @@ const UpgradePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 py-12 px-4 transition-colors">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-black text-gray-900 mb-4 uppercase tracking-tight">
+          <h1 className="text-4xl font-black text-gray-900 dark:text-zinc-100 mb-4 uppercase tracking-tight">
             Choose Your Plan
           </h1>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+          <p className="text-gray-600 dark:text-zinc-400 text-lg max-w-2xl mx-auto">
             Get the precision tools you need to build with confidence and save on material costs.
           </p>
           
-          <div className="mt-8 inline-flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+          <div className="mt-8 inline-flex items-center gap-4 bg-white dark:bg-zinc-900 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-zinc-800">
             <div className="bg-primary/10 p-3 rounded-xl">
               <i className="fas fa-info-circle text-primary text-xl"></i>
             </div>
             <div className="text-left">
-              <p className="font-bold text-gray-800">What is a credit?</p>
-              <p className="text-sm text-gray-500">1 Credit = 1 Unique Project. Use it to design, calculate, and save a full building plan.</p>
+              <p className="font-bold text-gray-800 dark:text-zinc-200">What is a credit?</p>
+              <p className="text-sm text-gray-500 dark:text-zinc-400">1 Credit = 1 Unique Project. Use it to design, calculate, and save a full building plan.</p>
             </div>
           </div>
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl mb-8 text-center font-medium">
+          <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl mb-8 text-center font-medium">
             {error}
           </div>
         )}
@@ -155,47 +174,47 @@ const UpgradePage = () => {
             return (
               <div 
                 key={key} 
-                className={`relative bg-white rounded-3xl p-8 transition-all hover:shadow-2xl border-2 flex flex-col min-h-[600px] ${
-                  isBestValue ? 'border-primary shadow-xl scale-105' : 'border-transparent shadow-md'
+                className={`relative bg-white dark:bg-zinc-900 rounded-3xl p-8 transition-all hover:shadow-2xl border-2 flex flex-col min-h-[600px] ${
+                  isBestValue ? 'border-primary dark:border-zinc-100 shadow-xl scale-105' : 'border-transparent dark:border-zinc-800 shadow-md'
                 }`}
               >
                 {isBestValue && (
-                  <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-black px-4 py-1 rounded-full uppercase tracking-widest shadow-lg">
+                  <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white dark:text-zinc-950 text-xs font-black px-4 py-1 rounded-full uppercase tracking-widest shadow-lg">
                     {plan.badge}
                   </span>
                 )}
 
                 <div className="flex justify-between items-start mb-6">
                   <div className="pr-2">
-                    <h3 className="text-2xl font-bold text-gray-900">{plan.name}</h3>
-                    <p className="text-xs text-gray-500 mt-2 font-medium leading-relaxed">
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-zinc-100">{plan.name}</h3>
+                    <p className="text-xs text-gray-500 dark:text-zinc-400 mt-2 font-medium leading-relaxed">
                       {plan.description}
                     </p>
                   </div>
-                  <div className={`p-3 rounded-2xl shrink-0 bg-${plan.color}-50 text-${plan.color}-600`}>
+                  <div className={`p-3 rounded-2xl shrink-0 bg-${plan.color}-50 dark:bg-zinc-800 text-${plan.color}-600 dark:text-zinc-300`}>
                     <i className={`fas ${plan.icon} text-xl`}></i>
                   </div>
                 </div>
 
                 <div className="mb-6">
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-400 line-through text-lg">₹{plan.originalPrice}</span>
-                    <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded">Save 30%</span>
+                    <span className="text-gray-400 dark:text-zinc-500 line-through text-lg">₹{plan.originalPrice}</span>
+                    <span className="bg-green-100 dark:bg-green-950/20 text-green-700 dark:text-green-400 text-xs font-bold px-2 py-0.5 rounded">Save 30%</span>
                   </div>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-5xl font-black text-gray-900">₹{plan.price}</span>
-                    <span className="text-gray-500 font-medium">/{key === 'pro' ? 'mo' : 'once'}</span>
+                    <span className="text-5xl font-black text-gray-900 dark:text-zinc-100">₹{plan.price}</span>
+                    <span className="text-gray-500 dark:text-zinc-400 font-medium">/{key === 'pro' ? 'mo' : 'once'}</span>
                   </div>
                 </div>
 
-                <div className="bg-gray-50 p-4 rounded-2xl mb-6">
+                <div className="bg-gray-50 dark:bg-zinc-800/40 p-4 rounded-2xl mb-6">
                   <p className="text-primary font-bold text-lg mb-1">{plan.credits}</p>
-                  <p className="text-xs text-gray-500 leading-relaxed">{plan.useCase}</p>
+                  <p className="text-xs text-gray-500 dark:text-zinc-400 leading-relaxed">{plan.useCase}</p>
                 </div>
 
                 <ul className="space-y-4 mb-8 flex-grow">
                   {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-3 text-sm text-gray-700 font-medium">
+                    <li key={i} className="flex items-start gap-3 text-sm text-gray-700 dark:text-zinc-300 font-medium">
                       <i className="fas fa-check-circle text-green-500 mt-0.5"></i>
                       {feature}
                     </li>
@@ -207,10 +226,10 @@ const UpgradePage = () => {
                   disabled={loadingPlan !== null || isCurrentPlan}
                   className={`w-full py-4 rounded-2xl font-black text-lg transition-all transform active:scale-95 disabled:opacity-50 ${
                     isCurrentPlan 
-                    ? 'bg-green-50 text-green-600 cursor-default border border-green-100'
+                    ? 'bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400 cursor-default border border-green-100 dark:border-green-900/30'
                     : isBestValue 
-                      ? 'bg-primary text-white hover:bg-amber-500 shadow-lg' 
-                      : 'bg-gray-900 text-white hover:bg-black'
+                      ? 'bg-primary text-white dark:text-zinc-950 hover:bg-primary-hover shadow-lg' 
+                      : 'bg-zinc-900 dark:bg-zinc-800 text-white hover:bg-black dark:hover:bg-zinc-700'
                   }`}
                 >
                   {loadingPlan === plan.id ? (

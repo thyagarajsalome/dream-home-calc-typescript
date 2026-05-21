@@ -13,8 +13,14 @@ export default function Hero() {
   useEffect(() => {
     const loadBanners = async () => {
       try {
+        const cached = localStorage.getItem("hde_hero_banners_cache");
+        if (cached) {
+          setBanners(JSON.parse(cached));
+          setLoading(false);
+        }
         const data = await HeroService.getBanners();
         setBanners(data);
+        localStorage.setItem("hde_hero_banners_cache", JSON.stringify(data));
       } catch (err) {
         console.error("Failed to load hero images", err);
       } finally {
@@ -38,6 +44,14 @@ export default function Hero() {
     if (toolsSection) toolsSection.scrollIntoView({ behavior: "smooth" });
   };
 
+  const getOptimizedImageUrl = (url: string) => {
+    if (url.includes("supabase.co/storage/v1/object/public/")) {
+      const separator = url.includes("?") ? "&" : "?";
+      return `${url}${separator}width=1200&quality=80`;
+    }
+    return url;
+  };
+
   if (loading || banners.length === 0) {
     return <div className="h-[30vh] lg:h-[65vh] bg-gray-200 animate-pulse"></div>;
   }
@@ -56,7 +70,7 @@ export default function Hero() {
               index === currentIndex ? "opacity-100 scale-105" : "opacity-0 scale-100"
             }`}
             style={{
-              backgroundImage: `url(${banner.image_url})`,
+              backgroundImage: `url(${getOptimizedImageUrl(banner.image_url)})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
               transitionProperty: "opacity, transform",
@@ -71,7 +85,7 @@ export default function Hero() {
       <div className="hero-content relative z-10 container mx-auto px-4 text-center">
         <button
           onClick={scrollToTools}
-          className="inline-flex items-center gap-2 md:gap-3 bg-primary hover:bg-yellow-600 text-white font-bold 
+          className="inline-flex items-center gap-2 md:gap-3 bg-primary hover:bg-primary-hover text-white dark:text-zinc-950 font-bold 
                      py-3 px-8 text-base 
                      md:py-4 md:px-10 md:text-lg 
                      rounded-full shadow-2xl transform hover:-translate-y-1 transition-all duration-300"

@@ -1,49 +1,36 @@
 import React, { useEffect, useState } from 'react';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Pagination, Navigation } from 'swiper/modules';
-import { fetchHeroSlides } from '../../services/heroService';
-
-// Import Swiper styles
-import 'swiper/css';
-import 'swiper/css/pagination';
-import 'swiper/css/navigation';
+import { HeroService, HeroBanner } from '../../services/heroService';
 
 const DirectoryHeroSlider = () => {
-  const [slides, setSlides] = useState<any[]>([]);
+  const [slides, setSlides] = useState<HeroBanner[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchHeroSlides('directory').then(setSlides);
+    HeroService.getBanners()
+      .then(data => {
+        setSlides(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
   }, []);
 
-  if (slides.length === 0) return null;
+  if (loading || slides.length === 0) return null;
 
   return (
-    <div className="w-full h-[400px] mb-8 overflow-hidden rounded-xl shadow-lg">
-      <Swiper
-        spaceBetween={30}
-        centeredSlides={true}
-        autoplay={{ delay: 5000, disableOnInteraction: false }}
-        pagination={{ clickable: true }}
-        navigation={true}
-        modules={[Autoplay, Pagination, Navigation]}
-        className="h-full w-full"
+    <div className="w-full h-[400px] mb-8 overflow-hidden rounded-xl shadow-lg relative bg-secondary flex items-center justify-center">
+      <div 
+        className="absolute inset-0 bg-cover bg-center transition-all duration-500"
+        style={{ backgroundImage: `url(${slides[0].image_url})` }}
       >
-        {slides.map((slide) => (
-          <SwiperSlide key={slide.id}>
-            <div 
-              className="relative w-full h-full bg-cover bg-center flex items-center"
-              style={{ backgroundImage: `url(${slide.image_url})` }}
-            >
-              {/* Dark Overlay for Text Readability */}
-              <div className="absolute inset-0 bg-black/40" />
-              <div className="relative z-10 px-12 text-white">
-                <h1 className="text-4xl font-bold mb-2">{slide.title}</h1>
-                <p className="text-lg opacity-90">{slide.description}</p>
-              </div>
-            </div>
-          </SwiperSlide>
-        ))}
-      </Swiper>
+        <div className="absolute inset-0 bg-black/40" />
+      </div>
+      <div className="relative z-10 px-12 text-white text-center">
+        <h1 className="text-4xl font-bold mb-2">{slides[0].title || "Verified Professionals"}</h1>
+        <p className="text-lg opacity-90">{slides[0].subtitle || "Connect with trusted experts near you."}</p>
+      </div>
     </div>
   );
 };

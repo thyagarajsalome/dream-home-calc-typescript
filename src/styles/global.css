@@ -6,20 +6,26 @@
 /* --- Your Custom Styles Below --- */
 
 :root {
-  --primary-color: #d9a443;
-  --secondary-color: #59483b;
-  --accent-color: #8c6a4e;
-  --background-color: #f8f9fa;
+  --primary-color: #c5a059; /* Champagne Gold */
+  --primary-hover: #b38e47; /* Deeper Gold */
+  --primary-light: #fdfbf7; /* Champagne Light Ivory */
+  --primary-contrast-color: #ffffff;
+  --secondary-color: #0f2042; /* Royal Navy Blue */
+  --secondary-light: #3b4e70; /* Medium Steel Blue */
+  --background-color: #f6f8fb; /* Clean Ice-White/Soft Blue */
   --card-background: #ffffff;
-  --text-color: #333;
-  --border-color: #e0e0e0;
+  --text-color: #0f2042;
+  --border-color: #e2e7f0;
   --font-body: "Roboto", sans-serif;
   --font-heading: "Roboto", sans-serif;
   --border-radius: 12px;
-  --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  --danger-color: #e74c3c;
-  --warning-color: #f39c12;
-  --success-color: #2ecc71;
+  --box-shadow: 0 4px 20px rgba(15, 32, 66, 0.05);
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+  --success-color: #10b981;
+  --glow-color: rgba(197, 160, 89, 0.12);
+  --glass-background: rgba(255, 255, 255, 0.75);
+  --glass-border: rgba(197, 160, 89, 0.08);
 }
 
 * {
@@ -1043,3 +1049,51 @@ input[type="text"],
 select {
   font-size: 16px !important; /* iOS zooms in if font-size is < 16px */
 }
+
+/* --- HDE Premium Design System Redesign Utilities --- */
+
+.glass-panel {
+  background: var(--glass-background);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+}
+
+.gold-focus-glow:focus,
+.primary-focus-glow:focus {
+  outline: none;
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 3px var(--glow-color) !important;
+}
+
+.step-indicator {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.step-indicator.active {
+  background-color: var(--primary-color);
+  color: var(--primary-contrast-color);
+  transform: scale(1.05);
+  box-shadow: 0 0 0 4px var(--glow-color);
+}
+
+/* Custom interactive presets card scale */
+.preset-card {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.preset-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--primary-color);
+  box-shadow: 0 12px 24px -10px var(--glow-color);
+}
+
+/* Primary Button Helper */
+.btn-primary {
+  background-color: var(--primary-color);
+  color: var(--primary-contrast-color);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--primary-hover);
+}

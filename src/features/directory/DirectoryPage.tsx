@@ -54,19 +54,19 @@ const DirectoryPage = () => {
       
       {/* ADDED: Back to Home Link */}
       <div className="mb-6">
-        <Link to="/" className="text-xs font-bold text-gray-400 hover:text-primary inline-flex items-center gap-2 transition-colors uppercase tracking-widest">
+        <Link to="/" className="text-xs font-bold text-gray-400 dark:text-zinc-500 hover:text-primary inline-flex items-center gap-2 transition-colors uppercase tracking-widest">
           <i className="fas fa-arrow-left"></i> Back to Home
         </Link>
       </div>
 
       <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
         <div className="text-center md:text-left max-w-2xl">
-          <h1 className="text-4xl font-extrabold text-secondary mb-2 mt-2">Find Verified Professionals</h1>
-          <p className="text-gray-600">Connect with the best experts in your city to build your dream home.</p>
+          <h1 className="text-4xl font-extrabold text-secondary dark:text-zinc-100 mb-2 mt-2">Find Verified Professionals</h1>
+          <p className="text-gray-600 dark:text-zinc-400">Connect with the best experts in your city to build your dream home.</p>
         </div>
         <Link 
           to="/register-pro" 
-          className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-xl font-bold shadow-md hover:bg-yellow-600 transition-all whitespace-nowrap"
+          className="inline-flex items-center gap-2 bg-primary text-white dark:text-zinc-950 px-6 py-3 rounded-xl font-bold shadow-md hover:bg-primary-hover transition-all whitespace-nowrap"
         >
           <i className="fas fa-user-plus"></i>
           Manage My Listing
@@ -74,19 +74,19 @@ const DirectoryPage = () => {
       </div>
 
       {/* Search Filters */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-10">
+      <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-zinc-800 mb-10">
         <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
           <div className="md:col-span-4">
-            <label className="block text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest ml-1">Professional Category</label>
+            <label className="block text-[10px] font-bold text-gray-400 dark:text-zinc-500 mb-2 uppercase tracking-widest ml-1">Professional Category</label>
             <select 
               value={category} 
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full p-3.5 border-2 border-gray-100 rounded-xl bg-gray-50/50 text-sm focus:border-primary focus:bg-white outline-none transition-all"
+              className="w-full p-3.5 border-2 border-gray-100 dark:border-zinc-800 rounded-xl bg-gray-50/50 dark:bg-zinc-950 text-gray-805 dark:text-zinc-150 text-sm focus:border-primary focus:bg-white dark:focus:bg-zinc-950 outline-none transition-all"
             >
-              <option value="">All Experts</option>
+              <option value="" className="dark:bg-zinc-900">All Experts</option>
               {Object.entries(GROUPED_CATEGORIES).map(([group, cats]) => (
-                <optgroup label={group} key={group}>
-                  {cats.map(c => <option key={c} value={c}>{c}</option>)}
+                <optgroup label={group} key={group} className="dark:bg-zinc-900 font-bold">
+                  {cats.map(c => <option key={c} value={c} className="dark:bg-zinc-900">{c}</option>)}
                 </optgroup>
               ))}
             </select>

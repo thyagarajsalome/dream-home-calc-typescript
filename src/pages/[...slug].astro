@@ -1,0 +1,24 @@
+---
+import Layout from '../layouts/Layout.astro';
+import AstroApp from '../AstroApp';
+
+export function getStaticPaths() {
+  return [
+    { params: { slug: 'dashboard' } },
+    { params: { slug: 'plans' } },
+    { params: { slug: 'directory' } },
+    { params: { slug: 'signin' } },
+    { params: { slug: 'signup' } },
+    { params: { slug: 'upgrade' } },
+    { params: { slug: 'register-pro' } },
+    { params: { slug: 'privacy' } },
+    { params: { slug: 'terms' } },
+    { params: { slug: 'contact' } },
+    { params: { slug: 'disclaimer' } },
+  ];
+}
+---
+
+<Layout title="HDE - Home Design English">
+  <AstroApp client:only="react" />
+</Layout>
