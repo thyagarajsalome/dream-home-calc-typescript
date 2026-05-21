@@ -47,6 +47,39 @@ const Loading = () => (
   </div>
 );
 
+class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: any}> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+  render() {
+    if (this.state.hasError) {
+      const isChunkError = this.state.error?.name === 'ChunkLoadError' || String(this.state.error).includes('fetch');
+      return (
+        <div className="flex flex-col justify-center items-center min-h-[600px] bg-gray-50 rounded-2xl border border-gray-100 p-8 text-center">
+          <i className="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Oops, something went wrong</h2>
+          <p className="text-gray-500 mb-6 max-w-md">
+            {isChunkError 
+              ? "We just released a new update and your browser is trying to load old files. Please click below to refresh."
+              : this.state.error?.message || "An unexpected error occurred while loading this page."}
+          </p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-primary hover:bg-primary-hover text-white font-bold py-3 px-8 rounded-xl transition-all shadow-md"
+          >
+            <i className="fas fa-sync-alt mr-2"></i> Refresh Page
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 type CalculatorType =
   | "construction"
   | "interior"
@@ -173,31 +206,33 @@ const AppRoutes = () => {
   const { user, loading } = useUser();
   if (loading) return <Loading />;
   return (
-    <Suspense fallback={<Loading />}>
-      <Routes>
-        <Route path="/signin" element={user ? <Navigate to="/" /> : <SignIn />} />
-        <Route path="/signup" element={user ? <Navigate to="/" /> : <SignUp />} />
+    <ErrorBoundary>
+      <Suspense fallback={<Loading />}>
+        <Routes>
+          <Route path="/signin" element={user ? <Navigate to="/" /> : <SignIn />} />
+          <Route path="/signup" element={user ? <Navigate to="/" /> : <SignUp />} />
 
-        <Route element={<InfoLayout />}>
-          <Route path="/privacy"    element={<PrivacyPolicy />} />
-          <Route path="/terms"      element={<TermsOfService />} />
-          <Route path="/contact"    element={<Contact />} />
-          <Route path="/disclaimer" element={<Disclaimer />} />
-          <Route path="/plans"      element={<PlanGallery />} />
-          <Route path="/directory"  element={<DirectoryPage />} />
-          <Route path="/upgrade"    element={<UpgradePage />} />
-        </Route>
+          <Route element={<InfoLayout />}>
+            <Route path="/privacy"    element={<PrivacyPolicy />} />
+            <Route path="/terms"      element={<TermsOfService />} />
+            <Route path="/contact"    element={<Contact />} />
+            <Route path="/disclaimer" element={<Disclaimer />} />
+            <Route path="/plans"      element={<PlanGallery />} />
+            <Route path="/directory"  element={<DirectoryPage />} />
+            <Route path="/upgrade"    element={<UpgradePage />} />
+          </Route>
 
-        <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/register-pro" element={<ProRegistration />} /> {/* Moved inside ProtectedRoute */}
-        </Route>
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/register-pro" element={<ProRegistration />} /> {/* Moved inside ProtectedRoute */}
+          </Route>
 
-        <Route path="/"  element={<MainLayout />} />
-        <Route path="*"  element={<Navigate to="/" />} />
+          <Route path="/"  element={<MainLayout />} />
+          <Route path="*"  element={<Navigate to="/" />} />
 
-      </Routes>
-    </Suspense>
+        </Routes>
+      </Suspense>
+    </ErrorBoundary>
   );
 };
 

@@ -71,9 +71,8 @@ Deno.serve(async (req) => {
         creditsToAdd = 10;
         plan_tier = 'standard';
       } else if (planId === 'pro_monthly' || planId === 'pro') {
+        creditsToAdd = 100;
         plan_tier = 'pro';
-        // For Pro, you could optionally grant a large starting balance (e.g., 100) 
-        // or handle it as unlimited in the frontend logic.
       } else if (planId === 'basic') {
         plan_tier = 'basic';
       } else if (planId === 'standard') {
