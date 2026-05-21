@@ -110,8 +110,8 @@ const PaintingCalculator: React.FC = () => {
             </div>
           )}
           <form onSubmit={calculateCost} className="space-y-6">
-            <Input label="Carpet Area (sq.ft)" type="number" value={carpetArea} onChange={(e) => setCarpetArea(e.target.value)} disabled={isLocked} />
-            <Input label="Total Paintable Area (Auto)" type="number" value={wallArea} onChange={(e) => setWallArea(e.target.value)} disabled={isLocked} />
+            <Input label="Carpet Area (sq.ft)" icon="fas fa-expand" type="number" value={carpetArea} onChange={(e) => setCarpetArea(e.target.value)} disabled={isLocked} />
+            <Input label="Total Paintable Area (Auto)" icon="fas fa-brush" type="number" value={wallArea} onChange={(e) => setWallArea(e.target.value)} disabled={isLocked} />
             
             <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
               <label className="flex items-center cursor-pointer">

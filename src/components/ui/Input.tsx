@@ -20,7 +20,7 @@ export const Input: React.FC<InputProps> = ({ label, icon, className = "", ...pr
         placeholder=" "
         className={`
           peer w-full py-3.5 pr-4
-          ${icon ? 'pl-14' : 'pl-4'}
+          ${icon ? '!pl-14' : '!pl-4'}
           border-2 border-gray-200 rounded-xl outline-none 
           text-gray-700 bg-white
           focus:border-primary focus:ring-4 focus:ring-primary/10 
