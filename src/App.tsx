@@ -16,7 +16,7 @@ import Footer from "./components/layout/Footer";
 import Hero from "./components/layout/Hero";
 import FAQ from "./components/layout/FAQ";
 import Testimonials from "./components/layout/Testimonials";
-import SEO from "./components/layout/SEO";
+
 import CalculatorTabs from "./features/construction/CalculatorTabs";
 import { useGSAPTabSwitch } from "./hooks/useGSAP";
 
@@ -105,10 +105,7 @@ const MainLayout = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      <SEO
-        title="Home Design English"
-        description="Calculate construction and interior costs for your dream home in India."
-      />
+      
       <Header />
 
       <main className="flex-grow">
