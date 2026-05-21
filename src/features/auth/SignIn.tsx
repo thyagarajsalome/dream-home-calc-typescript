@@ -16,7 +16,7 @@ const SignIn = () => {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      window.location.href = "/dashboard";
+      window.location.assign("/dashboard");
     } catch (err: any) {
       console.error("Sign In Error:", err);
       setError(err.message || "Failed to sign in.");

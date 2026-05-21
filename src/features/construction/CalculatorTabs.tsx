@@ -29,7 +29,7 @@ const CalculatorTabs: React.FC<CalculatorTabsProps> = ({ activeCalculator, setAc
 
   const handleTabClick = (id: CalculatorType, reqTier: number) => {
     if (tierValue < reqTier) {
-      window.location.href = "/upgrade";
+      window.location.assign("/upgrade");
     } else {
       setActiveCalculator(id);
       setIsDropdownOpen(false);

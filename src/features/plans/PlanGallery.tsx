@@ -180,14 +180,14 @@ export const PlanGallery: React.FC = () => {
   };
 
   const handleDownload = async (plan: HousePlan) => {
-    if (!user) { window.location.href = "/signin"; return; }
+    if (!user) { window.location.assign("/signin"); return; }
     
     const currentTier = planTier || (hasPaid ? 'pro' : 'free');
     const limits: Record<string, number> = { basic: 1, standard: 2, pro: 3 };
     const userLimit = limits[currentTier] || 0;
 
     if (role !== 'admin') {
-      if (userLimit === 0) { window.location.href = "/upgrade"; return; }
+      if (userLimit === 0) { window.location.assign("/upgrade"); return; }
 
       const today = new Date().toISOString().split('T')[0];
       const { count } = await supabase.from('download_logs').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('downloaded_at', today);

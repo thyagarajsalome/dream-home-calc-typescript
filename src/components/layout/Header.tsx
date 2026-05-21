@@ -9,7 +9,7 @@ const Header = () => {
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
-      window.location.href = "/signin";
+      window.location.assign("/signin");
       setMenuOpen(false);
     } catch (error) {
       console.error("Error signing out:", error);
