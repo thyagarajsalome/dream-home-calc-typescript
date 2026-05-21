@@ -1,6 +1,5 @@
 // src/features/plans/PlanGallery.tsx
 import React, { useEffect, useState, useCallback } from "react";
-import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../../config/supabaseClient";
 import { useUser } from "../../context/UserContext";
 import { useToast } from "../../context/ToastContext";
@@ -84,7 +83,6 @@ export const PlanGallery: React.FC = () => {
 
   const { user, hasPaid, planTier, role } = useUser();
   const { showToast } = useToast();
-  const navigate = useNavigate();
 
   const fetchPlans = useCallback(async (pageNum: number) => {
     setLoading(true);
@@ -182,14 +180,14 @@ export const PlanGallery: React.FC = () => {
   };
 
   const handleDownload = async (plan: HousePlan) => {
-    if (!user) { navigate("/signin"); return; }
+    if (!user) { window.location.href = "/signin"; return; }
     
     const currentTier = planTier || (hasPaid ? 'pro' : 'free');
     const limits: Record<string, number> = { basic: 1, standard: 2, pro: 3 };
     const userLimit = limits[currentTier] || 0;
 
     if (role !== 'admin') {
-      if (userLimit === 0) { navigate("/upgrade"); return; }
+      if (userLimit === 0) { window.location.href = "/upgrade"; return; }
 
       const today = new Date().toISOString().split('T')[0];
       const { count } = await supabase.from('download_logs').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('downloaded_at', today);

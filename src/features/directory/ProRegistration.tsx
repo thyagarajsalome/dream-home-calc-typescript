@@ -1,6 +1,6 @@
 // src/features/directory/ProRegistration.tsx
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { supabase } from "../../config/supabaseClient";
 import { useUser } from "../../context/UserContext";
 import { useToast } from "../../context/ToastContext";
@@ -20,7 +20,6 @@ const INDIAN_CITIES = ["Mumbai", "Delhi", "Bengaluru", "Chennai", "Hyderabad", "
 export const ProRegistration = () => {
   const { user, loading: authLoading } = useUser();
   const { showToast } = useToast();
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [isExisting, setIsExisting] = useState(false);
   const [agreed, setAgreed] = useState(false);
@@ -83,7 +82,7 @@ export const ProRegistration = () => {
       const { error } = await supabase.from('professionals').delete().eq('user_id', user.id);
       if (error) throw error;
       showToast("Listing deleted and records removed from database.", "success");
-      navigate("/directory");
+      window.location.href = "/directory";
     } catch (err: any) {
       showToast("Delete failed: " + err.message, "error");
     } finally {
