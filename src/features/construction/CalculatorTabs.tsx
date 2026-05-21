@@ -1,6 +1,5 @@
 // src/features/construction/CalculatorTabs.tsx
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 
 type CalculatorType = "construction" | "interior" | "doors-windows" | "flooring" | "painting" | "plumbing" | "electrical" | "materials";
@@ -23,7 +22,6 @@ const CALCULATORS: { id: CalculatorType; name: string; icon: string; reqTier: nu
 ];
 
 const CalculatorTabs: React.FC<CalculatorTabsProps> = ({ activeCalculator, setActiveCalculator, hasPaid }) => {
-  const navigate = useNavigate();
   const { tierValue } = useUser();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -31,7 +29,7 @@ const CalculatorTabs: React.FC<CalculatorTabsProps> = ({ activeCalculator, setAc
 
   const handleTabClick = (id: CalculatorType, reqTier: number) => {
     if (tierValue < reqTier) {
-      navigate("/upgrade");
+      window.location.href = "/upgrade";
     } else {
       setActiveCalculator(id);
       setIsDropdownOpen(false);
