@@ -1,6 +1,6 @@
 // src/features/dashboard/UpgradePage.tsx
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+// removed useNavigate
 import { supabase } from "../../config/supabaseClient";
 import { useUser } from "../../context/UserContext";
 
@@ -87,7 +87,6 @@ const UpgradePage = () => {
   const { user, refreshProfile, planTier } = useUser();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const navigate = useNavigate();
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -122,7 +121,7 @@ const UpgradePage = () => {
           });
           if (result?.status === "success") {
             await refreshProfile();
-            navigate("/dashboard");
+            window.location.href = "/dashboard";
           } else {
             setError("Verification failed. Please contact support.");
           }
@@ -254,3 +253,4 @@ const UpgradePage = () => {
 };
 
 export default UpgradePage;
+
