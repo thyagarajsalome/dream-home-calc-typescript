@@ -46,3 +46,19 @@ dist-ssr
 # Astro
 .astro
 .astro/
+
+# Generated HTML entry points
+/index.html
+/404.html
+/plans/
+/directory/
+/signin/
+/signup/
+/upgrade/
+/register-pro/
+/privacy/
+/terms/
+/contact/
+/disclaimer/
+/dashboard/
+/cost/
