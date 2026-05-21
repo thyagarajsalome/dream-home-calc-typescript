@@ -106,6 +106,24 @@ const breadcrumbSchema = JSON.stringify({
     }
   ]
 });
+
+const localBusinessSchema = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "name": "HDE Construction Services",
+  "image": "https://homedesignenglish.com/bg-logo.png",
+  "telephone": "+91-XXXXXXXXXX",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": cityName,
+    "addressCountry": "IN"
+  },
+  "areaServed": {
+    "@type": "City",
+    "name": cityName
+  },
+  "priceRange": "₹₹₹"
+});
 ---
 
 <Layout 
@@ -211,4 +229,5 @@ const breadcrumbSchema = JSON.stringify({
 
   <script type="application/ld+json" is:inline set:html={schema}></script>
   <script type="application/ld+json" is:inline set:html={breadcrumbSchema}></script>
+  <script type="application/ld+json" is:inline set:html={localBusinessSchema}></script>
 </Layout>
