@@ -4,11 +4,9 @@
   "private": true,
   "homepage": "https://homedesignenglish.com",
   "scripts": {
-    "dev": "astro dev --port 3001",
-    "build": "astro build",
-    "preview": "astro preview",
-    "vite:dev": "vite --port 3001",
-    "vite:build": "vite build",
+    "dev": "vite --port 3001",
+    "build": "tsc --skipLibCheck || vite build", 
+    "preview": "vite preview",
     "lint": "eslint . --ext .ts,.tsx"
   },
   "dependencies": {
