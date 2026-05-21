@@ -185,10 +185,10 @@ const AppRoutes = () => {
           <Route path="/disclaimer" element={<Disclaimer />} />
           <Route path="/plans"      element={<PlanGallery />} />
           <Route path="/directory"  element={<DirectoryPage />} />
+          <Route path="/upgrade"    element={<UpgradePage />} />
         </Route>
 
         <Route element={<ProtectedRoute />}>
-          <Route path="/upgrade"   element={<UpgradePage />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/register-pro" element={<ProRegistration />} /> {/* Moved inside ProtectedRoute */}
         </Route>
