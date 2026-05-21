@@ -5,10 +5,18 @@ import { UserProvider, useUser } from "./context/UserContext";
 import { ToastProvider } from "./context/ToastContext";
 
 
+// Helper to handle ChunkLoadError on deployment changes
+const lazyWithRetry = (componentImport: () => Promise<any>) => 
+  lazy(() => componentImport().catch((error) => {
+    console.error("Chunk load failed, reloading page...", error);
+    window.location.reload();
+    return { default: () => null };
+  }));
+
 // Lazy-loaded pages
-const PlanGallery = lazy(() => import("./features/plans/PlanGallery"));
-const DirectoryPage = lazy(() => import("./features/directory/DirectoryPage"));
-const ProRegistration = lazy(() => import("./features/directory/ProRegistration"));
+const PlanGallery = lazyWithRetry(() => import("./features/plans/PlanGallery"));
+const DirectoryPage = lazyWithRetry(() => import("./features/directory/DirectoryPage"));
+const ProRegistration = lazyWithRetry(() => import("./features/directory/ProRegistration"));
 
 // Layout components
 import Header from "./components/layout/Header";
@@ -22,23 +30,23 @@ import { useGSAPTabSwitch } from "./hooks/useGSAP";
 
 
 // Lazy-loaded calculators
-const ConstructionCalculator     = lazy(() => import("./features/construction/ConstructionCalculator"));
-const FlooringCalculator         = lazy(() => import("./features/construction/FlooringCalculator"));
-const PaintingCalculator         = lazy(() => import("./features/construction/PaintingCalculator"));
-const PlumbingCalculator         = lazy(() => import("./features/construction/PlumbingCalculator"));
-const ElectricalCalculator       = lazy(() => import("./features/construction/ElectricalCalculator"));
-const InteriorCalculator         = lazy(() => import("./features/construction/InteriorCalculator"));
-const DoorsWindowsCalculator     = lazy(() => import("./features/construction/DoorsWindowsCalculator"));
-const MaterialQuantityCalculator = lazy(() => import("./features/construction/MaterialQuantityCalculator"));
+const ConstructionCalculator     = lazyWithRetry(() => import("./features/construction/ConstructionCalculator"));
+const FlooringCalculator         = lazyWithRetry(() => import("./features/construction/FlooringCalculator"));
+const PaintingCalculator         = lazyWithRetry(() => import("./features/construction/PaintingCalculator"));
+const PlumbingCalculator         = lazyWithRetry(() => import("./features/construction/PlumbingCalculator"));
+const ElectricalCalculator       = lazyWithRetry(() => import("./features/construction/ElectricalCalculator"));
+const InteriorCalculator         = lazyWithRetry(() => import("./features/construction/InteriorCalculator"));
+const DoorsWindowsCalculator     = lazyWithRetry(() => import("./features/construction/DoorsWindowsCalculator"));
+const MaterialQuantityCalculator = lazyWithRetry(() => import("./features/construction/MaterialQuantityCalculator"));
 
-const SignIn      = lazy(() => import("./features/auth/SignIn"));
-const SignUp      = lazy(() => import("./features/auth/SignUp"));
-const UpgradePage = lazy(() => import("./features/dashboard/UpgradePage"));
-const Dashboard   = lazy(() => import("./features/dashboard/Dashboard"));
-const PrivacyPolicy  = lazy(() => import("./legacy-pages/PrivacyPolicy"));
-const TermsOfService = lazy(() => import("./legacy-pages/TermsOfService"));
-const Contact        = lazy(() => import("./legacy-pages/Contact"));
-const Disclaimer     = lazy(() => import("./legacy-pages/Disclaimer"));
+const SignIn      = lazyWithRetry(() => import("./features/auth/SignIn"));
+const SignUp      = lazyWithRetry(() => import("./features/auth/SignUp"));
+const UpgradePage = lazyWithRetry(() => import("./features/dashboard/UpgradePage"));
+const Dashboard   = lazyWithRetry(() => import("./features/dashboard/Dashboard"));
+const PrivacyPolicy  = lazyWithRetry(() => import("./legacy-pages/PrivacyPolicy"));
+const TermsOfService = lazyWithRetry(() => import("./legacy-pages/TermsOfService"));
+const Contact        = lazyWithRetry(() => import("./legacy-pages/Contact"));
+const Disclaimer     = lazyWithRetry(() => import("./legacy-pages/Disclaimer"));
 
 const Loading = () => (
   <div className="flex flex-col justify-center items-center min-h-[600px] bg-gray-50 rounded-2xl border border-gray-100 animate-pulse">

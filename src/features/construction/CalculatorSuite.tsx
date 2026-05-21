@@ -3,15 +3,23 @@ import { useUser } from "../../context/UserContext";
 import CalculatorTabs from "./CalculatorTabs";
 import { supabase } from "../../config/supabaseClient";
 
+// Helper to handle ChunkLoadError on deployment changes
+const lazyWithRetry = (componentImport: () => Promise<any>) => 
+  lazy(() => componentImport().catch((error) => {
+    console.error("Chunk load failed, reloading page...", error);
+    window.location.reload();
+    return { default: () => null };
+  }));
+
 // Lazy-loaded calculators
-const ConstructionCalculator     = lazy(() => import("./ConstructionCalculator"));
-const FlooringCalculator         = lazy(() => import("./FlooringCalculator"));
-const PaintingCalculator         = lazy(() => import("./PaintingCalculator"));
-const PlumbingCalculator         = lazy(() => import("./PlumbingCalculator"));
-const ElectricalCalculator       = lazy(() => import("./ElectricalCalculator"));
-const InteriorCalculator         = lazy(() => import("./InteriorCalculator"));
-const DoorsWindowsCalculator     = lazy(() => import("./DoorsWindowsCalculator"));
-const MaterialQuantityCalculator = lazy(() => import("./MaterialQuantityCalculator"));
+const ConstructionCalculator     = lazyWithRetry(() => import("./ConstructionCalculator"));
+const FlooringCalculator         = lazyWithRetry(() => import("./FlooringCalculator"));
+const PaintingCalculator         = lazyWithRetry(() => import("./PaintingCalculator"));
+const PlumbingCalculator         = lazyWithRetry(() => import("./PlumbingCalculator"));
+const ElectricalCalculator       = lazyWithRetry(() => import("./ElectricalCalculator"));
+const InteriorCalculator         = lazyWithRetry(() => import("./InteriorCalculator"));
+const DoorsWindowsCalculator     = lazyWithRetry(() => import("./DoorsWindowsCalculator"));
+const MaterialQuantityCalculator = lazyWithRetry(() => import("./MaterialQuantityCalculator"));
 
 type CalculatorType =
   | "construction"

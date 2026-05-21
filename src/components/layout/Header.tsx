@@ -9,10 +9,24 @@ const Header = () => {
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
-      window.location.assign("/signin");
-      setMenuOpen(false);
     } catch (error) {
       console.error("Error signing out:", error);
+    } finally {
+      // Clear Supabase session keys from local storage manually to ensure clean state
+      try {
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.includes("sb-")) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+      } catch (err) {
+        console.error("Error clearing local storage:", err);
+      }
+      window.location.assign("/signin");
+      setMenuOpen(false);
     }
   };
 

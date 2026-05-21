@@ -64,19 +64,15 @@ Deno.serve(async (req) => {
       let plan_tier = 'free';
 
       // Assign credits based on the bundle purchased
-      if (planId === '5_credits') {
+      if (planId === '5_credits' || planId === 'basic') {
         creditsToAdd = 5;
         plan_tier = 'basic';
-      } else if (planId === '10_credits') {
+      } else if (planId === '10_credits' || planId === 'standard') {
         creditsToAdd = 10;
         plan_tier = 'standard';
       } else if (planId === 'pro_monthly' || planId === 'pro') {
         creditsToAdd = 100;
         plan_tier = 'pro';
-      } else if (planId === 'basic') {
-        plan_tier = 'basic';
-      } else if (planId === 'standard') {
-        plan_tier = 'standard';
       }
 
       // Fetch current profile to get existing credits for accurate increment
