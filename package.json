@@ -13,6 +13,7 @@
   "dependencies": {
     "@astrojs/react": "^5.0.5",
     "@astrojs/sitemap": "^3.7.2",
+    "@fortawesome/fontawesome-free": "^7.2.0",
     "@supabase/supabase-js": "^2.95.3",
     "astro": "^6.3.5",
     "chart.js": "^4.4.0",
