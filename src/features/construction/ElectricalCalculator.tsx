@@ -15,7 +15,7 @@ const QUALITY_OPTIONS = {
   smart:   { name: "Smart Home (WiFi / Touch Switches)", factor: 3.8 },
 };
 
-const CHART_COLORS = ["#D9A443","#59483B","#8C6A4E","#C4B594"];
+const CHART_COLORS = ["#c5a059", "#0f2042", "#5c473c", "#dfd0bf"];
 
 const WIRING_TYPES = [
   { type: "FR-LSH Wire",    size: "1.5 / 2.5 / 4 sqmm", brand: "Finolex / Polycab / Havells", use: "Internal house wiring — standard choice", note: "Flame retardant, low smoke halogen-free. IS 694 certified." },
@@ -60,7 +60,33 @@ const ElectricalCalculator: React.FC = () => {
 
   useEffect(() => {
     const state = (location.state as any)?.projectData;
-    if (state?.lightPoints) { setLightPoints(state.lightPoints); setFanPoints(state.fanPoints); setPowerPoints(state.powerPoints); setQuality(state.quality); }
+    if (state?.lightPoints) {
+      setLightPoints(state.lightPoints);
+      setFanPoints(state.fanPoints);
+      setPowerPoints(state.powerPoints);
+      setQuality(state.quality);
+      if (state.acPoints) setAcPoints(state.acPoints);
+      if (state.geyserPoints) setGeyserPoints(state.geyserPoints);
+    } else {
+      if (typeof window !== "undefined") {
+        const sharedArea = window.localStorage.getItem("hde_shared_area");
+        const sharedQuality = window.localStorage.getItem("hde_shared_quality");
+        if (sharedArea) {
+          const areaNum = parseFloat(sharedArea) || 0;
+          if (areaNum > 0) {
+            setLightPoints(Math.max(10, Math.round(areaNum / 50)).toString());
+            setFanPoints(Math.max(2, Math.round(areaNum / 150)).toString());
+            setPowerPoints(Math.max(2, Math.round(areaNum / 200)).toString());
+            setAcPoints(Math.max(1, Math.round(areaNum / 500)).toString());
+            setGeyserPoints(Math.max(1, Math.round(areaNum / 600)).toString());
+          }
+        }
+        if (sharedQuality) {
+          // Map basic/standard/premium quality
+          setQuality(sharedQuality as any);
+        }
+      }
+    }
   }, [location]);
 
   const calc = useMemo(() => {
@@ -213,15 +239,15 @@ const ElectricalCalculator: React.FC = () => {
                 <div className="h-52 mb-5">
                   <Chart data={{ "Wiring & Conduit": calc.total * 0.35, "Switches & Sockets": calc.total * 0.30, "Labor": calc.total * 0.25, "DB / MCBs": calc.total * 0.10 }} colors={CHART_COLORS} />
                 </div>
-                <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-700 mb-4">
-                  <i className="fas fa-info-circle mr-1"></i> Estimate covers wiring, conduits, switches, sockets, MCBs and labor. Does not include light fixtures, fans, ACs or heavy appliances.
+                <div className="p-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl text-xs text-zinc-600 dark:text-zinc-400 mb-4">
+                  <i className="fas fa-info-circle mr-1 text-primary"></i> Estimate covers wiring, conduits, switches, sockets, MCBs and labor. Does not include light fixtures, fans, ACs or heavy appliances.
                 </div>
                 {hasPaid && (
                   <div className="grid grid-cols-2 gap-4">
-                    <button onClick={handleDownloadPDF} disabled={isDownloading} className="flex items-center justify-center gap-2 py-3 bg-white border-2 border-secondary text-secondary font-bold rounded-xl hover:bg-secondary hover:text-white transition-all">
+                    <button onClick={handleDownloadPDF} disabled={isDownloading} className="flex items-center justify-center gap-2 py-3 bg-white dark:bg-zinc-900 border-2 border-secondary dark:border-zinc-700 text-secondary dark:text-zinc-100 font-bold rounded-xl hover:bg-secondary dark:hover:bg-zinc-800 hover:text-white transition-all">
                       <i className={`fas ${isDownloading ? "fa-spinner fa-spin" : "fa-file-pdf"}`}></i> PDF
                     </button>
-                    <button onClick={handleSave} disabled={isSaving} className="flex items-center justify-center gap-2 py-3 bg-primary text-white font-bold rounded-xl hover:bg-yellow-600 transition-all">
+                    <button onClick={handleSave} disabled={isSaving} className="flex items-center justify-center gap-2 py-3 bg-primary text-white dark:text-zinc-950 font-bold rounded-xl hover:bg-primary-hover transition-all">
                       <i className={`fas ${isSaving ? "fa-spinner fa-spin" : "fa-save"}`}></i> Save
                     </button>
                   </div>

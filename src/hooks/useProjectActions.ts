@@ -67,6 +67,16 @@ export const useProjectActions = (projectType: string) => {
 
       // Step 3: Refresh local profile to update the UI counters (credits, usage counts)
       await refreshProfile();
+
+      // Step 4: Clear the temporary auto-saved draft
+      try {
+        const key = `hde_draft_${user.id}_${projectType}`;
+        if (typeof window !== 'undefined') {
+          window.localStorage.removeItem(key);
+        }
+      } catch (err) {
+        console.warn("Failed to clear draft after save:", err);
+      }
       
       showToast("Project saved successfully!", "success");
     } catch (error: any) {
@@ -101,6 +111,42 @@ export const useProjectActions = (projectType: string) => {
     }
   };
 
+  // --- Helper: Convert Number to Words (Indian numbering system) ---
+  const convertNumberToWords = (amount: number | string): string => {
+    let num = 0;
+    if (typeof amount === "number") {
+      num = Math.round(amount);
+    } else {
+      const cleanStr = amount.replace(/[^0-9]/g, "");
+      num = parseInt(cleanStr, 10) || 0;
+    }
+
+    if (num === 0) return "Rupees Zero Only";
+
+    const a = [
+      "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
+      "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"
+    ];
+    const b = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
+    function numToWords(n: number): string {
+      if (n < 20) return a[n];
+      if (n < 100) return b[Math.floor(n / 10)] + (n % 10 !== 0 ? " " + a[n % 10] : "");
+      if (n < 1000) return a[Math.floor(n / 100)] + " Hundred" + (n % 100 !== 0 ? " and " + numToWords(n % 100) : "");
+      
+      // Indian system: Thousands, Lakhs, Crores
+      if (n < 100000) {
+        return numToWords(Math.floor(n / 1000)) + " Thousand" + (n % 1000 !== 0 ? " " + numToWords(n % 1000) : "");
+      }
+      if (n < 10000000) {
+        return numToWords(Math.floor(n / 100000)) + " Lakh" + (n % 100000 !== 0 ? " " + numToWords(n % 100000) : "");
+      }
+      return numToWords(Math.floor(n / 10000000)) + " Crore" + (n % 10000000 !== 0 ? " " + numToWords(n % 10000000) : "");
+    }
+
+    return "Rupees " + numToWords(num) + " Only";
+  };
+
   // --- 3. NEW UNIVERSAL SPREADSHEET-STYLE PDF ---
   const downloadSpreadsheetPDF = (
     projectName: string, 
@@ -114,13 +160,38 @@ export const useProjectActions = (projectType: string) => {
     try {
       const doc = new jsPDF();
 
-      doc.setFontSize(18);
-      doc.setTextColor(0, 0, 0); 
-      doc.text(`Project Estimate: ${projectName}`, 14, 20);
+      // Top brand accent line (HDE Gold / Amber)
+      doc.setDrawColor(217, 164, 67);
+      doc.setLineWidth(1.5);
+      doc.line(14, 12, 196, 12);
+
+      // Header Brand
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(150, 150, 150);
+      doc.text("HOME DESIGN ENGLISH (HDE)", 14, 18);
       
-      doc.setFontSize(11);
-      doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 28);
-      doc.text(`Category: ${projectType.toUpperCase()}`, 14, 34);
+      const categoryLabel = `ESTIMATE REPORT - ${projectType.toUpperCase()}`;
+      doc.text(categoryLabel, 196 - doc.getTextWidth(categoryLabel), 18);
+
+      // Estimate Title
+      const titleText = projectName
+        .replace(/-/g, " ")
+        .replace(/\w\S*/g, (w) => w.replace(/^\w/, (c) => c.toUpperCase()));
+      doc.setFontSize(18);
+      doc.setTextColor(30, 30, 30);
+      doc.text(titleText, 14, 28);
+
+      // Metadata Block
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Date: ${new Date().toLocaleDateString("en-IN")}`, 14, 34);
+
+      // Horizontal Divider
+      doc.setDrawColor(230, 230, 230);
+      doc.setLineWidth(0.5);
+      doc.line(14, 37, 196, 37);
 
       let footData = undefined;
       if (footerLabel && footerValue !== undefined) {
@@ -131,29 +202,51 @@ export const useProjectActions = (projectType: string) => {
       }
 
       autoTable(doc, {
-        startY: 45,
+        startY: 42,
         head: [headers],
         body: rows,
-        theme: 'grid', 
+        theme: 'striped', 
         styles: {
           font: 'helvetica',
-          lineColor: [0, 0, 0], 
-          lineWidth: 0.1,
-          textColor: [0, 0, 0], 
-          fillColor: [255, 255, 255], 
+          fontSize: 9,
+          cellPadding: 4,
+          textColor: [40, 40, 40], 
         },
         headStyles: {
-          fillColor: [240, 240, 240], 
-          textColor: [0, 0, 0],
+          fillColor: [30, 30, 30], 
+          textColor: [255, 255, 255],
           fontStyle: 'bold',
+        },
+        columnStyles: {
+          [headers.length - 1]: { halign: 'right' }
         },
         foot: footData,
         footStyles: {
-          fillColor: [255, 255, 255],
-          textColor: [0, 0, 0],
+          fillColor: [245, 245, 245],
+          textColor: [30, 30, 30],
           fontStyle: 'bold',
         }
       });
+
+      // Amount in Words
+      const finalY = (doc as any).lastAutoTable.finalY || 42;
+      if (footerValue) {
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(30, 30, 30);
+        
+        const words = convertNumberToWords(footerValue);
+        doc.text(`Amount in Words:`, 14, finalY + 12);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(80, 80, 80);
+        doc.text(words, 14, finalY + 17);
+      }
+
+      // Footer
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "italic");
+      doc.setTextColor(150, 150, 150);
+      doc.text("Thank you for using Home Design English. This estimate is for reference based on local market factors.", 14, 285);
 
       doc.save(`${projectName.replace(/\s+/g, '-')}.pdf`);
       showToast("PDF downloaded successfully!", "success");
@@ -166,5 +259,46 @@ export const useProjectActions = (projectType: string) => {
     }
   };
 
-  return { saveProject, downloadPDF, downloadSpreadsheetPDF, isSaving, isDownloading };
+  const autosaveDraft = async (data: any) => {
+    if (!user || typeof window === 'undefined') return;
+    try {
+      const key = `hde_draft_${user.id}_${projectType}`;
+      window.localStorage.setItem(key, JSON.stringify(data));
+    } catch (err) {
+      console.warn("Autosave draft failed:", err);
+    }
+  };
+
+  const getAutosaveDraft = async () => {
+    if (!user || typeof window === 'undefined') return null;
+    try {
+      const key = `hde_draft_${user.id}_${projectType}`;
+      const saved = window.localStorage.getItem(key);
+      return saved ? JSON.parse(saved) : null;
+    } catch (err) {
+      console.warn("Retrieve draft failed:", err);
+      return null;
+    }
+  };
+
+  const deleteAutosaveDraft = async () => {
+    if (!user || typeof window === 'undefined') return;
+    try {
+      const key = `hde_draft_${user.id}_${projectType}`;
+      window.localStorage.removeItem(key);
+    } catch (err) {
+      console.warn("Delete draft failed:", err);
+    }
+  };
+
+  return { 
+    saveProject, 
+    downloadPDF, 
+    downloadSpreadsheetPDF, 
+    isSaving, 
+    isDownloading,
+    autosaveDraft,
+    getAutosaveDraft,
+    deleteAutosaveDraft
+  };
 };

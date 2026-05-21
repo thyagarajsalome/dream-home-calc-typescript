@@ -1,0 +1,17 @@
+---
+import Layout from '../layouts/Layout.astro';
+import AstroApp from '../AstroApp';
+import { UserProvider } from '../context/UserContext';
+import { ToastProvider } from '../context/ToastContext';
+---
+
+<Layout 
+  title="HDE - Home Design English"
+  description="Calculate your dream home construction, materials BOQ, interior design, flooring, and MEP utility costs in India accurately."
+>
+  <ToastProvider client:load>
+    <UserProvider client:load>
+      <AstroApp client:only="react" />
+    </UserProvider>
+  </ToastProvider>
+</Layout>

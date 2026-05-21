@@ -318,15 +318,15 @@ export const PlanGallery: React.FC = () => {
                 </div>
                 
                 <div className="grid grid-cols-2 gap-2 mt-2">
-                  <button onClick={() => setSelectedPlan(plan)} className="w-full py-2 text-xs font-bold rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors">
+                  <button onClick={() => setSelectedPlan(plan)} className="w-full py-2 text-xs font-bold rounded-xl border border-gray-200 dark:border-zinc-800 text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800 hover:border-gray-300 dark:hover:border-zinc-700 transition-colors">
                     <i className="fas fa-eye mr-1"></i> Specs
                   </button>
                   {downloadingId === plan.id ? (
-                    <div className="w-full flex items-center bg-gray-100 rounded-xl px-2"><div className="w-full bg-gray-200 rounded-full h-1.5"><div className="bg-primary h-1.5 rounded-full" style={{ width: `${downloadProgress}%` }}></div></div></div>
+                    <div className="w-full flex items-center bg-gray-100 dark:bg-zinc-800 rounded-xl px-2"><div className="w-full bg-gray-200 dark:bg-zinc-700 rounded-full h-1.5"><div className="bg-primary h-1.5 rounded-full" style={{ width: `${downloadProgress}%` }}></div></div></div>
                   ) : (
                     <button 
                       onClick={() => handleDownload(plan)}
-                      className={`w-full py-2 text-xs font-bold rounded-xl shadow-sm transition-colors ${!isLockedForUser ? "bg-primary text-white hover:bg-yellow-600" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
+                      className={`w-full py-2 text-xs font-bold rounded-xl shadow-sm transition-colors ${!isLockedForUser ? "bg-primary text-white dark:text-zinc-950 hover:bg-primary-hover" : "bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-zinc-400 hover:bg-gray-200 dark:hover:bg-zinc-700"}`}
                     >
                       <i className={`mr-1 ${!isLockedForUser ? "fas fa-download" : "fas fa-lock"}`}></i> {!isLockedForUser ? "DL" : "Pro"}
                     </button>
@@ -461,11 +461,11 @@ export const PlanGallery: React.FC = () => {
                     {isEditing ? <input type="text" value={editData.parking} onChange={e=>setEditData({...editData, parking: e.target.value})} className="w-24 border rounded text-sm" /> : <p className="font-bold text-gray-800">{selectedPlan.parking}</p>}
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center border border-amber-100"><i className="fas fa-kitchen-set"></i></div>
+                 <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 flex items-center justify-center border border-zinc-100 dark:border-zinc-700"><i className="fas fa-kitchen-set"></i></div>
                   <div>
-                    <p className="text-[10px] text-gray-500 font-bold uppercase">Kitchen</p>
-                    {isEditing ? <input type="text" value={editData.kitchen_info} onChange={e=>setEditData({...editData, kitchen_info: e.target.value})} className="w-24 border rounded text-sm" /> : <p className="font-bold text-gray-800">{selectedPlan.kitchen_info || '1'}</p>}
+                    <p className="text-[10px] text-gray-500 dark:text-zinc-500 font-bold uppercase">Kitchen</p>
+                    {isEditing ? <input type="text" value={editData.kitchen_info} onChange={e=>setEditData({...editData, kitchen_info: e.target.value})} className="w-24 border rounded text-sm" /> : <p className="font-bold text-gray-800 dark:text-zinc-200">{selectedPlan.kitchen_info || '1'}</p>}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -492,11 +492,11 @@ export const PlanGallery: React.FC = () => {
                 </>
               )}
 
-              <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 mb-6">
+              <div className="bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 mb-6">
                 <div className="flex gap-2">
-                  <i className="fas fa-info-circle text-amber-500 text-xs mt-0.5"></i>
-                  <p className="text-[10px] leading-relaxed text-amber-800">
-                    <strong className="uppercase">Note:</strong> These plans serve as conceptual designs to help you visualize and customize your layout. For actual construction and municipal approvals, please consult a <strong>licensed professional architect</strong>.
+                  <i className="fas fa-info-circle text-zinc-500 dark:text-zinc-400 text-xs mt-0.5"></i>
+                  <p className="text-[10px] leading-relaxed text-zinc-600 dark:text-zinc-450">
+                    <strong className="uppercase">Note:</strong> These plans serve as conceptual designs to help you customize your layout. For actual construction, please consult a <strong>licensed professional architect</strong>.
                   </p>
                 </div>
               </div>

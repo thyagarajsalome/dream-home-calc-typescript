@@ -20,7 +20,7 @@ const QUALITY_OPTIONS = {
   premium:  { name: "Premium (Grohe / Kohler / Jaquar)",factor: 1.8 },
 };
 
-const CHART_COLORS = ["#D9A443","#59483B","#8C6A4E","#C4B594"];
+const CHART_COLORS = ["#c5a059", "#0f2042", "#5c473c"];
 
 const PIPE_TYPES = [
   { type: "CPVC Pipe",   brand: "Ashirvad / Supreme / Finolex", size: "½\" to 2\"", use: "Hot & cold water supply (recommended for India)", note: "Temperature resistant up to 93°C. IS 15778 certified. Preferred for all internal plumbing." },
@@ -60,7 +60,35 @@ const PlumbingCalculator: React.FC = () => {
 
   useEffect(() => {
     const state = (location.state as any)?.projectData;
-    if (state?.kitchens) { setKitchens(state.kitchens); setCommonBaths(state.commonBaths); setMasterBaths(state.masterBaths); setIncludeMotor(state.includeMotor); setQuality(state.quality); }
+    if (state?.kitchens) {
+      setKitchens(state.kitchens);
+      setCommonBaths(state.commonBaths);
+      setMasterBaths(state.masterBaths);
+      setIncludeMotor(state.includeMotor);
+      setQuality(state.quality);
+    } else {
+      if (typeof window !== "undefined") {
+        const sharedArea = window.localStorage.getItem("hde_shared_area");
+        if (sharedArea) {
+          const areaNum = parseFloat(sharedArea) || 0;
+          if (areaNum > 0) {
+            if (areaNum < 1200) {
+              setKitchens("1");
+              setCommonBaths("1");
+              setMasterBaths("1");
+            } else if (areaNum < 2200) {
+              setKitchens("1");
+              setCommonBaths("1");
+              setMasterBaths("2");
+            } else {
+              setKitchens("1");
+              setCommonBaths("2");
+              setMasterBaths("3");
+            }
+          }
+        }
+      }
+    }
   }, [location]);
 
   const calc = useMemo(() => {
@@ -217,15 +245,15 @@ const PlumbingCalculator: React.FC = () => {
                 <div className="h-52 mb-5">
                   <Chart data={{ "Fixtures & Fittings": calc.total * 0.45, "CPVC / GI Pipes": calc.total * 0.30, "Labor": calc.total * 0.25 }} colors={CHART_COLORS} />
                 </div>
-                <div className="p-3 bg-cyan-50 border border-cyan-100 rounded-xl text-xs text-cyan-700 mb-4">
-                  <i className="fas fa-info-circle mr-1"></i> Estimate includes fixtures, CPVC supply pipes, drainage SWR pipes and labor. Excludes water softener, RO systems and overhead water tank if not selected above.
+                <div className="p-3 bg-cyan-50 dark:bg-cyan-950/20 border border-cyan-100 dark:border-cyan-900/50 rounded-xl text-xs text-cyan-700 dark:text-cyan-400 mb-4">
+                  <i className="fas fa-info-circle mr-1 text-primary"></i> Estimate includes fixtures, CPVC supply pipes, drainage SWR pipes and labor. Excludes water softener, RO systems and overhead water tank if not selected above.
                 </div>
                 {hasPaid && (
                   <div className="grid grid-cols-2 gap-4">
-                    <button onClick={handleDownloadPDF} disabled={isDownloading} className="flex items-center justify-center gap-2 py-3 bg-white border-2 border-secondary text-secondary font-bold rounded-xl hover:bg-secondary hover:text-white transition-all">
+                    <button onClick={handleDownloadPDF} disabled={isDownloading} className="flex items-center justify-center gap-2 py-3 bg-white dark:bg-zinc-900 border-2 border-secondary dark:border-zinc-700 text-secondary dark:text-zinc-100 font-bold rounded-xl hover:bg-secondary dark:hover:bg-zinc-800 hover:text-white transition-all">
                       <i className={`fas ${isDownloading ? "fa-spinner fa-spin" : "fa-file-pdf"}`}></i> PDF
                     </button>
-                    <button onClick={handleSave} disabled={isSaving} className="flex items-center justify-center gap-2 py-3 bg-primary text-white font-bold rounded-xl hover:bg-yellow-600 transition-all">
+                    <button onClick={handleSave} disabled={isSaving} className="flex items-center justify-center gap-2 py-3 bg-primary text-white dark:text-zinc-950 font-bold rounded-xl hover:bg-primary-hover transition-all">
                       <i className={`fas ${isSaving ? "fa-spinner fa-spin" : "fa-save"}`}></i> Save
                     </button>
                   </div>

@@ -35,10 +35,10 @@ const SignIn      = lazy(() => import("./features/auth/SignIn"));
 const SignUp      = lazy(() => import("./features/auth/SignUp"));
 const UpgradePage = lazy(() => import("./features/dashboard/UpgradePage"));
 const Dashboard   = lazy(() => import("./features/dashboard/Dashboard"));
-const PrivacyPolicy  = lazy(() => import("./pages/PrivacyPolicy"));
-const TermsOfService = lazy(() => import("./pages/TermsOfService"));
-const Contact        = lazy(() => import("./pages/Contact"));
-const Disclaimer     = lazy(() => import("./pages/Disclaimer"));
+const PrivacyPolicy  = lazy(() => import("./legacy-pages/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./legacy-pages/TermsOfService"));
+const Contact        = lazy(() => import("./legacy-pages/Contact"));
+const Disclaimer     = lazy(() => import("./legacy-pages/Disclaimer"));
 
 const Loading = () => (
   <div className="flex flex-col justify-center items-center min-h-[600px] bg-gray-50 rounded-2xl border border-gray-100 animate-pulse">
@@ -58,7 +58,7 @@ type CalculatorType =
   | "materials";
 
 const MainLayout = () => {
-  const { hasPaid, markup, setMarkup } = useUser();
+  const { hasPaid } = useUser();
   const location    = useLocation();
 
   const routeState = location.state as {
@@ -128,36 +128,8 @@ const MainLayout = () => {
 <CalculatorTabs 
   activeCalculator={activeCalculator} 
   setActiveCalculator={setActiveCalculator} 
+  hasPaid={hasPaid}
 />
-
-          {hasPaid && (
-            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gradient-to-r from-gray-900 to-secondary p-4 rounded-xl shadow-lg border border-gray-800 animate-fade-in">
-              <div className="flex items-center gap-3 text-white">
-                <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
-                  <i className="fas fa-user-tie text-primary"></i>
-                </div>
-                <div>
-                  <h4 className="font-bold text-sm">Builder Mode Active</h4>
-                  <p className="text-xs text-gray-400">Client only sees final totals. Profit margin is hidden.</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-xs font-bold text-primary uppercase tracking-wider hidden md:block">Profit Margin:</span>
-                <select 
-                  value={markup} 
-                  onChange={(e) => setMarkup(Number(e.target.value))}
-                  className="bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all cursor-pointer w-full sm:w-auto"
-                >
-                  <option value={0}>0% (Raw Cost)</option>
-                  <option value={10}>+ 10% Margin</option>
-                  <option value={15}>+ 15% Margin</option>
-                  <option value={20}>+ 20% Margin</option>
-                  <option value={25}>+ 25% Margin</option>
-                  <option value={30}>+ 30% Margin</option>
-                </select>
-              </div>
-            </div>
-          )}
 
           <div ref={panelRef} className="mt-8 min-h-[600px]">
             <Suspense fallback={<Loading />}>
@@ -214,6 +186,8 @@ const AppRoutes = () => {
           <Route path="/terms"      element={<TermsOfService />} />
           <Route path="/contact"    element={<Contact />} />
           <Route path="/disclaimer" element={<Disclaimer />} />
+          <Route path="/plans"      element={<PlanGallery />} />
+          <Route path="/directory"  element={<DirectoryPage />} />
         </Route>
 
         <Route element={<ProtectedRoute />}>
@@ -224,8 +198,6 @@ const AppRoutes = () => {
 
         <Route path="/"  element={<MainLayout />} />
         <Route path="*"  element={<Navigate to="/" />} />
-        <Route path="/plans" element={<PlanGallery />} />
-        <Route path="/directory" element={<DirectoryPage />} />
 
       </Routes>
     </Suspense>

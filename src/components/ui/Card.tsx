@@ -14,7 +14,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
         className={`bg-white rounded-2xl shadow-float border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-lg ${className}`}
       >
         {title && (
-          <div className="bg-gradient-to-r from-secondary to-gray-800 px-6 py-4">
+          <div className="bg-secondary px-6 py-4">
             <h3 className="text-white font-heading text-lg font-semibold tracking-wide">{title}</h3>
           </div>
         )}

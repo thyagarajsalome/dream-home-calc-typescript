@@ -10,6 +10,7 @@ export interface ProjectData {
 
 export const ProjectService = {
   save: async (project: ProjectData) => {
+    // 1. Write to Supabase (primary database)
     const { data, error } = await supabase
       .from('projects')
       .insert(project)
@@ -17,6 +18,7 @@ export const ProjectService = {
       .single();
       
     if (error) throw new Error(error.message);
+
     return data;
   },
 
@@ -33,12 +35,14 @@ export const ProjectService = {
 
   // NEW: Added the delete function
   deleteProject: async (projectId: string) => {
+    // 1. Delete from Supabase
     const { error } = await supabase
       .from('projects')
       .delete()
       .eq('id', projectId);
 
     if (error) throw new Error(error.message);
+
     return true;
   }
 };

@@ -14,9 +14,15 @@ const DirectoryHeroSlider = () => {
   const [slides, setSlides] = useState<HeroBanner[]>([]);
 
   useEffect(() => {
-    // Calling the correct service method and handling potential errors
+    const cached = localStorage.getItem("hde_hero_banners_cache");
+    if (cached) {
+      setSlides(JSON.parse(cached));
+    }
     HeroService.getBanners()
-      .then(setSlides)
+      .then((data) => {
+        setSlides(data);
+        localStorage.setItem("hde_hero_banners_cache", JSON.stringify(data));
+      })
       .catch((err) => console.error("Failed to load banners:", err));
   }, []);
 

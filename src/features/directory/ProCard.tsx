@@ -13,31 +13,31 @@ export const ProCard: React.FC<ProCardProps> = ({ pro }) => {
   const { user } = useUser(); // Access auth state to protect email and numbers
 
   return (
-    <Card className="h-full flex flex-col group hover:border-primary/40 transition-all duration-300 relative">
+    <Card className="h-full flex flex-col group hover:border-primary/40 dark:border-zinc-800 dark:hover:border-zinc-700 transition-all duration-300 relative">
       <div className="flex items-start gap-4 mb-5">
         <div className="relative">
-          <div className="w-14 h-14 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl flex-shrink-0 flex items-center justify-center text-secondary border border-gray-100 group-hover:scale-105 transition-transform duration-300">
+          <div className="w-14 h-14 bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-850 dark:to-zinc-900 rounded-2xl flex-shrink-0 flex items-center justify-center text-secondary dark:text-zinc-200 border border-gray-100 dark:border-zinc-800 group-hover:scale-105 transition-transform duration-300">
             {pro.profile_pic_url ? (
               <img src={pro.profile_pic_url} alt={pro.name} className="w-full h-full rounded-2xl object-cover" />
             ) : (
-              <i className="fas fa-user-tie text-2xl opacity-40"></i>
+              <i className="fas fa-user-tie text-2xl opacity-40 text-gray-400 dark:text-zinc-600"></i>
             )}
           </div>
           
           {/* UPDATED: Larger, Stylish, Green Verified Badge overlay */}
           {pro.is_verified && (
-            <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-md border-2 border-white scale-100 group-hover:scale-110 transition-transform duration-300" title="HDE Verified Professional">
-  <i className="fas fa-check text-white text-[9px] font-bold"></i>
-</div>
+            <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-md border-2 border-white dark:border-zinc-900 scale-100 group-hover:scale-110 transition-transform duration-300" title="HDE Verified Professional">
+              <i className="fas fa-check text-white text-[9px] font-bold"></i>
+            </div>
           )}
         </div>
 
         <div className="min-w-0 flex-grow">
-          <h3 className="font-bold text-gray-800 truncate flex items-center gap-1 leading-tight">
+          <h3 className="font-bold text-gray-800 dark:text-zinc-100 truncate flex items-center gap-1 leading-tight">
             {pro.name}
           </h3>
-          <p className="text-[10px] text-primary font-black uppercase tracking-tighter">{pro.category}</p>
-          <p className="text-xs text-gray-400 flex items-center gap-1 mt-1 truncate">
+          <p className="text-[10px] text-primary dark:text-primary-hover font-black uppercase tracking-tighter">{pro.category}</p>
+          <p className="text-xs text-gray-400 dark:text-zinc-500 flex items-center gap-1 mt-1 truncate">
             <i className="fas fa-location-dot text-[10px]"></i> {pro.city}{pro.area ? `, ${pro.area}` : ""}
           </p>
         </div>
@@ -45,7 +45,7 @@ export const ProCard: React.FC<ProCardProps> = ({ pro }) => {
 
       <div className="space-y-2 mb-4 flex-grow">
         {/* Experience Label */}
-        <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500 bg-gray-50 px-2 py-1.5 rounded-lg w-fit">
+        <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500 dark:text-zinc-400 bg-gray-50 dark:bg-zinc-800/40 px-2 py-1.5 rounded-lg w-fit">
           <i className="fas fa-briefcase text-primary"></i>
           <span>{pro.years_of_experience}+ Years Exp.</span>
         </div>
@@ -53,35 +53,35 @@ export const ProCard: React.FC<ProCardProps> = ({ pro }) => {
         {/* Professional Bio & Services Section */}
         {pro.bio && (
           <div className="mt-3">
-             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Services & Bio</p>
-             <p className="text-xs text-gray-600 line-clamp-3 leading-relaxed italic">
+             <p className="text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-widest mb-1">Services & Bio</p>
+             <p className="text-xs text-gray-600 dark:text-zinc-450 line-clamp-3 leading-relaxed italic">
                "{pro.bio}"
              </p>
           </div>
         )}
         
         {/* Contact Details (Numbers AND Email) - Only shown to signed-in users */}
-        <div className="mt-5 pt-4 border-t border-gray-100">
+        <div className="mt-5 pt-4 border-t border-gray-100 dark:border-zinc-800">
           {user ? (
             <div className="space-y-2.5">
               {/* Added Email display - Protected from public scraping */}
-              <p className="text-xs font-bold text-gray-700 flex items-center gap-2 truncate" title={pro.email}>
+              <p className="text-xs font-bold text-gray-700 dark:text-zinc-300 flex items-center gap-2 truncate" title={pro.email}>
                 <i className="fas fa-envelope text-primary w-4 text-center"></i> {pro.email}
               </p>
               
-              <p className="text-xs font-bold text-gray-700 flex items-center gap-2">
+              <p className="text-xs font-bold text-gray-700 dark:text-zinc-300 flex items-center gap-2">
                 <i className="fas fa-phone text-primary w-4 text-center"></i> {pro.contact_number}
               </p>
               
               {pro.whatsapp_number && (
-                <p className="text-xs font-bold text-gray-700 flex items-center gap-2">
+                <p className="text-xs font-bold text-gray-700 dark:text-zinc-300 flex items-center gap-2">
                   <i className="fab fa-whatsapp text-green-500 w-4 text-center"></i> {pro.whatsapp_number}
                 </p>
               )}
             </div>
           ) : (
-            <div className="bg-amber-50 p-2.5 rounded-lg border border-amber-100 text-center">
-              <Link to="/signin" className="text-[10px] font-bold text-primary hover:underline flex items-center justify-center gap-1.5">
+            <div className="bg-zinc-50 dark:bg-zinc-800/40 p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 text-center">
+              <Link to="/signin" className="text-[10px] font-bold text-primary hover:text-primary-hover flex items-center justify-center gap-1.5">
                 <i className="fas fa-lock"></i> Sign in to view email and contact numbers
               </Link>
             </div>
@@ -90,11 +90,11 @@ export const ProCard: React.FC<ProCardProps> = ({ pro }) => {
       </div>
 
       {/* Action Buttons with permission check */}
-      <div className="pt-4 border-t border-gray-50 flex gap-2">
+      <div className="pt-4 border-t border-gray-50 dark:border-zinc-800 flex gap-2">
         <a 
           href={user ? `tel:${pro.contact_number}` : "#"}
           onClick={(e) => !user && e.preventDefault()}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all ${user ? "bg-secondary text-white hover:bg-gray-800" : "bg-gray-100 text-gray-400 cursor-not-allowed"}`}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all ${user ? "bg-secondary dark:bg-zinc-850 text-white dark:text-zinc-150 hover:bg-zinc-800 dark:hover:bg-zinc-700" : "bg-gray-105 dark:bg-zinc-800/40 text-gray-400 dark:text-zinc-650 cursor-not-allowed"}`}
         >
           <i className="fas fa-phone"></i> Call
         </a>
@@ -104,7 +104,7 @@ export const ProCard: React.FC<ProCardProps> = ({ pro }) => {
             target={user ? "_blank" : undefined}
             rel="noopener noreferrer"
             onClick={(e) => !user && e.preventDefault()}
-            className={`w-12 flex items-center justify-center rounded-xl transition-all ${user ? "bg-green-50 text-green-600 hover:bg-green-100" : "bg-gray-50 text-gray-300 cursor-not-allowed"}`}
+            className={`w-12 flex items-center justify-center rounded-xl transition-all ${user ? "bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-950/40" : "bg-gray-50 dark:bg-zinc-850 text-gray-300 dark:text-zinc-700 cursor-not-allowed"}`}
           >
             <i className="fab fa-whatsapp text-lg"></i>
           </a>

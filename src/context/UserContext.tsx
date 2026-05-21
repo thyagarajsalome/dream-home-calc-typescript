@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { supabase } from "../config/supabaseClient";
 import { User } from "@supabase/supabase-js";
 
@@ -33,6 +33,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const tierValue = { free: 0, basic: 1, standard: 2, pro: 3 }[planTier];
 
+  // Refs to prevent duplicate profile queries in parallel and resolve race conditions
+  const profilePromiseRef = useRef<Promise<void> | null>(null);
+  const fetchedUserIdRef = useRef<string | null>(null);
+
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
@@ -42,41 +46,84 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
   }, []);
 
-  const fetchProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('has_paid, plan_tier, role, credits') // Added credits to selection
-        .eq('id', userId)
-        .maybeSingle(); 
-      
-      if (error) console.error("Error fetching profile:", error);
-      
-      setHasPaid(data?.has_paid || false);
-      setPlanTier(data?.plan_tier || (data?.has_paid ? 'pro' : 'free'));
-      setRole(data?.role || 'user');
-      setCredits(data?.credits || 0); // Set the credit count from DB
-    } catch (err) {
-      console.error("Unexpected error fetching profile:", err);
-      setHasPaid(false);
-      setPlanTier('free');
-      setRole('user');
-      setCredits(0); // Reset credits on error
+  const fetchProfile = (userId: string): Promise<void> => {
+    // If the profile for this user has already been fetched, return a resolved promise immediately
+    if (fetchedUserIdRef.current === userId) {
+      return Promise.resolve();
     }
+    
+    // If a profile request is already in-flight for this user, share that existing promise
+    if (profilePromiseRef.current) {
+      return profilePromiseRef.current;
+    }
+
+    const promise = (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('has_paid, plan_tier, role, credits') // Added credits to selection
+          .eq('id', userId)
+          .maybeSingle(); 
+        
+        if (error) console.error("Error fetching profile:", error);
+        
+        setHasPaid(data?.has_paid || false);
+        setPlanTier(data?.plan_tier || (data?.has_paid ? 'pro' : 'free'));
+        setRole(data?.role || 'user');
+        setCredits(data?.credits || 0); // Set the credit count from DB
+        fetchedUserIdRef.current = userId;
+      } catch (err) {
+        console.error("Unexpected error fetching profile:", err);
+        setHasPaid(false);
+        setPlanTier('free');
+        setRole('user');
+        setCredits(0); // Reset credits on error
+      } finally {
+        profilePromiseRef.current = null;
+      }
+    })();
+
+    profilePromiseRef.current = promise;
+    return promise;
   };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) fetchProfile(session.user.id);
-      else setLoading(false);
-    });
+    let active = true;
 
+    // 1. Fetch current session once on load
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!active) return;
+        
+        if (session?.user) {
+          setUser(session.user);
+          await fetchProfile(session.user.id);
+        } else {
+          setUser(null);
+        }
+      } catch (err) {
+        console.error("Auth initialization error:", err);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    initializeAuth();
+
+    // 2. Setup subscription to react to changes (login, logout, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await fetchProfile(session.user.id);
+      if (!active) return;
+      
+      const sessionUser = session?.user ?? null;
+      setUser(sessionUser);
+
+      if (sessionUser) {
+        // Shared promise logic ensures we don't trigger a secondary profile request in parallel
+        await fetchProfile(sessionUser.id);
       } else {
+        // Reset local states on sign out
+        fetchedUserIdRef.current = null;
         setHasPaid(false);
         setPlanTier('free');
         setRole('user');
@@ -85,14 +132,24 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
   }, []);
+
+  const handleManualRefresh = async () => {
+    if (user) {
+      fetchedUserIdRef.current = null; // Invalidate cached user ID to force a fresh fetch
+      await fetchProfile(user.id);
+    }
+  };
 
   return (
     <UserContext.Provider value={{ 
       user, role, hasPaid, planTier, tierValue, credits, // Exposed credits to the app
       setHasPaid, loading, installPrompt, markup, setMarkup, 
-      refreshProfile: () => user ? fetchProfile(user.id) : Promise.resolve() 
+      refreshProfile: handleManualRefresh 
     }}>
       {children}
     </UserContext.Provider>

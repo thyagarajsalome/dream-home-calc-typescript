@@ -37,7 +37,7 @@ const INTERIOR_BREAKDOWN = {
   "Painting & Finishes": 10,
 };
 
-const CHART_COLORS = ["#D9A443", "#59483B", "#8C6A4E", "#C4B594", "#A99A86"];
+const CHART_COLORS = ["#c5a059", "#5c473c", "#8c776c", "#dfd0bf", "#ebdcd0"];
 
 const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
   const { saveProject, downloadSpreadsheetPDF, isSaving, isDownloading } = useProjectActions("interior");
@@ -54,8 +54,22 @@ const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
         setArea(data.area);
         setQuality(data.quality);
       }
+    } else {
+      if (typeof window !== "undefined") {
+        const sharedArea = window.localStorage.getItem("hde_shared_area");
+        const sharedQuality = window.localStorage.getItem("hde_shared_quality");
+        if (sharedArea) setArea(sharedArea);
+        if (sharedQuality) setQuality(sharedQuality as any);
+      }
     }
   }, [location]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (area) window.localStorage.setItem("hde_shared_area", area);
+      if (quality) window.localStorage.setItem("hde_shared_quality", quality);
+    }
+  }, [area, quality]);
 
   const parsedArea = parseFloat(area) || 0;
   const totalCost = parsedArea * QUALITY_RATES[quality].rate;
@@ -170,7 +184,7 @@ const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
                   <button
                     onClick={handleDownloadPDF}
                     disabled={isDownloading}
-                    className="flex items-center justify-center gap-2 py-3 px-4 bg-white border-2 border-secondary text-secondary font-bold rounded-xl hover:bg-secondary hover:text-white transition-all duration-300"
+                    className="flex items-center justify-center gap-2 py-3 px-4 bg-white dark:bg-zinc-900 border-2 border-secondary dark:border-zinc-700 text-secondary dark:text-zinc-100 font-bold rounded-xl hover:bg-secondary dark:hover:bg-zinc-800 hover:text-white transition-all duration-300"
                   >
                     <i className={`fas ${isDownloading ? "fa-spinner fa-spin" : "fa-file-pdf"}`}></i>
                     <span>{isDownloading ? "Processing..." : "Download PDF"}</span>
@@ -178,7 +192,7 @@ const InteriorCalculator: React.FC<InteriorCalculatorProps> = ({ hasPaid }) => {
                   <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="flex items-center justify-center gap-2 py-3 px-4 bg-primary text-white font-bold rounded-xl hover:bg-yellow-600 transition-all duration-300 shadow-float transform active:scale-95"
+                    className="flex items-center justify-center gap-2 py-3 px-4 bg-primary text-white dark:text-zinc-950 font-bold rounded-xl hover:bg-primary-hover transition-all duration-300 shadow-float transform active:scale-95"
                   >
                     <i className={`fas ${isSaving ? "fa-spinner fa-spin" : "fa-save"}`}></i>
                     <span>{isSaving ? "Save" : "Save Project"}</span>

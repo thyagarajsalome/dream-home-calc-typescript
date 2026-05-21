@@ -34,7 +34,7 @@ const ROOM_SUGGESTIONS = [
   { room: "Study/Office", rec: "wood",      reason: "Laminate or engineered wood — quiet, warm, professional look." },
 ];
 
-const CHART_COLORS = ["#D9A443","#59483B","#8C6A4E","#C4B594"];
+const CHART_COLORS = ["#c5a059", "#0f2042", "#5c473c", "#dfd0bf"];
 
 // ── Component ──────────────────────────────────────────────────────────────────
 const FlooringCalculator: React.FC = () => {
@@ -49,8 +49,23 @@ const FlooringCalculator: React.FC = () => {
 
   useEffect(() => {
     const state = (location.state as any)?.projectData;
-    if (state?.flooringType) { setArea(state.area); setFlooringType(state.flooringType); setIncludeSkirting(state.includeSkirting); }
+    if (state?.flooringType) {
+      setArea(state.area);
+      setFlooringType(state.flooringType);
+      setIncludeSkirting(state.includeSkirting);
+    } else {
+      if (typeof window !== "undefined") {
+        const sharedArea = window.localStorage.getItem("hde_shared_area");
+        if (sharedArea && !area) setArea(sharedArea);
+      }
+    }
   }, [location]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && area) {
+      window.localStorage.setItem("hde_shared_area", area);
+    }
+  }, [area]);
 
   const parsedArea = parseFloat(area) || 0;
   const ft         = FLOORING_TYPES[flooringType];
@@ -179,7 +194,7 @@ const FlooringCalculator: React.FC = () => {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-gray-800">{pat.name}</span>
-                      <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">{pat.wastage} wastage</span>
+                      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{pat.wastage} wastage</span>
                     </div>
                     <p className="text-xs text-gray-500 mt-0.5">{pat.desc}</p>
                   </div>
@@ -278,12 +293,12 @@ const FlooringCalculator: React.FC = () => {
             {hasPaid && (
               <div className="grid grid-cols-2 gap-4">
                 <button onClick={handleDownloadPDF} disabled={isDownloading}
-                  className="flex items-center justify-center gap-2 py-3 px-4 bg-white border-2 border-secondary text-secondary font-bold rounded-xl hover:bg-secondary hover:text-white transition-all">
+                  className="flex items-center justify-center gap-2 py-3 px-4 bg-white dark:bg-zinc-900 border-2 border-secondary dark:border-zinc-700 text-secondary dark:text-zinc-100 font-bold rounded-xl hover:bg-secondary dark:hover:bg-zinc-800 hover:text-white transition-all">
                   <i className={`fas ${isDownloading ? "fa-spinner fa-spin" : "fa-file-pdf"}`}></i>
                   <span>Download PDF</span>
                 </button>
                 <button onClick={handleSave} disabled={isSaving}
-                  className="flex items-center justify-center gap-2 py-3 px-4 bg-primary text-white font-bold rounded-xl hover:bg-yellow-600 transition-all shadow-float active:scale-95">
+                  className="flex items-center justify-center gap-2 py-3 px-4 bg-primary text-white dark:text-zinc-950 font-bold rounded-xl hover:bg-primary-hover transition-all shadow-float active:scale-95">
                   <i className={`fas ${isSaving ? "fa-spinner fa-spin" : "fa-save"}`}></i>
                   <span>{isSaving ? "Saving..." : "Save Project"}</span>
                 </button>
