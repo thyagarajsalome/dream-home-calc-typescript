@@ -6,7 +6,7 @@ import { Professional } from '../../types/directory';
 import { ProCard } from './ProCard';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
-import SEO from '../../components/layout/SEO';
+
 
 const GROUPED_CATEGORIES: Record<string, string[]> = {
   "Design & Planning": ["3D Designer / Visualizer", "Architect", "Draftsman", "Structural Engineer"],
@@ -49,8 +49,7 @@ const DirectoryPage = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 animate-fade-in">
-      <SEO title="Verified Professionals - HDE" description="Find verified architects, contractors, and experts for your home construction." />
+    <div className="container mx-auto px-4 py-8">
       
       {/* ADDED: Back to Home Link */}
       <div className="mb-6">

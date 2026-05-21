@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
-  { ignores: ['dist', '.astro'] },
+  { ignores: ['dist', '.astro', 'node_modules', 'node_modules_old'] },
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -22,11 +22,7 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': [
-        'warn',
-        { allowConstantExport: true },
-      ],
-      // Allow unused variables/parameters during build to match typecheck rules
+      'react-refresh/only-export-components': 'off',
       '@typescript-eslint/no-unused-vars': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       'react-hooks/set-state-in-effect': 'off',

@@ -4,21 +4,23 @@ import AstroApp from '../AstroApp';
 
 export function getStaticPaths() {
   return [
-    { params: { slug: 'dashboard' } },
-    { params: { slug: 'plans' } },
-    { params: { slug: 'directory' } },
-    { params: { slug: 'signin' } },
-    { params: { slug: 'signup' } },
-    { params: { slug: 'upgrade' } },
-    { params: { slug: 'register-pro' } },
-    { params: { slug: 'privacy' } },
-    { params: { slug: 'terms' } },
-    { params: { slug: 'contact' } },
-    { params: { slug: 'disclaimer' } },
+    { params: { slug: 'dashboard' }, props: { title: "Pro Dashboard | HDE", desc: "Manage your projects and reports." } },
+    { params: { slug: 'plans' }, props: { title: "House Plan Gallery & Designs | HDE", desc: "Browse modern architectural house plans." } },
+    { params: { slug: 'directory' }, props: { title: "Find Verified Construction Professionals | HDE", desc: "Connect with architects, designers, and builders." } },
+    { params: { slug: 'signin' }, props: { title: "Sign In | HDE", desc: "Access your HDE account." } },
+    { params: { slug: 'signup' }, props: { title: "Sign Up | HDE", desc: "Create a free HDE account." } },
+    { params: { slug: 'upgrade' }, props: { title: "Upgrade to Pro | HDE", desc: "Unlock premium calculators and BOQ reports." } },
+    { params: { slug: 'register-pro' }, props: { title: "Register as Professional | HDE", desc: "Join our directory of construction pros." } },
+    { params: { slug: 'privacy' }, props: { title: "Privacy Policy | HDE", desc: "Our privacy policy." } },
+    { params: { slug: 'terms' }, props: { title: "Terms of Service | HDE", desc: "Our terms of service." } },
+    { params: { slug: 'contact' }, props: { title: "Contact Us | HDE", desc: "Get in touch with the HDE team." } },
+    { params: { slug: 'disclaimer' }, props: { title: "Disclaimer | HDE", desc: "Legal disclaimer." } },
   ];
 }
+
+const { title, desc } = Astro.props;
 ---
 
-<Layout title="HDE - Home Design English" description="Access the HDE dashboard, plans, directory and more for your home design needs.">
+<Layout title={title} description={desc}>
   <AstroApp client:only="react" />
 </Layout>

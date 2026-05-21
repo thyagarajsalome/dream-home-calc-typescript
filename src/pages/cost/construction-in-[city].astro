@@ -87,6 +87,25 @@ const schema = JSON.stringify({
     "priceCurrency": "INR"
   }
 });
+
+const breadcrumbSchema = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://homedesignenglish.com/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": `Construction Cost in ${cityName}`,
+      "item": `https://homedesignenglish.com/cost/construction-in-${city}`
+    }
+  ]
+});
 ---
 
 <Layout 
@@ -191,4 +210,5 @@ const schema = JSON.stringify({
   <Footer />
 
   <script type="application/ld+json" is:inline set:html={schema}></script>
+  <script type="application/ld+json" is:inline set:html={breadcrumbSchema}></script>
 </Layout>
