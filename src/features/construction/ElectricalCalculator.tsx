@@ -208,7 +208,7 @@ const ElectricalCalculator: React.FC = () => {
             </div>
 
             {activeTab === "result" && (
-              <Card title="Electrical Estimate" className="border-primary/20" ref={resultsRef as any}>
+          <Card title="Electrical Estimate" className="border-primary/20">
                 <div className="text-center py-4 bg-gray-50 rounded-xl mb-5">
                   <p className="text-xs font-bold text-gray-400 uppercase">Total Electrical Estimate</p>
                   <h2 className="text-4xl font-extrabold text-secondary">{formatCurrency(calc.total)}</h2>

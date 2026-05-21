@@ -1,3 +1,4 @@
+// src/features/construction/CalculatorTabs.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
@@ -6,8 +7,8 @@ type CalculatorType = "construction" | "interior" | "doors-windows" | "flooring"
 
 interface CalculatorTabsProps {
   activeCalculator: CalculatorType;
-  setActiveCalculator: (tab: CalculatorType) => void;
-  hasPaid: boolean;  // Add this line
+  setActiveCalculator: (calculator: CalculatorType) => void;
+  hasPaid: boolean; // Add this line here
 }
 
 const CALCULATORS: { id: CalculatorType; name: string; icon: string; reqTier: number }[] = [

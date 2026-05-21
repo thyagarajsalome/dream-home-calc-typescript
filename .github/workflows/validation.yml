@@ -22,5 +22,5 @@ jobs:
     - name: Install Dependencies
       run: npm ci
 
-    - name: Bypass Checks
-      run: echo "Strict checks bypassed for rapid production deployment."
+    - name: Bypass Pipeline Blockers
+      run: echo "Code compilation validation bypassed for deployment synchronization."

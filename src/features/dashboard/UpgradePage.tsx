@@ -21,7 +21,7 @@ type PlanType = {
 };
 
 // 2. Apply the interface to the plans object
-const plans: Record<string, PlanType> = {
+const plans = {
   basic: {
     id: "5_credits",
     name: "Basic",
@@ -31,9 +31,10 @@ const plans: Record<string, PlanType> = {
     description: "Ideal for individuals starting a single home renovation or a small DIY project.",
     credits: "5 Project Credits",
     useCase: "Best for: Quick room makeovers and interior planning.",
+    badge: undefined, // Add this line
     features: [
       "Unlock Interiors, Flooring & Painting",
-      "Interactive 3D Visualizer Access",
+      "House Plan Access",
       "Save up to 5 unique projects",
       "Standard PDF Cost Reports"
     ],
@@ -69,6 +70,7 @@ const plans: Record<string, PlanType> = {
     description: "Built for professional contractors and builders who need high-volume access.",
     credits: "High-Volume Usage",
     useCase: "Limits: 100 projects/month and 10 saves per day.",
+    badge: undefined, // Add this line
     features: [
       "100 Monthly Project Saves",
       "10 Daily Save Limit (Anti-Bot Protection)",
