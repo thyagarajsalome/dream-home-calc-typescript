@@ -82,7 +82,7 @@ export const ProRegistration = () => {
       const { error } = await supabase.from('professionals').delete().eq('user_id', user.id);
       if (error) throw error;
       showToast("Listing deleted and records removed from database.", "success");
-      window.location.href = "/directory";
+      window.location.assign("/directory");
     } catch (err: any) {
       showToast("Delete failed: " + err.message, "error");
     } finally {
