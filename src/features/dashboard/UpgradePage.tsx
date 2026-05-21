@@ -100,7 +100,10 @@ const UpgradePage = () => {
     setError("");
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Please sign in to continue.");
+      if (!session) {
+        window.location.assign("/signin");
+        return;
+      }
 
       const { data: order, error: orderError } = await supabase.functions.invoke('create-order', {
         body: { planId } 
