@@ -80,7 +80,10 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-gray-100 pt-6 text-center">
+        <div className="border-t border-gray-100 pt-6 text-center max-w-4xl mx-auto">
+          <p className="text-gray-400 text-[11px] leading-relaxed mb-4">
+            Disclaimer: Home Design English (HDE) is an independent budget calculation and estimation platform. All rates, material quantities, and cost estimates provided are approximate projections for general guidance only. HDE does not provide building contractor services, architectural supervision, or physical construction works. Users should verify final quotes and structural designs with licensed local builders and engineers before commencing actual construction.
+          </p>
           <p className="text-gray-400 text-xs font-medium">
             &copy; 2025 Home Design English (HDE). All rights reserved.
           </p>

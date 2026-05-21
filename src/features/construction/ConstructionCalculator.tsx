@@ -105,12 +105,8 @@ export const ConstructionCalculator = ({ projectData }: { projectData?: any }) =
   const [activeTab,          setActiveTab]         = useState<"rates"|"timeline">("rates");
   const [detectedCityName,   setDetectedCityName]  = useState<string | null>(null);
 
-  // Pre-fill from saved project (Dashboard edit flow) or fetch draft
+  // 1. Pathname-change effect: Detects city from URL path and resets edit rate status on navigation
   useEffect(() => {
-    const state = location.state as { projectData?: any } | null;
-    const data  = projectData || state?.projectData;
-    
-    // Check for city name in URL path
     const path = window.location.pathname.toLowerCase();
     let cityMatched: string | null = null;
     if (path.includes("mumbai")) cityMatched = "Mumbai";
@@ -120,9 +116,14 @@ export const ConstructionCalculator = ({ projectData }: { projectData?: any }) =
     else if (path.includes("hyderabad")) cityMatched = "Hyderabad";
     else if (path.includes("pune")) cityMatched = "Pune";
     
-    if (cityMatched) {
-      setDetectedCityName(cityMatched);
-    }
+    setDetectedCityName(cityMatched);
+    setIsEditingRate(false);
+  }, [location.pathname]);
+
+  // 2. Mount-time effect: Pre-fill from saved project or fetch draft
+  useEffect(() => {
+    const state = location.state as { projectData?: any } | null;
+    const data  = projectData || state?.projectData;
 
     if (data) {
       if (data.area)               setArea(String(data.area));
@@ -151,16 +152,27 @@ export const ConstructionCalculator = ({ projectData }: { projectData?: any }) =
             setCustomRate(d.rate);
             setIsEditingRate(d.rate !== QUALITY_RATES[d.quality as keyof typeof QUALITY_RATES]);
           }
-        } else if (cityMatched) {
-          // If no draft exists, preload the city benchmark rate
-          const benchmark = CITY_BENCHMARKS.find(b => b.city === cityMatched);
-          if (benchmark) {
-            setCustomRate(benchmark.basic);
+        } else {
+          // If no draft exists, preload the city benchmark rate if present in URL
+          const path = window.location.pathname.toLowerCase();
+          let cityMatched: string | null = null;
+          if (path.includes("mumbai")) cityMatched = "Mumbai";
+          else if (path.includes("bengaluru")) cityMatched = "Bengaluru";
+          else if (path.includes("delhi")) cityMatched = "Delhi NCR";
+          else if (path.includes("chennai")) cityMatched = "Chennai";
+          else if (path.includes("hyderabad")) cityMatched = "Hyderabad";
+          else if (path.includes("pune")) cityMatched = "Pune";
+          
+          if (cityMatched) {
+            const benchmark = CITY_BENCHMARKS.find(b => b.city === cityMatched);
+            if (benchmark) {
+              setCustomRate(benchmark.basic);
+            }
           }
         }
       });
     }
-  }, [location.state]);
+  }, []);
 
   // Debounced Autosave effect to update draft in Firestore when inputs change
   useEffect(() => {

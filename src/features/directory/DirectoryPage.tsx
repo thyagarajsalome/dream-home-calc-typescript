@@ -1,5 +1,5 @@
 // src/features/directory/DirectoryPage.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ProService } from '../../services/proService';
 import { Professional } from '../../types/directory';
@@ -22,6 +22,20 @@ const DirectoryPage = () => {
   const [city, setCity] = useState('');
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const fetchPros = async (isNewSearch = false) => {
     try {
@@ -75,20 +89,69 @@ const DirectoryPage = () => {
       {/* Search Filters */}
       <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-zinc-800 mb-10">
         <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
-          <div className="md:col-span-4">
+          <div className="md:col-span-4 relative" ref={dropdownRef}>
             <label className="block text-[10px] font-bold text-gray-400 dark:text-zinc-500 mb-2 uppercase tracking-widest ml-1">Professional Category</label>
-            <select 
-              value={category} 
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full p-3.5 border-2 border-gray-100 dark:border-zinc-800 rounded-xl bg-gray-50/50 dark:bg-zinc-950 text-gray-805 dark:text-zinc-150 text-sm focus:border-primary focus:bg-white dark:focus:bg-zinc-950 outline-none transition-all"
+            <button
+              type="button"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="w-full flex items-center justify-between p-3.5 border-2 border-gray-100 dark:border-zinc-800 rounded-xl bg-gray-50/50 dark:bg-zinc-950 text-gray-800 dark:text-zinc-150 text-sm hover:bg-gray-100/50 dark:hover:bg-zinc-900/50 focus:border-primary dark:focus:border-primary outline-none transition-all text-left font-semibold"
             >
-              <option value="" className="dark:bg-zinc-900">All Experts</option>
-              {Object.entries(GROUPED_CATEGORIES).map(([group, cats]) => (
-                <optgroup label={group} key={group} className="dark:bg-zinc-900 font-bold">
-                  {cats.map(c => <option key={c} value={c} className="dark:bg-zinc-900">{c}</option>)}
-                </optgroup>
-              ))}
-            </select>
+              <span className="flex items-center gap-2.5">
+                <i className="fas fa-briefcase text-gray-400 dark:text-zinc-500"></i>
+                {category || "All Experts"}
+              </span>
+              <i className={`fas fa-chevron-down text-gray-400 dark:text-zinc-500 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180 text-primary' : ''}`}></i>
+            </button>
+
+            {isDropdownOpen && (
+              <div className="absolute left-0 right-0 mt-2 bg-white dark:bg-zinc-900 border border-gray-150 dark:border-zinc-800 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="max-h-72 overflow-y-auto custom-scrollbar py-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCategory('');
+                      setIsDropdownOpen(false);
+                    }}
+                    className={`w-full text-left px-4 py-2.5 text-sm transition-all flex items-center justify-between font-bold ${
+                      category === '' 
+                        ? 'bg-primary/10 text-primary' 
+                        : 'text-gray-700 dark:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-805/50'
+                    }`}
+                  >
+                    <span>All Experts</span>
+                    {category === '' && <i className="fas fa-check text-xs text-primary"></i>}
+                  </button>
+                  
+                  {Object.entries(GROUPED_CATEGORIES).map(([group, cats]) => (
+                    <div key={group} className="mt-2 border-t border-gray-100/60 dark:border-zinc-800/60 pt-2">
+                      <div className="px-4 py-1 text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider">
+                        {group}
+                      </div>
+                      <div className="space-y-0.5 mt-1">
+                        {cats.map(c => (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => {
+                              setCategory(c);
+                              setIsDropdownOpen(false);
+                            }}
+                            className={`w-full text-left px-6 py-2 text-sm transition-all flex items-center justify-between ${
+                              category === c 
+                                ? 'bg-primary/10 text-primary font-bold' 
+                                : 'text-gray-600 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-805/50'
+                            }`}
+                          >
+                            <span>{c}</span>
+                            {category === c && <i className="fas fa-check text-xs text-primary"></i>}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <div className="md:col-span-5">
             <Input 
