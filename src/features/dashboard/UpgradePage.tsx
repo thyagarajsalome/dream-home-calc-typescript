@@ -121,7 +121,7 @@ const UpgradePage = () => {
           });
           if (result?.status === "success") {
             await refreshProfile();
-            window.location.href = "/dashboard";
+            window.location.assign("/dashboard");
           } else {
             setError("Verification failed. Please contact support.");
           }
@@ -253,4 +253,5 @@ const UpgradePage = () => {
 };
 
 export default UpgradePage;
+
 

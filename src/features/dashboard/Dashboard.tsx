@@ -54,7 +54,7 @@ const Dashboard = () => {
 
   const handleOpenProject = (project: any) => {
     sessionStorage.setItem("projectData", JSON.stringify(project.data));
-    window.location.href = `/?openCalculator=${project.type}`;
+    window.location.assign(`/?openCalculator=${project.type}`);
   };
 
   if (loading) {
@@ -106,7 +106,7 @@ const Dashboard = () => {
             </div>
           </div>
           <button 
-            onClick={() => window.location.href = '/upgrade'}
+            onClick={() => window.location.assign('/upgrade')}
             className="bg-red-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-red-700 transition-all shadow-md hover:shadow-lg active:scale-95"
           >
             Buy Credits Now
