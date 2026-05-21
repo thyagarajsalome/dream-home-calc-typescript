@@ -246,9 +246,9 @@ export const PlanGallery: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in relative">
       <div className="mb-6">
-        <Link to="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-primary transition-colors font-bold bg-white px-5 py-2.5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md w-fit">
+        <a href="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-primary transition-colors font-bold bg-white px-5 py-2.5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md w-fit">
           <i className="fas fa-arrow-left"></i> Back to Calculator
-        </Link>
+        </a>
       </div>
 
       {role === 'admin' && <PlanUploader onUploadSuccess={() => fetchPlans(0)} />}
