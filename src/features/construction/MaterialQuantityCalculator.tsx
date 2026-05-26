@@ -35,7 +35,7 @@ const WALL_TYPES = {
 };
 
 const QUALITY_PRESETS = {
-  economy:  { label: "Economy",  desc: "Budget materials, local brands",          factor: 0.8 },
+  basic:    { label: "Basic",    desc: "Budget materials, local brands",          factor: 0.8 },
   standard: { label: "Standard", desc: "Mid-range materials, IS-certified",       factor: 1.0 },
   premium:  { label: "Premium",  desc: "High-grade materials, leading brands",    factor: 1.3 },
 };
@@ -73,8 +73,9 @@ function computeBOQ(
   floors: number,
   quality: keyof typeof QUALITY_PRESETS
 ): PhaseResult[] {
-  const f = QUALITY_PRESETS[quality].factor;
-  const wt = WALL_TYPES[wallType];
+  const preset = QUALITY_PRESETS[quality] || QUALITY_PRESETS.standard;
+  const f = preset.factor;
+  const wt = WALL_TYPES[wallType] || WALL_TYPES.redBrick;
 
   // Derived quantities (industry thumb rules, India)
   const builtUpArea   = area;                          // sqft total
@@ -224,7 +225,13 @@ const MaterialQuantityCalculator: React.FC = () => {
         setShowBOQ(true); // Automatically show BOQ if area was shared
       }
       if (sharedQuality) {
-        setQuality(sharedQuality as any);
+        if (sharedQuality in QUALITY_PRESETS) {
+          setQuality(sharedQuality as any);
+        } else if (sharedQuality === "economy") {
+          setQuality("basic");
+        } else if (sharedQuality === "basic") {
+          setQuality("basic");
+        }
       }
     }
   }, []);

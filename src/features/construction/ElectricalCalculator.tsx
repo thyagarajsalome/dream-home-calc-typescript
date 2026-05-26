@@ -64,7 +64,11 @@ const ElectricalCalculator: React.FC = () => {
       setLightPoints(state.lightPoints);
       setFanPoints(state.fanPoints);
       setPowerPoints(state.powerPoints);
-      setQuality(state.quality);
+      if (state.quality && state.quality in QUALITY_OPTIONS) {
+        setQuality(state.quality);
+      } else {
+        setQuality("basic");
+      }
       if (state.acPoints) setAcPoints(state.acPoints);
       if (state.geyserPoints) setGeyserPoints(state.geyserPoints);
     } else {
@@ -82,8 +86,11 @@ const ElectricalCalculator: React.FC = () => {
           }
         }
         if (sharedQuality) {
-          // Map basic/standard/premium quality
-          setQuality(sharedQuality as any);
+          if (sharedQuality in QUALITY_OPTIONS) {
+            setQuality(sharedQuality as any);
+          } else {
+            setQuality("basic");
+          }
         }
       }
     }
@@ -95,7 +102,8 @@ const ElectricalCalculator: React.FC = () => {
     const pCount = parseInt(powerPoints) || 0;
     const aCount = parseInt(acPoints)    || 0;
     const gCount = parseInt(geyserPoints)|| 0;
-    const factor = QUALITY_OPTIONS[quality].factor;
+    const option = QUALITY_OPTIONS[quality] || QUALITY_OPTIONS.basic;
+    const factor = option.factor;
 
     const lightCost   = lCount * POINT_RATES.light  * factor;
     const fanCost     = fCount * POINT_RATES.fan    * factor;
