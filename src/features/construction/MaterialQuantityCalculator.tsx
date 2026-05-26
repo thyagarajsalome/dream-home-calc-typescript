@@ -322,7 +322,7 @@ const MaterialQuantityCalculator: React.FC = () => {
           {/* Area */}
           <div>
             <Input label="Built-up Area (sq.ft)" icon="fas fa-ruler-combined" type="number" placeholder="e.g. 1200" value={area} onChange={e => setArea(e.target.value)} disabled={isLocked} />
-            <p className="text-xs text-gray-400 -mt-3 ml-1">Total super built-up area</p>
+            <p className="text-xs text-gray-400 mt-1.5 ml-1">Total super built-up area</p>
           </div>
 
           {/* Floors */}

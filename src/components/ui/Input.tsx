@@ -34,13 +34,14 @@ export const Input: React.FC<InputProps> = ({ label, icon, className = "", ...pr
         absolute z-20 cursor-text
         text-xs font-bold text-gray-500 bg-white px-2 rounded-md
         transition-all duration-200
-        -top-2.5 left-3 text-primary
+        -top-2.5
+        ${icon ? 'left-10' : 'left-3'}
         peer-placeholder-shown:top-3.5 
         peer-placeholder-shown:text-base 
         peer-placeholder-shown:text-gray-400
         ${icon ? 'peer-placeholder-shown:left-14' : 'peer-placeholder-shown:left-4'}
         peer-focus:-top-2.5 
-        peer-focus:left-3 
+        ${icon ? 'peer-focus:left-10' : 'peer-focus:left-3'}
         peer-focus:text-xs 
         peer-focus:text-primary
       `}>
