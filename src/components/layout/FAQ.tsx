@@ -28,7 +28,7 @@ export default function FAQ() {
               </span>
             </summary>
             <p className="mt-4 text-gray-600 text-sm md:text-base leading-relaxed">
-              Upgrading to a Pro plan (available as a monthly or annual subscription) unlocks all specialized calculators (
+              Upgrading to a Pro plan (unlocked by purchasing credit packages starting from ₹199) unlocks all specialized calculators (
               <strong className="text-primary">Materials BOQ</strong>
               , Flooring, Painting, Plumbing, Electrical, Interiors, Doors & Windows), enables Standard & Premium quality estimates in the main construction calculator, and removes all restrictions on saving or sharing reports.
             </p>

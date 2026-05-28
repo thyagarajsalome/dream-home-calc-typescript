@@ -25,6 +25,7 @@ import Hero from "./components/layout/Hero";
 import FAQ from "./components/layout/FAQ";
 import Testimonials from "./components/layout/Testimonials";
 import CityContent, { CITIES_DATA } from "./components/layout/CityContent";
+import AppPromoSection from "./components/layout/AppPromoSection";
 
 import CalculatorTabs from "./features/construction/CalculatorTabs";
 import { useGSAPTabSwitch } from "./hooks/useGSAP";
@@ -43,6 +44,7 @@ const MaterialQuantityCalculator = lazyWithRetry(() => import("./features/constr
 const SignIn      = lazyWithRetry(() => import("./features/auth/SignIn"));
 const SignUp      = lazyWithRetry(() => import("./features/auth/SignUp"));
 const UpgradePage = lazyWithRetry(() => import("./features/dashboard/UpgradePage"));
+const AppPromoPage = lazyWithRetry(() => import("./features/promo/AppPromoPage"));
 const Dashboard   = lazyWithRetry(() => import("./features/dashboard/Dashboard"));
 const PrivacyPolicy  = lazyWithRetry(() => import("./legacy-pages/PrivacyPolicy"));
 const TermsOfService = lazyWithRetry(() => import("./legacy-pages/TermsOfService"));
@@ -194,6 +196,7 @@ const MainLayout = () => {
         </div>
 
         {cityData && <CityContent cityData={cityData} />}
+        <AppPromoSection />
         <FAQ />
         <Testimonials />
       </main>
@@ -261,6 +264,8 @@ const AppRoutes = () => {
             <Route path="/directory/index.html"  element={<DirectoryPage />} />
             <Route path="/upgrade"    element={<UpgradePage />} />
             <Route path="/upgrade/index.html"    element={<UpgradePage />} />
+            <Route path="/app"        element={<AppPromoPage />} />
+            <Route path="/app/index.html"        element={<AppPromoPage />} />
           </Route>
 
           <Route element={<ProtectedRoute />}>

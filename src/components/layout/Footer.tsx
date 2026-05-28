@@ -4,46 +4,48 @@ import { Link } from "react-router-dom";
 
 export default function Footer() {
   return (
-    <footer className="footer bg-white border-t border-gray-100 pt-12 pb-6">
+    <footer className="footer bg-white border-t border-gray-100 pt-8 pb-4">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8 items-start">
+        
+        {/* Main Footer Row */}
+        <div className="flex flex-col md:flex-row justify-between items-start gap-8 mb-6">
           
-          {/* Column 1: Brand Info */}
-          <div className="text-center md:text-left">
-            <Link to="/" className="flex items-center justify-center md:justify-start gap-2 text-xl font-bold text-secondary mb-4 hover:text-primary transition-colors">
+          {/* Left Side: Brand & Quick Links */}
+          <div className="flex-1 space-y-4 text-center md:text-left">
+            <Link to="/" className="flex items-center justify-center md:justify-start gap-2 text-xl font-bold text-secondary hover:text-primary transition-colors no-underline">
               <img src="/bg-logo.png" alt="HDE Logo" className="w-10 h-10 object-contain" />
               <span className="text-primary uppercase tracking-tighter font-extrabold text-2xl">HDE</span>
             </Link>
-            <p className="text-gray-500 text-sm max-w-xs mx-auto md:mx-0">
+            <p className="text-gray-500 text-sm max-w-md mx-auto md:mx-0">
               India's leading platform for construction cost estimation, material BOQ reports, and modern architectural house planning.
             </p>
+            
+            {/* Quick Links Horizontally */}
+            <div className="flex flex-wrap justify-center md:justify-start items-center gap-x-3 gap-y-1 text-sm font-medium pt-1">
+              <Link to="/contact" className="text-gray-500 hover:text-primary transition-colors no-underline">Contact Us</Link>
+              <span className="text-gray-300">|</span>
+              <Link to="/disclaimer" className="text-gray-500 hover:text-primary transition-colors no-underline">Disclaimer</Link>
+              <span className="text-gray-300">|</span>
+              <Link to="/privacy" className="text-gray-500 hover:text-primary transition-colors no-underline">Privacy Policy</Link>
+              <span className="text-gray-300">|</span>
+              <Link to="/terms" className="text-gray-500 hover:text-primary transition-colors no-underline">Terms of Service</Link>
+            </div>
           </div>
 
-          {/* Column 2: Quick Links */}
-          <div className="text-center">
-            <h4 className="font-bold text-gray-800 mb-4 uppercase text-xs tracking-widest">Quick Links</h4>
-            <ul className="space-y-2 text-sm list-none p-0">
-              <li><Link to="/contact" className="text-gray-500 hover:text-primary transition-colors">Contact Us</Link></li>
-              <li><Link to="/disclaimer" className="text-gray-500 hover:text-primary transition-colors">Disclaimer</Link></li>
-              <li><Link to="/privacy" className="text-gray-500 hover:text-primary transition-colors">Privacy Policy</Link></li>
-              <li><Link to="/terms" className="text-gray-500 hover:text-primary transition-colors">Terms of Service</Link></li>
-            </ul>
-          </div>
-
-          {/* Column 3: Play Store Apps */}
-          <div className="text-center md:text-right flex flex-col items-center md:items-end col-span-1 md:col-span-2">
+          {/* Right Side: Play Store Badges */}
+          <div className="flex flex-col items-center md:items-end shrink-0 w-full md:w-auto">
             <h4 className="font-bold text-gray-800 mb-4 uppercase text-xs tracking-widest">Get Our Mobile Apps</h4>
-            <div className="flex flex-wrap md:flex-col gap-3 justify-center">
+            <div className="flex flex-wrap md:flex-col gap-2 justify-center">
               {/* App 1: HDE Construction */}
               <a 
                 href="https://play.google.com/store/apps/details?id=in.toolwebsite.twa" 
                 target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-3 bg-gray-900 text-white px-4 py-2 rounded-xl hover:bg-black hover:scale-[1.02] transition-all border border-gray-700 w-56 text-left"
+                className="flex items-center gap-2 bg-gray-900 text-white px-3 py-1.5 rounded-lg hover:bg-black hover:scale-[1.02] transition-all border border-gray-700 w-44 text-left no-underline"
               >
-                <i className="fab fa-google-play text-2xl text-primary font-bold"></i>
+                <i className="fab fa-google-play text-lg text-primary font-bold"></i>
                 <div>
-                  <p className="text-[10px] uppercase font-bold text-gray-400 leading-none">Get it on</p>
-                  <p className="text-sm font-bold mt-1">HDE Construction</p>
+                  <p className="text-[8px] uppercase font-bold text-gray-400 leading-none">Download App</p>
+                  <p className="text-xs font-bold mt-0.5">HDE</p>
                 </div>
               </a>
               
@@ -51,37 +53,39 @@ export default function Footer() {
               <a 
                 href="https://play.google.com/store/apps/details?id=com.aihomedecorator.twa&pcampaignid=web_share" 
                 target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-3 bg-gray-900 text-white px-4 py-2 rounded-xl hover:bg-black hover:scale-[1.02] transition-all border border-gray-700 w-56 text-left"
+                className="flex items-center gap-2 bg-gray-900 text-white px-3 py-1.5 rounded-lg hover:bg-black hover:scale-[1.02] transition-all border border-gray-700 w-44 text-left no-underline"
               >
-                <i className="fab fa-google-play text-2xl text-green-400 font-bold"></i>
+                <i className="fab fa-google-play text-lg text-green-400 font-bold"></i>
                 <div>
-                  <p className="text-[10px] uppercase font-bold text-gray-400 leading-none">Download Now</p>
-                  <p className="text-sm font-bold mt-1">AI Home Decorator</p>
+                  <p className="text-[8px] uppercase font-bold text-gray-400 leading-none">Download App</p>
+                  <p className="text-xs font-bold mt-0.5">AI Home Decorator</p>
                 </div>
               </a>
             </div>
           </div>
         </div>
 
-        <div className="border-t border-gray-100 pt-6 mt-6 mb-6">
-          <h4 className="font-bold text-gray-800 mb-4 uppercase text-xs tracking-widest text-center">House Construction Costs By City</h4>
-          <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 text-sm font-medium">
-            <Link to="/cost/construction-in-mumbai" className="text-gray-500 hover:text-primary transition-colors">Mumbai</Link>
+        {/* City links - compact */}
+        <div className="border-t border-gray-100 pt-4 mt-4 mb-4">
+          <h4 className="font-bold text-gray-800 mb-2 uppercase text-xs tracking-widest text-center">House Construction Costs By City</h4>
+          <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-1.5 text-sm font-medium">
+            <Link to="/cost/construction-in-mumbai" className="text-gray-500 hover:text-primary transition-colors no-underline">Mumbai</Link>
             <span className="hidden md:inline text-gray-300">|</span>
-            <Link to="/cost/construction-in-bengaluru" className="text-gray-500 hover:text-primary transition-colors">Bengaluru</Link>
+            <Link to="/cost/construction-in-bengaluru" className="text-gray-500 hover:text-primary transition-colors no-underline">Bengaluru</Link>
             <span className="hidden md:inline text-gray-300">|</span>
-            <Link to="/cost/construction-in-delhi-ncr" className="text-gray-500 hover:text-primary transition-colors">Delhi NCR</Link>
+            <Link to="/cost/construction-in-delhi-ncr" className="text-gray-500 hover:text-primary transition-colors no-underline">Delhi NCR</Link>
             <span className="hidden md:inline text-gray-300">|</span>
-            <Link to="/cost/construction-in-chennai" className="text-gray-500 hover:text-primary transition-colors">Chennai</Link>
+            <Link to="/cost/construction-in-chennai" className="text-gray-500 hover:text-primary transition-colors no-underline">Chennai</Link>
             <span className="hidden md:inline text-gray-300">|</span>
-            <Link to="/cost/construction-in-hyderabad" className="text-gray-500 hover:text-primary transition-colors">Hyderabad</Link>
+            <Link to="/cost/construction-in-hyderabad" className="text-gray-500 hover:text-primary transition-colors no-underline">Hyderabad</Link>
             <span className="hidden md:inline text-gray-300">|</span>
-            <Link to="/cost/construction-in-pune" className="text-gray-500 hover:text-primary transition-colors">Pune</Link>
+            <Link to="/cost/construction-in-pune" className="text-gray-500 hover:text-primary transition-colors no-underline">Pune</Link>
           </div>
         </div>
 
-        <div className="border-t border-gray-100 pt-6 text-center max-w-4xl mx-auto">
-          <p className="text-gray-400 text-[11px] leading-relaxed mb-4">
+        {/* Disclaimer & Copyright */}
+        <div className="border-t border-gray-100 pt-4 text-center max-w-4xl mx-auto">
+          <p className="text-gray-400 text-[10px] leading-relaxed mb-2">
             Disclaimer: Home Design English (HDE) is an independent budget calculation and estimation platform. All rates, material quantities, and cost estimates provided are approximate projections for general guidance only. HDE does not provide building contractor services, architectural supervision, or physical construction works. Users should verify final quotes and structural designs with licensed local builders and engineers before commencing actual construction.
           </p>
           <p className="text-gray-400 text-xs font-medium">
@@ -91,4 +95,4 @@ export default function Footer() {
       </div>
     </footer>
   );
-}
+}

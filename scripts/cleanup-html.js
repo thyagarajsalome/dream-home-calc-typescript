@@ -21,7 +21,8 @@ const pathsToDelete = [
   'contact',
   'disclaimer',
   'dashboard',
-  'cost'
+  'cost',
+  'app'
 ];
 
 pathsToDelete.forEach(p => {

@@ -82,7 +82,7 @@ const faqHtml = `
           </span>
         </summary>
         <p class="mt-4 text-gray-600 text-sm md:text-base leading-relaxed">
-          Upgrading to a Pro plan (available as a monthly or annual subscription) unlocks all specialized calculators (Materials BOQ, Flooring, Painting, Plumbing, Electrical, Interiors, Doors & Windows), enables Standard & Premium quality estimates in the main construction calculator, and removes all restrictions on saving or sharing reports.
+          Upgrading to a Pro plan (unlocked by purchasing credit packages starting from ₹199) unlocks all specialized calculators (Materials BOQ, Flooring, Painting, Plumbing, Electrical, Interiors, Doors & Windows), enables Standard & Premium quality estimates in the main construction calculator, and removes all restrictions on saving or sharing reports.
         </p>
       </details>
       <details class="group bg-white p-6 rounded-2xl border border-gray-200/80 shadow-sm transition-all duration-300 [&_summary::-webkit-details-marker]:hidden open:border-primary/30 open:ring-1 open:ring-primary/20">
@@ -177,50 +177,54 @@ const testimonialsHtml = `
 `;
 
 const footerHtml = `
-<footer class="footer bg-white border-t border-gray-100 pt-12 pb-6">
+<footer class="footer bg-white border-t border-gray-100 pt-8 pb-4">
   <div class="container mx-auto px-4">
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8 items-start">
-      <div class="text-center md:text-left">
+    <div class="flex flex-col md:flex-row justify-between items-start gap-8 mb-6">
+      
+      <div class="flex-1 space-y-4 text-center md:text-left">
         <a href="/" class="flex items-center justify-center md:justify-start gap-2 text-xl font-bold text-secondary mb-4 no-underline hover:text-primary transition-colors">
           <img src="/bg-logo.png" alt="HDE Logo" class="w-10 h-10 object-contain" />
           <span class="text-primary uppercase tracking-tighter font-extrabold text-2xl">HDE</span>
         </a>
-        <p class="text-gray-500 text-sm max-w-xs mx-auto md:mx-0">
+        <p class="text-gray-500 text-sm max-w-md mx-auto md:mx-0">
           India's leading platform for construction cost estimation, material BOQ reports, and modern architectural house planning.
         </p>
+        
+        <div class="flex flex-wrap justify-center md:justify-start items-center gap-x-3 gap-y-1 text-sm font-medium pt-1">
+          <a href="/contact" class="text-gray-500 hover:text-primary transition-colors no-underline">Contact Us</a>
+          <span class="text-gray-300">|</span>
+          <a href="/disclaimer" class="text-gray-500 hover:text-primary transition-colors no-underline">Disclaimer</a>
+          <span class="text-gray-300">|</span>
+          <a href="/privacy" class="text-gray-500 hover:text-primary transition-colors no-underline">Privacy Policy</a>
+          <span class="text-gray-300">|</span>
+          <a href="/terms" class="text-gray-500 hover:text-primary transition-colors no-underline">Terms of Service</a>
+        </div>
       </div>
-      <div class="text-center">
-        <h4 class="font-bold text-gray-800 mb-4 uppercase text-xs tracking-widest">Quick Links</h4>
-        <ul class="space-y-2 text-sm list-none p-0">
-          <li><a href="/contact" class="text-gray-500 hover:text-primary transition-colors no-underline">Contact Us</a></li>
-          <li><a href="/disclaimer" class="text-gray-500 hover:text-primary transition-colors no-underline">Disclaimer</a></li>
-          <li><a href="/privacy" class="text-gray-500 hover:text-primary transition-colors no-underline">Privacy Policy</a></li>
-          <li><a href="/terms" class="text-gray-500 hover:text-primary transition-colors no-underline">Terms of Service</a></li>
-        </ul>
-      </div>
-      <div class="text-center md:text-right flex flex-col items-center md:items-end col-span-1 md:col-span-2">
-        <h4 class="font-bold text-gray-800 mb-4 uppercase text-xs tracking-widest">Get Our Mobile Apps</h4>
-        <div class="flex flex-wrap md:flex-col gap-3 justify-center">
-          <a href="https://play.google.com/store/apps/details?id=in.toolwebsite.twa" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 bg-gray-900 text-white px-4 py-2 rounded-xl hover:bg-black hover:scale-[1.02] transition-all border border-gray-700 w-56 no-underline text-left">
-            <i class="fab fa-google-play text-2xl text-primary font-bold"></i>
+
+      <div class="flex flex-col items-center md:items-end shrink-0 w-full md:w-auto">
+        <h4 class="font-bold text-gray-800 mb-3 uppercase text-xs tracking-widest text-center md:text-right">Get Our Mobile Apps</h4>
+        <div class="flex flex-wrap md:flex-col gap-2 justify-center">
+          <a href="https://play.google.com/store/apps/details?id=in.toolwebsite.twa" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 bg-gray-900 text-white px-3 py-1.5 rounded-lg hover:bg-black hover:scale-[1.02] transition-all border border-gray-700 w-44 no-underline text-left">
+            <i class="fab fa-google-play text-lg text-primary font-bold"></i>
             <div>
-              <p class="text-[10px] uppercase font-bold text-gray-400 leading-none m-0">Get it on</p>
-              <p class="text-sm font-bold m-0 mt-1">HDE Construction</p>
+              <p class="text-[8px] uppercase font-bold text-gray-400 leading-none m-0">Download App</p>
+              <p class="text-xs font-bold m-0 mt-0.5">HDE</p>
             </div>
           </a>
-          <a href="https://play.google.com/store/apps/details?id=com.aihomedecorator.twa&pcampaignid=web_share" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 bg-gray-900 text-white px-4 py-2 rounded-xl hover:bg-black hover:scale-[1.02] transition-all border border-gray-700 w-56 no-underline text-left">
-            <i class="fab fa-google-play text-2xl text-green-400 font-bold"></i>
+          <a href="https://play.google.com/store/apps/details?id=com.aihomedecorator.twa&pcampaignid=web_share" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 bg-gray-900 text-white px-3 py-1.5 rounded-lg hover:bg-black hover:scale-[1.02] transition-all border border-gray-700 w-44 no-underline text-left">
+            <i class="fab fa-google-play text-lg text-green-400 font-bold"></i>
             <div>
-              <p class="text-[10px] uppercase font-bold text-gray-400 leading-none m-0">Download Now</p>
-              <p class="text-sm font-bold m-0 mt-1">AI Home Decorator</p>
+              <p class="text-[8px] uppercase font-bold text-gray-400 leading-none m-0">Download App</p>
+              <p class="text-xs font-bold m-0 mt-0.5">AI Home Decorator</p>
             </div>
           </a>
         </div>
       </div>
     </div>
-    <div class="border-t border-gray-100 pt-6 mt-6 mb-6">
-      <h4 class="font-bold text-gray-800 mb-4 uppercase text-xs tracking-widest text-center">House Construction Costs By City</h4>
-      <div class="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 text-sm font-medium">
+    
+    <div class="border-t border-gray-100 pt-4 mt-4 mb-4">
+      <h4 class="font-bold text-gray-800 mb-2 uppercase text-xs tracking-widest text-center">House Construction Costs By City</h4>
+      <div class="flex flex-wrap justify-center items-center gap-x-4 gap-y-1.5 text-sm font-medium">
         <a href="/cost/construction-in-mumbai" class="text-gray-500 hover:text-primary transition-colors no-underline">Mumbai</a>
         <span class="hidden md:inline text-gray-300">|</span>
         <a href="/cost/construction-in-bengaluru" class="text-gray-500 hover:text-primary transition-colors no-underline">Bengaluru</a>
@@ -234,7 +238,11 @@ const footerHtml = `
         <a href="/cost/construction-in-pune" class="text-gray-500 hover:text-primary transition-colors no-underline">Pune</a>
       </div>
     </div>
-    <div class="border-t border-gray-100 pt-6 text-center">
+    
+    <div class="border-t border-gray-100 pt-4 text-center max-w-4xl mx-auto">
+      <p class="text-gray-400 text-[10px] leading-relaxed mb-2">
+        Disclaimer: Home Design English (HDE) is an independent budget calculation and estimation platform. All rates, material quantities, and cost estimates provided are approximate projections for general guidance only. HDE does not provide building contractor services, architectural supervision, or physical construction works. Users should verify final quotes and structural designs with licensed local builders and engineers before commencing actual construction.
+      </p>
       <p class="text-gray-400 text-xs font-medium">
         &copy; 2025 Home Design English (HDE). All rights reserved.
       </p>
@@ -253,7 +261,7 @@ const loadingSkeletonHtml = `
 `;
 
 // Base HTML Shell Template
-function makeHtmlShell({ title, description, canonical, schemas = [], bodyContent }) {
+function makeHtmlShell({ title, description, canonical, schemas = [], bodyContent, image = "https://homedesignenglish.com/bg-logo.png" }) {
   const schemaScripts = schemas.map(s => `<script type="application/ld+json">${JSON.stringify(s)}</script>`).join('\n    ');
   
   return `<!DOCTYPE html>
@@ -274,14 +282,14 @@ function makeHtmlShell({ title, description, canonical, schemas = [], bodyConten
     <meta property="og:url" content="${canonical}" />
     <meta property="og:title" content="${title}" />
     <meta property="og:description" content="${description}" />
-    <meta property="og:image" content="https://homedesignenglish.com/bg-logo.png" />
+    <meta property="og:image" content="${image}" />
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content="${canonical}" />
     <meta property="twitter:title" content="${title}" />
     <meta property="twitter:description" content="${description}" />
-    <meta property="twitter:image" content="https://homedesignenglish.com/bg-logo.png" />
+    <meta property="twitter:image" content="${image}" />
 
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" type="image/png" href="/icons/icon-192x192.png" />
@@ -641,6 +649,15 @@ const pagesToGenerate = [
     canonical: 'https://homedesignenglish.com/dashboard',
     schemas: [],
     bodyContent: `${headerHtml}<main class="flex-grow">${loadingSkeletonHtml}</main>${footerHtml}`
+  },
+  {
+    filePath: 'app/index.html',
+    title: 'Download HDE Construction App | Smart Cost Estimator & Planning',
+    description: 'Get the HDE Construction App for Android. Calculate building costs, estimate materials BOQ lists, browse modern house designs, and connect with verified local professionals.',
+    canonical: 'https://homedesignenglish.com/app',
+    image: 'https://homedesignenglish.com/promo/01.webp',
+    schemas: [],
+    bodyContent: `${headerHtml}<main class="flex-grow">${loadingSkeletonHtml}</main>${footerHtml}`
   }
 ];
 
@@ -653,7 +670,8 @@ pagesToGenerate.forEach(p => {
     description: p.description,
     canonical: p.canonical,
     schemas: p.schemas,
-    bodyContent: p.bodyContent
+    bodyContent: p.bodyContent,
+    image: p.image
   });
   fs.writeFileSync(fullPath, html, 'utf8');
   console.log(`Generated: ${p.filePath}`);
