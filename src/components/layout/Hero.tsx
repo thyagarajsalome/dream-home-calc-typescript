@@ -6,9 +6,20 @@ export default function Hero() {
   const [banners, setBanners] = useState<HeroBanner[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Parallax effect for the container and content
   useGSAPHeroParallax("#home", ".hero-content");
+
+  useEffect(() => {
+    // Detect mobile screens dynamically for optimized asset loading
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const loadBanners = async () => {
@@ -47,7 +58,10 @@ export default function Hero() {
   const getOptimizedImageUrl = (url: string) => {
     if (url.includes("supabase.co/storage/v1/object/public/")) {
       const separator = url.includes("?") ? "&" : "?";
-      return `${url}${separator}width=1200&quality=80`;
+      // Compress heavily for mobile screens to save bandwidth and load instantly
+      const width = isMobile ? 600 : 1200;
+      const quality = isMobile ? 70 : 80;
+      return `${url}${separator}width=${width}&quality=${quality}`;
     }
     return url;
   };
@@ -61,8 +75,8 @@ export default function Hero() {
       id="home" 
       className="relative w-full h-[30vh] lg:h-[65vh] overflow-hidden flex items-center justify-center bg-secondary"
     >
-      {/* IMAGES HIDDEN ON MOBILE/TABLET: Added 'hidden lg:block' wrapper */}
-      <div className="hidden lg:block">
+      {/* Background Banner Slides (Now visible on all screens with dynamic resolution selection) */}
+      <div className="absolute inset-0">
         {banners.map((banner, index) => (
           <div
             key={banner.id}
@@ -76,7 +90,8 @@ export default function Hero() {
               transitionProperty: "opacity, transform",
             }}
           >
-            <div className="absolute inset-0 bg-black/20"></div>
+            {/* Slightly darker overlay on mobile to ensure button accessibility */}
+            <div className={`absolute inset-0 ${isMobile ? "bg-black/35" : "bg-black/20"}`}></div>
           </div>
         ))}
       </div>
@@ -95,7 +110,7 @@ export default function Hero() {
         </button>
       </div>
 
-      {/* Indicators hidden on mobile/tablet */}
+      {/* Indicators hidden on mobile/tablet to avoid cluttering small sections */}
       <div className="hidden lg:flex absolute bottom-8 left-1/2 -translate-x-1/2 z-20 gap-3">
         {banners.map((_, i) => (
           <button

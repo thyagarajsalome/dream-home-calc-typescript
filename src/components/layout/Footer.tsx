@@ -36,20 +36,7 @@ export default function Footer() {
           <div className="flex flex-col items-center md:items-end shrink-0 w-full md:w-auto">
             <h4 className="font-bold text-gray-800 mb-4 uppercase text-xs tracking-widest">Get Our Mobile Apps</h4>
             <div className="flex flex-wrap md:flex-col gap-2 justify-center">
-              {/* App 1: HDE Construction */}
-              <a 
-                href="https://play.google.com/store/apps/details?id=in.toolwebsite.twa" 
-                target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-2 bg-gray-900 text-white px-3 py-1.5 rounded-lg hover:bg-black hover:scale-[1.02] transition-all border border-gray-700 w-44 text-left no-underline"
-              >
-                <i className="fab fa-google-play text-lg text-primary font-bold"></i>
-                <div>
-                  <p className="text-[8px] uppercase font-bold text-gray-400 leading-none">Download App</p>
-                  <p className="text-xs font-bold mt-0.5">HDE</p>
-                </div>
-              </a>
-              
-              {/* App 2: AI Home Decorator */}
+             
               <a 
                 href="https://play.google.com/store/apps/details?id=com.aihomedecorator.twa&pcampaignid=web_share" 
                 target="_blank" rel="noopener noreferrer"
@@ -57,8 +44,8 @@ export default function Footer() {
               >
                 <i className="fab fa-google-play text-lg text-green-400 font-bold"></i>
                 <div>
-                  <p className="text-[8px] uppercase font-bold text-gray-400 leading-none">Download App</p>
-                  <p className="text-xs font-bold mt-0.5">AI Home Decorator</p>
+                  <p className="text-[10px] text-gray-300 leading-tight">Get it on</p>
+                  <p className="text-xs font-bold mt-0.5">AI Decorator</p>
                 </div>
               </a>
             </div>
