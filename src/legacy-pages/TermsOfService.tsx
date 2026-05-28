@@ -29,32 +29,20 @@ const TermsOfService = () => {
       </p>
 
       {/* --- UPDATED SECTION --- */}
-      <h2>3. Pro Accounts</h2>
+      <h2>3. Pro Accounts & Credits</h2>
       <p>
         Certain features, calculators, and functionalities of the Service are
-        only available through the purchase of a "Pro Account."
+        only available through the purchase of "Project Credits" or upgrading to a "Pro Account."
       </p>
       <ul>
         <li>
-          <strong>Term of Access:</strong> A Pro Account provides you with
-          access to all premium features via a recurring subscription, available
-          on a monthly or annual basis (the "Subscription Term"). Your access
-          lasts for the duration of the Subscription Term you select and pay
-          for.
+          <strong>Credits & Access:</strong> Upgrading or purchasing a credit package gives you a set number of project credits (e.g., 5, 10, or 100 credits). 1 Credit allows you to design, calculate, and save 1 unique project plan.
         </li>
         <li>
-          <strong>Payments and Fees:</strong> The fee for a Pro Account is
-          billed at the beginning of your chosen Subscription Term (monthly or
-          annually). All prices are inclusive of applicable taxes, including
-          GST. Your subscription will automatically renew at the end of each
-          Subscription Term unless you cancel it prior to the renewal date.
+          <strong>Payments and Fees:</strong> Fees for credit packages and Pro access are billed as one-time payments. All prices are inclusive of applicable taxes, including GST. Since these are one-time purchases, there are no automatic recurring subscriptions.
         </li>
         <li>
-          <strong>No Refund Policy:</strong> All payments for Pro Accounts are
-          final and non-refundable. Once a purchase is made, you will have
-          access for the full paid Subscription Term, and no partial or full
-          refunds will be issued for any reason, including if you cancel your
-          subscription mid-term.
+          <strong>No Refund Policy:</strong> All payments for credits or Pro account upgrades are final and non-refundable. Once a purchase is made, you will immediately receive the project credits, and no partial or full refunds will be issued for unused credits.
         </li>
       </ul>
       {/* --- END OF UPDATE --- */}
@@ -81,7 +69,7 @@ const TermsOfService = () => {
       <h2>6. Contact Us</h2>
       <p>
         If you have any questions about these Terms, please contact us at:{" "}
-        <a href="mailto:contact@toolwebsite.in">contact@toolwebsite.in</a>
+        <a href="mailto:thyagaraja1983@gmail.com">thyagaraja1983@gmail.com</a>
       </p>
     </div>
   );
