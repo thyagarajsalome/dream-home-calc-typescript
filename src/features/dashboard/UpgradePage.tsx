@@ -68,11 +68,11 @@ const plans = {
     price: 999,
     originalPrice: 1427,
     description: "Built for professional contractors and builders who need high-volume access.",
-    credits: "High-Volume Usage",
-    useCase: "Limits: 100 projects/month and 10 saves per day.",
-    badge: undefined, // Add this line
+    credits: "100 Project Credits",
+    useCase: "Best for: Professional builders, contractors, and heavy users.",
+    badge: undefined,
     features: [
-      "100 Monthly Project Saves",
+      "100 Project Credits",
       "10 Daily Save Limit (Anti-Bot Protection)",
       "Everything in Standard",
       "Material BOQ (Bill of Quantities)",
@@ -216,7 +216,7 @@ const UpgradePage = () => {
                   </div>
                   <div className="flex items-baseline gap-1">
                     <span className="text-5xl font-black text-gray-900 dark:text-zinc-100">₹{plan.price}</span>
-                    <span className="text-gray-500 dark:text-zinc-400 font-medium">/{key === 'pro' ? 'mo' : 'once'}</span>
+                    <span className="text-gray-500 dark:text-zinc-400 font-medium">/once</span>
                   </div>
                 </div>
 
@@ -253,8 +253,6 @@ const UpgradePage = () => {
                     'Current Plan'
                   ) : isActiveTier ? (
                     'Buy More Credits'
-                  ) : key === 'pro' ? (
-                    'Start Subscription'
                   ) : (
                     'Buy Credits Now'
                   )}

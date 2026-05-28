@@ -60,7 +60,7 @@ const PrivacyPolicy = () => {
       <h2>6. Contact Us</h2>
       <p>
         If you have any questions about this Privacy Policy, please contact us
-        at: <a href="mailto:contact@toolwebsite.in">contact@toolwebsite.in</a>
+        at: <a href="mailto:thyagaraja1983@gmail.com">thyagaraja1983@gmail.com</a>
       </p>
     </div>
   );
